@@ -25,4 +25,5 @@ services:
 #clamav-api is a 3rd party project/api
 # Link: https://github.com/benzino77/clamav-rest-api
 # When the containers are up and healthy then simply go to postman
-# Post request on URL: http://localhost:8086/api/v1/scan || In body section select files that you want to scan and send the post request.
+# Post request on URL Directly On VM: http://localhost:8086/api/v1/scan || In body section select files that you want to scan and send the post request.
+# Internal calling - clamav-api:8086
