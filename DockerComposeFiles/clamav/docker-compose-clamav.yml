@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  clamav:
+    image: clamav/clamav:stable
+    ports:
+      - "3310:3310"
+    restart: always
+
+  clamav-api:
+    image: benzino77/clamav-rest-api
+    ports:
+      - "8086:8086"
+    environment:
+      - NODE_ENV=production
+      - APP_PORT=8086
+      - APP_FORM_KEY=FILES
+      - CLAMD_IP=clamav
+      - APP_MAX_FILE_SIZE=52428800
+    restart: always
+    depends_on:
+      - clamav
+
+#NOTES
+#clamav-api is a 3rd party project/api
+# Link: https://github.com/benzino77/clamav-rest-api
+# When the containers are up and healthy then simply go to postman
+# Post request on URL: http://localhost:8086/api/v1/scan || In body section select files that you want to scan and send the post request.
