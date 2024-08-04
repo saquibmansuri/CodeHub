@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  myapp:
+    build: ./path/to/Dockerfile
+    restart: always
+
+# First do normal deployment - docker compose -f docker-compose-example.yml up -d
+# Note the container image - docker inspect --format='{{.Config.Image}}' <container_id_or_name>
+
+
+# Then, for rolling out updates using this 'rollout plugin', run these commands
+# Build the updated Docker image
+# docker compose -f docker-compose-example.yml build myapp
+
+# Roll out the updated service
+# docker rollout -f docker-compose-example.yml myapp
+
+
+# Verify that the container image changed or not - docker inspect --format='{{.Config.Image}}' <container_id_or_name>
