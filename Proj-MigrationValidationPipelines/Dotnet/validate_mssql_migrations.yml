@@ -1,0 +1,69 @@
+# Prerequisites
+# 1. Generate script (schema only) for the whole database
+# 2. Generate script (data only) for ef_migrations table
+
+name: Validate Mssql Database Migrations
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - staging
+      - master
+
+jobs:
+  validate-mssql-migrations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup MSSQL
+        uses: potatoqualitee/mssqlsuite@v1.7
+        with:
+          install: sqlengine, sqlclient, sqlpackage
+          version: 2019
+          sa-password: password@5043
+          show-log: true
+          collation: Latin1_General_BIN
+
+      - name: Echo Base Ref
+        run: echo "Base ref is ${{ github.base_ref }}"
+
+      - name: Restore Database Schema
+        run: |
+          if [[ ${{ github.base_ref }} == "dev" ]]; then
+            sqlcmd -S localhost -U sa -P password@5043 -i ./DbScripts/devdbsqlscript.sql
+            sqlcmd -S localhost -U sa -P password@5043 -i ./DbScripts/devdbefmigrationsqlscript.sql
+          elif [[ ${{ github.base_ref }} == "staging" ]]; then
+            sqlcmd -S localhost -U sa -P password@5043 -i ./DbScripts/stgdbsqlscript.sql
+            sqlcmd -S localhost -U sa -P password@5043 -i ./DbScripts/stgdbefmigrationsqlscript.sql
+          elif [[ ${{ github.base_ref }} == "master" ]]; then
+            sqlcmd -S localhost -U sa -P password@5043 -i ./DbScripts/proddbsqlscript.sql
+            sqlcmd -S localhost -U sa -P password@5043 -i ./DbScripts/proddbefmigrationsqlscript.sql
+          fi
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
+      - name: Test Migrations
+        run: |
+          dotnet tool install --global dotnet-ef --version 8.0.6
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef --version
+          cd Project # This is the directory in which .csproj resides
+          dotnet tool restore
+          cat > appsettings.json << 'EOF'
+          ${{ secrets.APPSETTINGS_SECRET }}
+          EOF
+          cat appsettings.json
+          if [[ ${{ github.base_ref }} == "dev" ]]; then
+            dotnet ef database update --context ProjectDbContext --connection "Server=localhost;Database=dev-db;User Id=sa;Password=password@5043;Encrypt=false;MultipleActiveResultSets=true;TrustServerCertificate=True;" -v --project ../SqlServer.Migration --startup-project .
+          elif [[ ${{ github.base_ref }} == "staging" ]]; then
+            dotnet ef database update --context ProjectDbContext --connection "Server=localhost;Database=stg-db;User Id=sa;Password=password@5043;Encrypt=false;MultipleActiveResultSets=true;TrustServerCertificate=True;" -v --project ../SqlServer.Migration --startup-project .
+          elif [[ ${{ github.base_ref }} == "master" ]]; then
+            dotnet ef database update --context ProjectDbContext --connection "Server=localhost;Database=prod-db;User Id=sa;Password=password@5043;Encrypt=false;MultipleActiveResultSets=true;TrustServerCertificate=True;" -v --project ../SqlServer.Migration --startup-project .
+          fi
