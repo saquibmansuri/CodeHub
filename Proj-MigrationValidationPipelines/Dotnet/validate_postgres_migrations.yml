@@ -1,3 +1,7 @@
+# Prerequisites
+# 1. Generate script (schema only) for the whole database
+# 2. Generate script (data only) for ef_migrations table
+
 name: Validate Postgres Database Migrations
 
 on:
