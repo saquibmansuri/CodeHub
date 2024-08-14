@@ -1,0 +1,65 @@
+name: Validate Postgres Database Migrations
+
+on:
+    pull_request:
+      branches:
+        - dev
+        - staging
+        - master
+
+jobs:
+  validate-postgresql-migrations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup POSTGRESQL
+        uses: ikalnytskyi/action-setup-postgres@v6 
+        with:
+          username: sa
+          password: password5043
+          database: test
+          port: 5432
+        id: postgres
+
+      - name: Echo Base Ref
+        run: echo "Base ref is ${{ github.base_ref }}"
+
+      - name: Restore Database Schema
+        run: |
+          if [[ ${{ github.base_ref }} == "dev" ]]; then
+            psql postgresql://sa:password5043@localhost:5432/test -f ./DbScripts/devdbpostgresscript.sql
+            psql postgresql://sa:password5043@localhost:5432/test -f ./DbScripts/devdbefmigrationspostgresscript.sql
+          elif [[ ${{ github.base_ref }} == "staging" ]]; then
+            psql postgresql://sa:password5043@localhost:5432/test -f ./DbScripts/stgdbpostgresscript.sql
+            psql postgresql://sa:password5043@localhost:5432/test -f ./DbScripts/stgdbefmigrationspostgresscript.sql
+          elif [[ ${{ github.base_ref }} == "master" ]]; then
+            psql postgresql://sa:password5043@localhost:5432/test -f ./DbScripts/proddbpostgresscript.sql
+            psql postgresql://sa:password5043@localhost:5432/test -f ./DbScripts/proddbefmigrationspostgresscript.sql
+          fi
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
+      - name: Test Migrations
+        run: |
+          dotnet tool install --global dotnet-ef --version 8.0.6
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef --version
+          cd Project   # This is the directory in which .csproj file resides 
+          dotnet tool restore
+          cat > appsettings.json << 'EOF'
+          ${{ secrets.APPSETTINGS_SECRET }}
+          EOF
+          cat appsettings.json
+          if [[ ${{ github.base_ref }} == "dev" ]]; then
+            dotnet ef database update --context ProjectDbContext --connection "Server=localhost;User ID=sa;Password=password5043;Database=test" -v --project ../Postgresql.Migration --startup-project .
+          elif [[ ${{ github.base_ref }} == "staging" ]]; then
+            dotnet ef database update --context ProjectDbContext --connection "Server=localhost;User ID=sa;Password=password5043;Database=test" -v --project ../Postgresql.Migration --startup-project .
+          elif [[ ${{ github.base_ref }} == "master" ]]; then
+            dotnet ef database update --context ProjectDbContext --connection "Server=localhost;User ID=sa;Password=password5043;Database=test" -v --project ../Postgresql.Migration --startup-project .
+          fi
