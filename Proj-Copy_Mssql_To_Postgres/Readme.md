@@ -4,10 +4,14 @@
 + set_sequesnce.py - sets primary key value to max+1 for all tables containing columns with integer datatype 
 
 ## STEPS TO RUN THE PYTHON SCRIPTS
-Note: If you're going to run this in windows machine then open powershell as admin and execute this command
+Note: 
++ If you're going to run this in windows machine then open powershell as admin and execute this command
 ```
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 ```
++ Download odbc - https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16
+
+
 ### 1. Go to project directory and create a virtual environment
 ```
 python -m venv venv
