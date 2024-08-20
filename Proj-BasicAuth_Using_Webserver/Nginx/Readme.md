@@ -1,4 +1,5 @@
 # This repository explains how to setup basic authentication using NGINX
+Reference - https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/
 
 ## Step 1 
 Install nginx
