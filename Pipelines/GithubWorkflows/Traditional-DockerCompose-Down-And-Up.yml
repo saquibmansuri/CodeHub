@@ -1,0 +1,155 @@
+# DEPLOYING BASIC DOTNET APP ON VIRTUAL MACHINE USING SIMPLE COMPOSE DOWN AND UP STRATEGY 
+
+name: Build & Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+env:
+  SERVICE_ACCOUNT_USERNAME: _json_key
+  GCP_ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
+  GCP_ARTIFACT_REPOSITORY: myrepository
+  VM_SSH_PORT: 22
+  IMAGE_TAG: ${{ github.sha }}
+  GCP_PROJECT_ID: myproject
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Configure GCP Credentials
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_CREDENTIALS }}
+
+      - name: Login to GCP Artifact Registry
+        uses: docker/login-action@v3
+        id: login-registry
+        with:
+          registry: ${{ env.GCP_ARTIFACT_REGISTRY }}
+          username: ${{ env.SERVICE_ACCOUNT_USERNAME }}
+          password: ${{ secrets.SERVICE_ACCOUNT_CREDENTIALS }}
+
+      - name: Build, Tag and Push Image to GCP Artifact Repository
+        id: build-image
+        run: |
+          docker build -t ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/app:${{ env.IMAGE_TAG }} -t ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/app:latest -f Dockerfiles/app.Dockerfile .
+          docker push ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/app:${{ env.IMAGE_TAG }}
+          docker push ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/app:latest
+          echo "appimage=${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/app:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Docker Compose Down in VM
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ env.VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp
+            sudo docker compose -f docker-compose-app.yml down
+
+      - name: Copy Updated Docker Compose File to GCP VM
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VM_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ env.VM_SSH_PORT }}
+          overwrite: true
+          source: "Docker.Compose.Files/docker-compose-app.yml"
+          target: "myapp/"
+
+      - name: Docker Compose Up in GCP VM
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ env.VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp
+            cp Docker.Compose.Files/docker-compose-app.yml docker-compose-app.yml
+            sed -i 's#APP_IMAGE=.*#APP_IMAGE=${{ steps.build-image.outputs.appimage }}#' .env
+            export $( cat .env | xargs)
+            sudo docker compose -f docker-compose-app.yml pull 
+            sudo docker compose -f docker-compose-app.yml up -d
+            sudo docker system prune -af
+
+      - name: Healthcheck
+        env: 
+          HEALTHCHECK_URL: https://myapp.saquib.com/health
+          SLEEP_TIME: 120
+        run: |
+          chmod +x Scripts/ShellScripts/health_check.sh
+          if Scripts/ShellScripts/health_check.sh ${{ HEALTHCHECK_URL }} ${{ env.SLEEP_TIME }}; then
+            curl -H "Content-Type: application/json" -d '{"text": "Deployment Successful"}' ${{ secrets.TEAMS_CHANNEL_WEBHOOK_URL }}
+          else
+            # If health check is not successful
+            curl -H "Content-Type: application/json" -d '{"text": "Deployment Unsuccessful"}' ${{ secrets.TEAMS_CHANNEL_WEBHOOK_URL }}
+          fi
+
+      # OR SEND AN EMAIL 
+       
+      - name: Send Email
+        uses: hilarion5/send-mail@v1
+        with:
+          smtp-server: smtp.example.com
+          smtp-port: 465
+          smtp-secure: true
+          from-email: sender@example.com
+          to-email: recipient1@example.com,recipient2@example.com
+          username: yourusername
+          password: yourpassword
+          subject: Test Email
+          body: This is a test email sent from GitHub Actions.
+          html: |
+            <h1>This is a test email</h1>
+            <p>Test Paragraph</p>
+
+
+
+#################################################################################################################################################
+
+# If you want to minimize downtime slightly, then don't do compose down at all, simply remove that step
+
+- name: Copy Updated Docker Compose File to VM
+  uses: appleboy/scp-action@v0.1.4
+  with:
+    host: ${{ secrets.VM_IP }}
+    username: "ubuntu"
+    key: ${{ secrets.VM_SSH_KEY }}
+    port: ${{ env.VM_SSH_PORT }}
+    overwrite: true
+    source: "Docker.Compose.Files/docker-compose-app.yml"
+    target: "myapp/"
+
+- name: Fetch Latest Secrets & Rollout New Version
+  uses: appleboy/ssh-action@v0.1.7
+  with:
+    host: ${{ secrets.VM_IP }}
+    username: "ubuntu"
+    key: ${{ secrets.VM_SSH_KEY }}
+    port: ${{ env.VM_SSH_PORT }}
+    script: |
+      sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+      cd myapp
+      cp Docker.Compose.Files/docker-compose-app.yml docker-compose-app.yml
+      sed -i 's#APP_IMAGE=.*#APP_IMAGE=${{ steps.build-image.outputs.appimage }}#' .env
+      export $( cat .env | xargs)
+      sudo docker compose -f docker-compose-app.yml pull 
+      sudo docker compose -f docker-compose-app.yml up -d
+      for i in {1..5}; do sudo docker system prune -af && break || sleep 3; done
+      
