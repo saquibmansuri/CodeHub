@@ -1,0 +1,56 @@
+# Note: This example is for angular, you can deploy similarly for other technologies which created static files after building the application.
+
+name: Static Site Deploy - Azure
+
+on:
+  push:
+    branches: [branch_name]
+
+env:
+  AZURE_STORAGE_ACCOUNT_NAME: mystgaccount
+  SOURCE: ./dist/myapp/  # This is the path where static files are built
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Npm Install
+        run: npm ci --force
+
+      - name: Build Application
+        run: npm run build-myapp # Alias like this can be written in package.json
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}  # Service principal can be used
+
+      - name: Upload to blob storage
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "no-cache" --content-type "text/html" --pattern "*.html" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "application/javascript" --pattern "*.js" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "image/x-icon" --pattern "*.ico" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "image/png" --pattern "*.png" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "no-cache" --content-type "application/json" --pattern "*.json" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "text/css" --pattern "*.css" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "image/svg+xml" --pattern "*.svg" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "application/font-woff" --pattern "*.woff" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "application/font-woff2" --pattern "*.woff2" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "application/vnd.ms-fontobject" --pattern "*.eot" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "application/x-font-ttf" --pattern "*.ttf" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "application/x-font-opentype" --pattern "*.otf" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "image/jpeg" --pattern "*.jpg" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "image/gif" --pattern "*.gif" --overwrite true
+            az storage blob upload-batch --account-name ${{ env.AZURE_STORAGE_ACCOUNT_NAME }} --auth-mode key -d '$web' -s ${{ env.SOURCE }} --content-cache-control "public; max-age=2592000" --content-type "video/mp4" --pattern "*.mp4" --overwrite true
+            
