@@ -1,0 +1,67 @@
+# CLEAR ALL TABLES IN POSTGRES DATABASE IN 'public' SCHEMA
+
+DO
+$$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')
+    LOOP
+        EXECUTE 'TRUNCATE TABLE public.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END
+$$;
+
+#############################################################################################
+
+# CLEAR ALL TABLES IN POSTGRES DATABASE IN 'public' SCHEMA EXCEPT TABLE = '__EFMigrationsHistory'
+
+DO
+$$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != '__EFMigrationsHistory')
+    LOOP
+        EXECUTE 'TRUNCATE TABLE public.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END
+$$;
+
+#############################################################################################
+
+# DELETE ALL TABLES IN POSTGRES DATABASE IN 'public' SCHEMA
+
+DO
+$$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')
+    LOOP
+        EXECUTE 'DROP TABLE public.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END
+$$;
+
+#############################################################################################
+
+# DISABLE FOREIGN KEY CONSTRAINTS IN A DATABASE IN 'public' SCHEMA (THIS WILL NOT WORK FOR CLOUD MANAGED DATABASES)
+
+DO $$
+DECLARE
+  rec RECORD;
+BEGIN
+  FOR rec IN SELECT conname, relname AS tablename
+             FROM pg_constraint
+             INNER JOIN pg_class ON pg_constraint.conrelid = pg_class.oid
+             WHERE contype = 'f' AND pg_class.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+  LOOP
+    EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT %I', rec.tablename, rec.conname);
+  END LOOP;
+END $$;
+
+##############################################################################################
+
+
+
