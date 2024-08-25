@@ -1,0 +1,49 @@
+# This example build angular project and copies the static files to AWS bucket (NOTE: static website hosting should be enabled with CDN configured properly)
+# Similarly we can copy static files for any other technology other than angular.
+
+name: Static Site Deploy - AWS
+
+on:
+  push:
+    branches: [branch_name]
+
+env:
+  BUCKET_NAME: testbucket
+  SOURCE_DIRECTORY_PATH: dist/apps/myproject/  # This is the directory where the static files get built and stored)
+  DESTINATION_PATH: s3://${{ env.BUCKET_NAME }}/$GITHUB_REF_NAME
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Clean npm install
+        run: npm ci --force
+        
+      - name: Build Project
+        run: npm run build-prod # Alias like this can be written in package.json in angular
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Copy static files to desired bucket
+        run: |
+          aws s3 cp ${{ env.SOURCE_DIRECTORY_PATH }} ${{ env.DESTINATION_PATH }} --recursive --exclude "*" --include "*.html" --cache-control "no-cache" --content-type "text/html"
+          aws s3 cp ${{ env.SOURCE_DIRECTORY_PATH }} ${{ env.DESTINATION_PATH }} --recursive --exclude "*" --include "*.js" --cache-control "public; max-age=2592000" --content-type "application/javascript"
+          aws s3 cp ${{ env.SOURCE_DIRECTORY_PATH }} ${{ env.DESTINATION_PATH }} --recursive --exclude "*" --include "*.ico" --cache-control "public; max-age=2592000" --content-type "image/x-icon"
+          aws s3 cp ${{ env.SOURCE_DIRECTORY_PATH }} ${{ env.DESTINATION_PATH }} --recursive --exclude "*" --include "*.png" --cache-control "public; max-age=2592000" --content-type "image/png"
+          aws s3 cp ${{ env.SOURCE_DIRECTORY_PATH }} ${{ env.DESTINATION_PATH }} --recursive --exclude "*" --include "*.json" --cache-control "no-cache" --content-type "application/json"
+          aws s3 cp ${{ env.SOURCE_DIRECTORY_PATH }} ${{ env.DESTINATION_PATH }} --recursive --exclude "*" --include "*.css" --cache-control "public; max-age=2592000" --content-type "text/css"
+          
