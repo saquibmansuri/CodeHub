@@ -1,0 +1,90 @@
+# Note: This example uses angular for the demonstration, you can do this for any other frontend language that supports static file deployment
+# REFERENCE: https://cloud.google.com/storage/docs/gsutil/addlhelp/GlobalCommandLineOptions
+
+name: Static Site Deploy - GCP
+
+on:
+  push:
+    branches: [branch_name]
+
+env:
+  GCP_BUCKET_NAME: my-bucket
+  SOURCE: ./dist/myapp # This is the directory where static files are built
+  GCP_PROJECT_ID: myproject
+        
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node  
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Npm Install
+        run: npm ci --force
+        
+      - name: Build project
+        run: npm run build-myapplication # Alias like this can be written in package.json in angular
+      
+      - name: Configure GCP Credentials
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_CREDENTIALS }} # Service Principal can be used
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 363.0.0'
+          project_id: ${{ env.GCP_PROJECT_ID }}    
+
+      - name: Upload to GCP bucket
+        run: |
+              CACHE_CONTROL="public, max-age=2592000"
+              LOCAL_ROOT_DIRECTORY="${{ env.SOURCE }}"
+              GCP_BUCKET="gs://${{ env.GCP_BUCKET_NAME }}"
+    
+              # Function to determine content type based on file extension
+              get_content_type() {
+                  local file_extension=${1##*.}
+                  case "$file_extension" in
+                      "html") echo "text/html:no-cache" ;;
+                      "json") echo "application/json:no-cache" ;;
+                      "js") echo "application/javascript:public,max-age=2592000" ;;
+                      "ico") echo "image/x-icon:public,max-age=2592000" ;;
+                      "png") echo "image/png:public,max-age=2592000" ;;
+                      "css") echo "text/css:public,max-age=2592000" ;;
+                      "svg") echo "image/svg+xml:public,max-age=2592000" ;;
+                      "woff") echo "application/font-woff:public,max-age=2592000" ;;
+                      "woff2") echo "application/font-woff2:public,max-age=2592000" ;;
+                      "eot") echo "application/vnd.ms-fontobject:public,max-age=2592000" ;;
+                      "ttf") echo "application/x-font-ttf:public,max-age=2592000" ;;
+                      "otf") echo "application/x-font-opentype:public,max-age=2592000" ;;
+                      "jpg" | "jpeg") echo "image/jpeg:public,max-age=2592000" ;;
+                      "gif") echo "image/gif:public,max-age=2592000" ;;
+                      "mp4") echo "video/mp4:public,max-age=2592000" ;;
+                      *) echo "application/octet-stream:public,max-age=2592000" ;;  # Default for unknown types
+                  esac
+              }
+    
+              # Function to copy a file with metadata
+              copy_file() {
+                  local file_path=$1
+                  local gcp_path=$2
+                  local content_type=$(get_content_type "$file_path")
+                  IFS=':' read -r content_type custom_cache_control <<< "$content_type"
+                  gsutil -D -h "Cache-Control:$custom_cache_control" -h "Content-Type:$content_type" cp "$file_path" "$gcp_path"
+              }
+    
+              # Recursively copy files from the local directory to the GCP bucket
+              find "$LOCAL_ROOT_DIRECTORY" -type f | while read file; do
+                  # Create a GCP path that preserves the local directory structure
+                  gcp_path="$GCP_BUCKET/${file#$LOCAL_ROOT_DIRECTORY/}"
+    
+                  # Copy the file
+                  copy_file "$file" "$gcp_path"
+              done
