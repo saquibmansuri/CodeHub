@@ -1,0 +1,21 @@
+# Builds the projects to ensure everything is fine before merging the pull request
+
+name: PR Build
+on:
+  pull_request:
+    branches: [ master, staging, dev ]
+env:  
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'       
+
+    - name: Install dependencies
+      run: dotnet build Myproject.sln --configuration Release
