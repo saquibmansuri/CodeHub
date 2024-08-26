@@ -1,0 +1,30 @@
+# Checks for code formatting, linting and project build issues before merging the PR
+
+name: PR Build
+on:
+  pull_request:
+    branches: [ dev, staging, master]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # We need to fetch all branches and commits so that Nx affected has a base to compare against.
+          fetch-depth: 0       
+            
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'      
+
+      - run: npm ci --force
+
+      - run: npm run prettier --check .
+
+      - run: npm run lint 
+
+      - run: npm run stylelint \"src/**/*.scss\"
+
+      - run: npm run ng build --configuration production 
+      
