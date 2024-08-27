@@ -132,12 +132,13 @@ jobs:
             commit_id=$(echo "$commit" | awk '{print $1}')
             commit_message=$(echo "$commit" | cut -d ' ' -f 2-)
             echo "Processing $commit_id with message: $commit_message"
-            for word in $commit_message; do
+            IFS=' ' # Set IFS to space to correctly split the commit message into words
+            read -ra words <<< "$commit_message" # Read the commit message into an array of words
+            for word in "${words[@]}"; do
               if [[ "$word" =~ ed$ ]]; then
                 echo "Commit message is in past tense: '$commit_message' - $commit_id"
                 exit 1
-              else
-                echo "Commit message is not in past tense which meets the guidelines"
               fi
             done
+            echo "Commit message is not in past tense which meets the guidelines"
           done
