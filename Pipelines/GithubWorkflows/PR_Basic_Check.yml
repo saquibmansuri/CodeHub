@@ -1,0 +1,143 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      [master, main, production, staging, stg, dev, development, develop]
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository # needed for the git commands to run properly in the steps below
+        uses: actions/checkout@v4
+
+      - name: Check Branch Name Prefix
+        env:
+          REFERENCE: https://abc.com
+        run: |
+          branch_name="${{ github.head_ref }}"
+          if ! [[ "$branch_name" =~ ^(feature-|fix-|hotfix-|bugfix-|change-|solve-|bug-|remove-|dev|development|develop|stg|staging|master|main|production) ]]; then
+            echo "Branch name is not according to the guidelines. It should start with one of the following prefixes: feature-, fix-, hotfix-, bugfix-, change-, solve-, bug-, remove-"
+            echo "${{ env.REFERENCE }}"
+          else
+            echo "Branch name is correct"
+          fi
+
+      - name: Check PR Title Format
+        env:
+          REFERENCE: https://abc.com
+        run: |
+          pr_title="${{ github.event.pull_request.title }}"
+          if ! [[ "$pr_title" =~ ^[A-Za-z0-9_-]+(-\ [A-Z][a-z0-9\ ]+)?$ ]] && ! [[ "$pr_title" =~ ^[A-Z][a-z0-9\ ]+$ ]]; then
+            echo "PR title is not according to the guidelines."
+            echo "${{ env.REFERENCE }}"
+            exit 1
+          else
+            echo "PR title format is correct"
+          fi
+
+      # - name: Check PR Title for Spelling Errors
+      #   run: |
+      #     echo "${{ github.event.pull_request.title }}" > pr_title.txt
+      #     python -m pip install pyspellchecker
+      #     python -c "from spellchecker import SpellChecker; spell = SpellChecker(); title = open('pr_title.txt').read(); misspelled = spell.unknown(title.split()); print('Misspelled words:', list(misspelled)); assert not misspelled, 'Spelling errors detected in PR title!'"
+
+      # - name: Check PR Title for Grammatical/Spelling Errors
+      #   run: |
+      #     echo "${{ github.event.pull_request.title }}" > pr_title.txt
+      #     python -m pip install language_tool_python
+      #     python -c "import language_tool_python; tool = language_tool_python.LanguageTool('en-US'); text = open('pr_title.txt').read(); matches = tool.check(text); print('Found %d errors:' % len(matches)); [print(m) for m in matches]; assert len(matches) == 0, 'Grammar errors detected in PR title!'"
+
+      - name: Check PR Description Format
+        env:
+          REFERENCE: https://abc.com
+        run: |
+          pr_description="${{ github.event.pull_request.body }}"
+          missing_sections=()
+          if ! [[ "$pr_description" =~ "Linked Work Items" ]]; then
+            missing_sections+=("Linked Work Items")
+          fi
+          if ! [[ "$pr_description" =~ "Checklist" ]]; then
+            missing_sections+=("Checklist")
+          fi
+          if ! [[ "$pr_description" =~ "Comments" ]]; then
+            missing_sections+=("Comments")
+          fi
+          if [ ${#missing_sections[@]} -ne 0 ]; then
+            echo "PR description is missing the following sections: ${missing_sections[*]}"
+            echo "${{ env.REFERENCE }}"
+            exit 1
+          else
+            echo "PR description format is correct"
+          fi
+
+      - name: Check Commit Message Capitalization
+        env:
+          REFERENCE: https://abc.com
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+          git fetch origin ${{ github.event.pull_request.head.ref }}:${{ github.event.pull_request.head.ref }}
+          IFS=$'\n'
+          commit_messages=$(git log ${{ github.event.pull_request.base.ref }}..${{ github.event.pull_request.head.ref }} --pretty=format:"%h %s")
+          echo "Commit Messages Output:"
+          echo "$commit_messages"
+          echo "-------------------"
+          for commit in $commit_messages; do
+            commit_id=$(echo "$commit" | awk '{print $1}')
+            commit_message=$(echo "$commit" | cut -d ' ' -f 2-)
+            echo "Processing $commit_id with message: $commit_message"
+            if ! [[ "${commit_message:0:1}" =~ [A-Z] ]]; then
+              echo "Commit message should start with an uppercase letter - $commit_id : $commit_message"
+              echo "${{ env.REFERENCE }}"
+              exit 1
+            else
+              echo "Commit message first character is uppercase"
+            fi
+          done
+
+      - name: Check Commit Message Length
+        env:
+          REFERENCE: https://abc.com
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+          git fetch origin ${{ github.event.pull_request.head.ref }}:${{ github.event.pull_request.head.ref }}
+          IFS=$'\n'
+          commit_messages=$(git log ${{ github.event.pull_request.base.ref }}..${{ github.event.pull_request.head.ref }} --pretty=format:"%h %s")
+          echo "Commit Messages Output:"
+          echo "$commit_messages"
+          echo "-------------------"
+          for commit in $commit_messages; do
+            commit_id=$(echo "$commit" | awk '{print $1}')
+            commit_message=$(echo "$commit" | cut -d ' ' -f 2-)
+            if [ "${#commit_message}" -gt 50 ]; then
+              echo "Commit message should be less than or equal to 50 characters - $commit_id : $commit_message"
+              echo "${{ env.REFERENCE }}"
+              exit 1
+            else
+              echo "Commit message length is correct i.e <=50"
+            fi
+          done
+
+      - name: Check Commit Message Tense
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+          git fetch origin ${{ github.event.pull_request.head.ref }}:${{ github.event.pull_request.head.ref }}
+          IFS=$'\n'
+          commit_messages=$(git log ${{ github.event.pull_request.base.ref }}..${{ github.event.pull_request.head.ref }} --pretty=format:"%h %s")
+          echo "Commit Messages Output:"
+          echo "$commit_messages"
+          echo "-------------------"
+          for commit in $commit_messages; do
+            commit_id=$(echo "$commit" | awk '{print $1}')
+            commit_message=$(echo "$commit" | cut -d ' ' -f 2-)
+            echo "Processing $commit_id with message: $commit_message"
+            for word in $commit_message; do
+              if [[ "$word" =~ ed$ ]]; then
+                echo "Commit message is in past tense: '$commit_message' - $commit_id"
+                exit 1
+              else
+                echo "Commit message is not in past tense which meets the guidelines"
+              fi
+            done
+          done
