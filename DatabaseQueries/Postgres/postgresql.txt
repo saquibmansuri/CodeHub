@@ -101,5 +101,17 @@ END $$;
 
 #############################################################################################################################################################################
 
+# QUERY TO CHECK USER PERMISSIONS IN A POSTGRESQL DB (BASED ON SCHEMA & TABLE NAME)
 
+SELECT 
+    grantee, 
+    table_schema, 
+    table_name, 
+    privilege_type 
+FROM 
+    information_schema.role_table_grants 
+WHERE 
+    grantee = '';  -- Replace with the username
+
+##############################################################################################################################################################################
 
