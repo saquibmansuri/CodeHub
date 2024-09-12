@@ -12,7 +12,7 @@ BEGIN
 END
 $$;
 
-#############################################################################################
+##############################################################################################################################################################################
 
 # CLEAR ALL TABLES IN POSTGRES DATABASE IN 'public' SCHEMA EXCEPT TABLE = '__EFMigrationsHistory'
 
@@ -28,7 +28,7 @@ BEGIN
 END
 $$;
 
-#############################################################################################
+##############################################################################################################################################################################
 
 # DELETE ALL TABLES IN POSTGRES DATABASE IN 'public' SCHEMA
 
@@ -44,7 +44,7 @@ BEGIN
 END
 $$;
 
-#############################################################################################
+###############################################################################################################################################################################
 
 # DISABLE FOREIGN KEY CONSTRAINTS IN A DATABASE IN 'public' SCHEMA (THIS WILL NOT WORK FOR CLOUD MANAGED DATABASES)
 
@@ -61,7 +61,45 @@ BEGIN
   END LOOP;
 END $$;
 
-##############################################################################################
+###############################################################################################################################################################################
+
+# CREATE A NEW USER IN POSTGRESQL DATABASE WHICH CAN ONLY VIEW AND UPDATE THE DATA (DELETE AND DROP IS PROHIBITED)
+
+-- ==============================
+-- Define your variables here:
+-- ==============================
+DO $$ 
+DECLARE
+    db_name TEXT := ''; -- Replace with your database name
+    new_user TEXT := ''; -- Replace with the desired username
+    user_password TEXT := ''; -- Replace with a strong password
+BEGIN
+
+-- 1. Create the new user with the specified password
+EXECUTE format('CREATE USER %I WITH PASSWORD %L', new_user, user_password);
+
+-- 2. Grant CONNECT permission to the specified database
+EXECUTE format('GRANT CONNECT ON DATABASE %I TO %I', db_name, new_user);
+
+-- 3. Grant USAGE permission on the public schema (or any other schema)
+EXECUTE format('GRANT USAGE ON SCHEMA public TO %I', new_user);
+
+-- 4. Grant SELECT and UPDATE privileges on all existing tables in the schema (no INSERT or DELETE)
+EXECUTE format('GRANT SELECT, UPDATE ON ALL TABLES IN SCHEMA public TO %I', new_user);
+
+-- 5. Ensure the user cannot insert or delete data explicitly
+EXECUTE format('REVOKE INSERT, DELETE ON ALL TABLES IN SCHEMA public FROM %I', new_user);
+
+-- 6. Set default privileges to automatically grant SELECT and UPDATE on future tables to the user
+EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, UPDATE ON TABLES TO %I', new_user);
+
+-- 7. Ensure future tables also do not allow INSERT or DELETE by the user
+EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE INSERT, DELETE ON TABLES FROM %I', new_user);
+
+END $$;
+
+
+#############################################################################################################################################################################
 
 
 
