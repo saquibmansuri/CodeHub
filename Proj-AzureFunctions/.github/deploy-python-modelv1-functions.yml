@@ -1,0 +1,77 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+# More info on Python, GitHub Actions, and Azure Functions: https://aka.ms/python-webapps-actions
+
+# Note: In modelv1 more than 1 function can be deployed in 1 single azure function app
+
+name: Deploy Functions
+on:
+  push:
+    branches: [main]
+
+env:
+  GIT_FunctionApp_Name: "myfunction" # WRITE FUNCTION NAME FROM AZURE PORTAL
+  GIT_FunctionApp_URL: "https://myfunction.azurewebsites.net" # WRITE FUNCTION URL FROM AZURE PORTAL
+  GIT_FunctionApp_PATH: "PythonFunctions/Model-V1/" # PATH WHERE FUNCTION DIRECTORIES RESIDE
+  PYTHON_VERSION: 3.9 # THIS SHOULD MATCH PYTHON VERSION USED IN FUNCTION
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python Version
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          pushd ${{ github.workspace }}/${{ env.GIT_FunctionApp_PATH }}
+          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+          popd
+
+      - name: Upload Artifact For Deployment Job
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: ${{ github.workspace }}/${{ env.GIT_FunctionApp_PATH }}
+
+  deploy-function1:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download Artifact From Build Job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+          path: ${{ github.workspace }}/${{ env.GIT_FunctionApp_PATH }}/Function1
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.GIT_FunctionApp_Name }}
+          package: ${{ github.workspace }}/${{ env.GIT_FunctionApp_PATH }}/Function1
+          publish-profile: ${{ secrets.FUNCTIONAPP_PUBLISH_PROFILE }}
+
+  deploy-function2:
+    runs-on: ubuntu-latest
+    needs: deploy-function1
+
+    steps:
+      - name: Download Artifact From Build Job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+          path: ${{ github.workspace }}/${{ env.GIT_FunctionApp_PATH }}/Function2
+
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.GIT_FunctionApp_Name }}
+          package: ${{ github.workspace }}/${{ env.GIT_FunctionApp_PATH }}/Function2
+          publish-profile: ${{ secrets.FUNCTIONAPP_PUBLISH_PROFILE }}
