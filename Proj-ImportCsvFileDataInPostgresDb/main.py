@@ -8,10 +8,10 @@ from sqlalchemy import create_engine, text
 
 # Database configuration
 DB_CONFIG = {
-    'dbname': 'saquib-testing',
-    'user': 'climateintelligenceadmin5043',
-    'password': 'jM28bn5hqesUdAZD',
-    'host': 'climate-intelligence-postgres.postgres.database.azure.com',
+    'dbname': 'mydb',
+    'user': 'myuser',
+    'password': 'mypassword',
+    'host': 'myhost',
     'port': '5432'
 }
 
