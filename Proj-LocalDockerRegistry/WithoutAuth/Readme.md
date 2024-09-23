@@ -24,5 +24,9 @@
 - docker push localhost:5000/project1/ubuntu:latest
 - docker push localhost:5000/project2/ubuntu:latest
 
+### Pull from a local registry
+- docker pull localhost:5000/project1/ubuntu:latest
+- docker pull localhost:5000/project2/ubuntu:latest
+
 ## Check images in local registry on the UI
 http://localhost:8080
