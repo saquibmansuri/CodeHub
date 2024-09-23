@@ -1,4 +1,5 @@
 # Reference - https://github.com/Joxit/docker-registry-ui
+#           - https://hub.docker.com/_/registry
 
 version: '3.8'
 
@@ -7,7 +8,7 @@ services:
     image: joxit/docker-registry-ui:main
     restart: always
     ports:
-      - "8080:80"  # Expose the UI on desired port
+      - "8080:80"  # Expose the UI
     environment:
       - SINGLE_REGISTRY=true
       - REGISTRY_TITLE=Docker Registry UI
@@ -29,11 +30,11 @@ services:
     restart: always
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: 'true'
-      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '[http://registry.example.com]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Credentials: '[true]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers: '[Authorization,Accept,Cache-Control]'
       REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers: '[Docker-Content-Digest]'
+      # REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '[http://registry.example.com]'
     volumes:
       - ./registry/data:/var/lib/registry  # Persisting data
     container_name: registry-server
