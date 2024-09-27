@@ -1,0 +1,40 @@
+#REFERENCE: https://cloud.google.com/storage/docs/gsutil/addlhelp/GlobalCommandLineOptions
+
+name: Copy files from github to GCP bucket
+
+on:
+  push:
+    branches: [main] #specify branch name. build will only start when something is pushed to this particular branch
+
+env:
+    GCP_DESTINATION_BUCKET: gs://sqb-bucket
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure GCP credentials
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.TEST_GCP_CREDENTIALS }} #Create credentials from service account page from GCP console and also set 'storage admin' permission to give full access to bucket and objects and allow all operations like create object, replace/delete object etc.
+      
+      - name: Copy to GCP Storage Bucket
+        run: |
+          #COPY SPECIFIC FILE FROM ROOT
+          gsutil cp *.txt ${{ env.GCP_DESTINATION_BUCKET }}
+
+          #COPY WHOLE DIRECTORY FROM ROOT (FOLDER NAMED DIST WILL BE CREATED IN BUCKET AND ALL INTERNAL FILES WILL BE COPIED)
+          gsutil cp -r ./dist/ ${{ env.GCP_DESTINATION_BUCKET }}
+
+          #COPY ALL FILES INSIDE A DIRECTORY (WITHOUT MAKING A FOLDER IN THE BUCKET OF IT)
+          gsutil cp ./dist/* ${{ env.GCP_DESTINATION_BUCKET }}
+
+          #COPY FILES AND USAGE OF FLAGS FOR CACHE CONTROL, MAX AGE AND CONTENT TYPE
+          gsutil -D -h "Cache-Control:public,max-age=2592000" -h "Content-Type:image/png" cp ./dist/*.png ${{ env.GCP_DESTINATION_BUCKET }}
+
+          #NOTE: WHILE COPYING A PARTICULAR FILE OR FILES OF PARTICULAR EXTENSION, IF IT WON'T GET THAT PARTICULAR FILE OR FILES WITH THAT EXTENSION THEN IT WOULD NOT SKIP, IT WILL FAIL OVER THAT COMMAND.
+
