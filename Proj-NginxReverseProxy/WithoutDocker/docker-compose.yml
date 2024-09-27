@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  fe:
+    image: <frontend-image>
+    restart: unless-stopped
+    ports:
+      - 8080:80
+
+  be:
+    image: <backend-image>
+    restart: unless-stopped
+    ports:
+      - 8081:80
