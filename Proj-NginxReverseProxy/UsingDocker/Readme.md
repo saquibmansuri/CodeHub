@@ -3,6 +3,12 @@
 
 This guide outlines the steps to configure Docker Compose to use Nginx as a reverse proxy for a frontend (`fe`) and backend (`be`) service setup, handling SSL certificates with Certbot on host.
 
+## Install Docker & Docker Compose 
+```
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo apt-get install docker-compose-plugin
+```
 
 ## Step 1: Set Up SSL Certificates with Certbot
 
@@ -114,7 +120,7 @@ services:
 Deploy your services using Docker Compose:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Step 5: Manage Certificate Renewal
