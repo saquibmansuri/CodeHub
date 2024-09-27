@@ -1,0 +1,13 @@
+# This file contains all the useful & cool repositories/blogs that I've discovered
+
+# Docker-Autoheal
+https://github.com/willfarrell/docker-autoheal
+
+# All trending devops tools
+https://landscape.cncf.io/
+
+# Custom NAT
+https://fck-nat.dev/stable/
+
+# Lazy docker - A simple terminal UI for both docker and docker-compose
+https://github.com/jesseduffield/lazydocker
