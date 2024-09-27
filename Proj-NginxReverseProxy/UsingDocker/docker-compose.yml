@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  fe:
+    image: <frontend-image>
+    restart: unless-stopped
+
+  be:
+    image: <backend-image>
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - fe
+      - be
+    restart: unless-stopped
