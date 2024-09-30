@@ -19,8 +19,10 @@ Generate SSL certificates for your domains using Certbot:
 ```bash
 sudo snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
-sudo certbot --nginx -d fe.example.com --agree-tos --no-eff-email --non-interactive --redirect --email example@gmail.com
-sudo certbot --nginx -d be.example.com --agree-tos --no-eff-email --non-interactive --redirect --email example@gmail.com
+
+# Use standalone command to only generate the certificates
+sudo certbot certonly --standalone -d fe.example.com --agree-tos --no-eff-email --non-interactive --email example@gmail.com
+sudo certbot certonly --standalone -d be.example.com --agree-tos --no-eff-email --non-interactive --email example@gmail.com
 ```
 
 ## Step 2: Prepare the Nginx Configuration
