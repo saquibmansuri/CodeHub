@@ -55,8 +55,6 @@ Create your custom Nginx configuration to route requests to your services and en
 
        ssl_certificate /etc/letsencrypt/live/fe.example.com/fullchain.pem;
        ssl_certificate_key /etc/letsencrypt/live/fe.example.com/privkey.pem;
-       include /etc/letsencrypt/options-ssl-nginx.conf;
-       ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
        location / {
            proxy_pass http://fe:80;
@@ -74,8 +72,6 @@ Create your custom Nginx configuration to route requests to your services and en
 
        ssl_certificate /etc/letsencrypt/live/be.example.com/fullchain.pem;
        ssl_certificate_key /etc/letsencrypt/live/be.example.com/privkey.pem;
-       include /etc/letsencrypt/options-ssl-nginx.conf;
-       ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
        location / {
            proxy_pass http://be:80;
