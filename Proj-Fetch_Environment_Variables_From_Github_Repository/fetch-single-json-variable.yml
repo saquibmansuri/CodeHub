@@ -1,0 +1,43 @@
+# This workflow fetches json value of a single environment variable defined in github repository. The json value contains multiple variables and their values
+
+# For Example
+# This is the variable name in github repository - 'VARS_JSON'
+# and this is the value of VARS_JSON
+
+# {
+#   "variable1": "value1",
+#   "variable2": "value2",
+#   "variable3": "value3"
+# }
+
+# This workflow will read this json and break it into individual key=value and pass it in test.env file (preserving the double quotes for the "values")
+
+# FINAL RESULT (Content inside test.env)
+# variable1="value1"
+# variable2="value2"
+# variable3="value3"
+
+name: Fetch variables and values from a single JSON environment variable
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    environment: production  # THIS IS THE NAME OF THE ENVIRONMENT IN THE GITHUB REPOSITORY IN WHICH THE VARIABLE IS STORED
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch Variables and Values
+        env:
+          VARS_JSON: ${{ vars.VARS_JSON }}
+        run: |
+          echo '${{ vars.VARS_JSON }}' | jq -r 'to_entries[] | "\(.key)=\"\(.value)\""' > test.env
+          echo "This is the content of the test.env file"
+          cat test.env
+          
