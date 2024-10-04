@@ -83,10 +83,11 @@ jobs:
             cd myapp
             cp Docker.Compose.Files/docker-compose-app.yml docker-compose-app.yml
             sed -i 's#APP_IMAGE=.*#APP_IMAGE=${{ steps.build-image.outputs.appimage }}#' .env
-            export $( cat .env | xargs)
             sudo docker compose -f docker-compose-app.yml pull 
             sudo docker compose -f docker-compose-app.yml up -d
             sudo docker system prune -af
+            # For recreating particular services only use this command
+            # sudo docker compose -f docker-compose-app.yml up -d --force-recreate --no-deps fe be
 
       - name: Healthcheck
         env: 
@@ -148,8 +149,9 @@ jobs:
       cd myapp
       cp Docker.Compose.Files/docker-compose-app.yml docker-compose-app.yml
       sed -i 's#APP_IMAGE=.*#APP_IMAGE=${{ steps.build-image.outputs.appimage }}#' .env
-      export $( cat .env | xargs)
       sudo docker compose -f docker-compose-app.yml pull 
       sudo docker compose -f docker-compose-app.yml up -d
       for i in {1..5}; do sudo docker system prune -af && break || sleep 3; done
+      # For recreating particular services only use this command
+      # sudo docker compose -f docker-compose-app.yml up -d --force-recreate --no-deps fe be
       
