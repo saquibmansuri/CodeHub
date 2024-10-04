@@ -1,0 +1,33 @@
+# This Workflow Shows How to Fetch Multiple Environment Variables from a Particular Environment from a Github Repository
+
+# Open github repository & go to settings tab
+# Go to 'Environments' & create new environment (remember the name as this will be used in the workflow later)
+# In this section - "Deployment branches and tags" , add the branch names which can acccess variables from this particular environment
+# Go inside the environment & create multiple environment variables with their values
+ 
+name: Fetch Multiple Environment Variables from a Particular Environment
+
+on:
+  push:
+    branches:
+      - main
+  
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    environment: production   # THIS SHOULD BE THE NAME OF THE ENVIRONMENT WHICH IS CREATED IN THE REPOSITORY
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch Variables from Repository
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          echo "$VARS_JSON" | jq -r 'keys[] as $k | "\($k)=\(.[$k])"' >> test.env
+          echo "This is the content of test.env file"
+          cat test.env
+
+# Now all the environment variables are present in test.env, now you can use them as you need in the later steps
+  
