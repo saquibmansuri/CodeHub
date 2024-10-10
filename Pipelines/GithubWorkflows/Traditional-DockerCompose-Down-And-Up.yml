@@ -84,7 +84,7 @@ jobs:
             cp Docker.Compose.Files/docker-compose-app.yml docker-compose-app.yml
             sed -i 's#APP_IMAGE=.*#APP_IMAGE=${{ steps.build-image.outputs.appimage }}#' .env
             sudo docker compose -f docker-compose-app.yml pull 
-            sudo docker compose -f docker-compose-app.yml up -d
+            sudo docker compose -f docker-compose-app.yml up -d --force-recreate
             sudo docker system prune -af
             # For recreating particular services only use this command
             # sudo docker compose -f docker-compose-app.yml up -d --force-recreate --no-deps fe be
@@ -101,24 +101,6 @@ jobs:
             # If health check is not successful
             curl -H "Content-Type: application/json" -d '{"text": "Deployment Unsuccessful"}' ${{ secrets.TEAMS_CHANNEL_WEBHOOK_URL }}
           fi
-
-      # OR SEND AN EMAIL 
-       
-      - name: Send Email
-        uses: hilarion5/send-mail@v1
-        with:
-          smtp-server: smtp.example.com
-          smtp-port: 465
-          smtp-secure: true
-          from-email: sender@example.com
-          to-email: recipient1@example.com,recipient2@example.com
-          username: yourusername
-          password: yourpassword
-          subject: Test Email
-          body: This is a test email sent from GitHub Actions.
-          html: |
-            <h1>This is a test email</h1>
-            <p>Test Paragraph</p>
 
 
 
@@ -150,7 +132,7 @@ jobs:
       cp Docker.Compose.Files/docker-compose-app.yml docker-compose-app.yml
       sed -i 's#APP_IMAGE=.*#APP_IMAGE=${{ steps.build-image.outputs.appimage }}#' .env
       sudo docker compose -f docker-compose-app.yml pull 
-      sudo docker compose -f docker-compose-app.yml up -d
+      sudo docker compose -f docker-compose-app.yml up -d --force-recreate
       for i in {1..5}; do sudo docker system prune -af && break || sleep 3; done
       # For recreating particular services only use this command
       # sudo docker compose -f docker-compose-app.yml up -d --force-recreate --no-deps fe be
