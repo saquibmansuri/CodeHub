@@ -1,0 +1,42 @@
+# Learn how to send emails using github workflows
+
+name: PR Notification
+
+on:
+  pull_request:
+    branches:
+      - staging
+      - master
+      - dev
+    types: [opened, reopened, synchronize]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+
+      # Notify on teams channel by sending email on the team channel email or email directly to any email address
+      - name: Notify on Teams Channel
+        uses: hilarion5/send-mail@v1
+        with:
+          smtp-server: ${{ secrets.SMTP_SERVER }}
+          smtp-port: 587
+          smtp-secure: false
+          from-email: ${{ secrets.SMTP_EMAIL_FROM }}
+          to-email: ${{ secrets.SMTP_EMAIL_TO }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "PR Created for Branch - ${{ github.head_ref }}"
+          body: |
+            PR is about to be merged in ${{ github.head_ref }}
+            PR URL: ${{ github.event.pull_request.html_url }}
+            Note: If anyone has any concerns and queries then please respond immediately or it will be merged automatically after 15 mins.
+
+            PR Title - ${{ github.event.pull_request.title }}
+
+            PR Description
+            ${{ github.event.pull_request.body }}
+
+      - name: Notify WhatsApp Group
+        run: |
+          echo "Whatsapp notification integration coming soon"
