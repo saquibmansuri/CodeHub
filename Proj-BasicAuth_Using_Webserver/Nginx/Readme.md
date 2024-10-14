@@ -20,9 +20,10 @@ sudo sh -c "echo -n 'NEW_USER:' >> /etc/nginx/.htpasswd"
 sudo sh -c "openssl passwd -apr1 >> /etc/nginx/.htpasswd" (this command will ask for the password for the above user as a prompt)
 ```
 
-NOTE: 1. You can't use multiple passwords for same user
-      2. To delete any user, simple delete it from the file /etc/nginx/.htpasswd
-      3. To change password for a particular user - first delete the user and then recreate the user with the new password
+NOTE: 
+1. You can't use multiple passwords for same user
+2. To delete any user, simply delete it from the file /etc/nginx/.htpasswd
+3. To change password for a particular user - first delete the user and then recreate the user with the new password
 
 
 ## Step 3
