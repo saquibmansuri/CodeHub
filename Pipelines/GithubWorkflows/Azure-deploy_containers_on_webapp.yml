@@ -1,0 +1,76 @@
+# Reference: https://github.com/Azure/webapps-deploy
+
+name: Deploy containers on azure webapp
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  AZURE_CONTAINER_REGISTRY: myregistry.azurecr.io  # Define your registry here
+  FRONTEND_IMAGE_NAME: feimage # this will be used as a tag
+  BACKEND_IMAGE_NAME: beimage  # this will be used as a tag
+
+jobs:
+  build-and-deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: 'Login via Azure CLI'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}
+          username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+
+      - run: |
+          echo "Building frontend image"
+          docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} ./frontend
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+          echo "Docker image pushed to ACR"
+
+      - name: Deploy on Webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: '${{ secrets.FRONTEND_WEBAPP }}'
+          publish-profile: '${{ secrets.FRONTEND_WEBAPP_PUBLISH_PROFILE }}'
+          images: '${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}'
+
+  build-and-deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: 'Login via Azure CLI'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}
+          username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+          password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+
+      - run: |
+          echo "Building backend image"
+          docker build -t ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }} ./backend
+          docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
+          echo "Docker image pushed to ACR"
+
+      - name: Deploy on Webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: '${{ secrets.BACKEND_WEBAPP }}'
+          publish-profile: '${{ secrets.BACKEND_WEBAPP_PUBLISH_PROFILE }}'
+          images: '${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}'
