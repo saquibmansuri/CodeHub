@@ -1,0 +1,54 @@
+Once the graylog setup is complete and you are in the UI (usually on port 9200)
+Creating these 2 things is the most important
+1. Input
+2. Stream
+ 
+Simply go to streams tab and create 1 stream for each application.
+Once the stream is created then create a rule for the stream with these values
+'Field' = tag
+'Type' = matchexactly
+'Value' = <the tag which you will give in docker container>
+
+Then go to 'inputs' tab and create the input, there are a lot of options, so choose the one which is suitable.
+For the below example, which sends logs over udp using gelf, create a 'GELF UDP' input
+
+
+
+Now example if you want to send logs from docker container of your application then send it like this
+(make sure that the traffic is allowed from application vm to graylog vm on udp:12201 since we will be using that, you can whitelist more according to your needs)
+
+---------------------------------------------------------------------------------------------------------
+
+services:
+  feapp:
+    image: feimage
+    container_name: fecontainer
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://<graylog-server-ip>:12201"  # Replace with your Graylog server IP
+        tag: "feapp" # this tag should match with the tag which you created in the stream rule
+    ports:
+      - "8081:80"
+
+  beapp:
+    image: beapp
+    container_name: beapp
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://<graylog-server-ip>:12201"  # Replace with your Graylog server IP
+        tag: "beapp"
+    ports:
+      - "8082:80"
+-----------------------------------------------------------------------------------------------------------
+
+DONE!!
+Now go to streams and enjoy the logs
+
+
+
+Bonus Tips:
+1. Go to 'Indices' and edit all indices and set Max. days in storage and Min. days in storage , this will help in saving storage.
+2. Create users and teams with minimum access like Readonly access and share those creds with your team.
+ 
