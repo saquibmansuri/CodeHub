@@ -33,7 +33,8 @@ curl --location 'http://0.0.0.0:4000/chat/completions' \
 - On Open WebUI, click on the top-right profile icon and go to the Admin Panel.
 - Under the Admin Panel, select Settings, and click on Connections from the left navigation menu.
 - Update the OpenAI API Endpoint as follows:
-  - Endpoint: http://host.docker.internal:4000     # this is our proxy server
+  - Endpoint: http://host.docker.internal:4000     # Use this url of proxy server for windows
+  - Endpoint: http://llm-proxy:4000                # Use this url of proxy server for linux http://<service_name>:4000
   - Secret: AnyDummyValue                          # value of this doesn't matter since we already provided all secrets in the proxy container -->
   - Save Connection
 
