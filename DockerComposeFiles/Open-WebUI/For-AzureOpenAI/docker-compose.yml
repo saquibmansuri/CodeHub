@@ -1,0 +1,38 @@
+# REFERENCES 
+# Github Repository - https://github.com/open-webui/open-webui
+# Official Documentation - https://docs.openwebui.com/
+# Documentation to connect Open-WebUI with AzureOpenAI - https://uright.ca/blogs/2024-07-29-unlocking-the-power-of-azure-openai-on-open-webui/
+
+version: '3.8'
+services:
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - WEBUI_AUTH=True
+      - WEBUI_NAME=MyCompany
+      - ENABLE_SIGNUP=True
+      - ENABLE_LOGIN_FORM=True
+      - DEFAULT_USER_ROLE=pending
+    volumes:
+      - ./open-webui:/app/backend/data   # open-webui data will be stored here by the container
+    restart: always
+
+
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm-proxy
+    volumes:
+      - ./config/litellm_config.yaml:/app/config.yaml   # This is the custom config file for llm
+    environment:
+      - AZURE_API_KEY= <azure openai service key>
+      - AZURE_API_BASE= <azure openai service endpoint>                               # example- https://myservice.openai.azure.com/
+      - AZURE_API_VERSION= <this version can be found in the models in azure openai>  # example - 2024-08-01-preview
+    ports:
+      - "4000:4000"
+    command: --config /app/config.yaml --detailed_debug
+    restart: always
+ 
