@@ -11,3 +11,6 @@ https://fck-nat.dev/stable/
 
 # Lazy docker - A simple terminal UI for both docker and docker-compose
 https://github.com/jesseduffield/lazydocker
+
+# Setup Kubernetes Cluster Manually
+https://github.com/mmumshad/kubernetes-the-hard-way
