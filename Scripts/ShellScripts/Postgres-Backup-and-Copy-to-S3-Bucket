@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Container name
+CONTAINER_NAME="db"
+
+# Container port
+CONTAINER_PORT=5432
+
+# Define database credentials
+DB_USER="dbuser"
+DB_PASSWORD="dbuserpassword"
+DB_NAME="db"
+BACKUP_DIR="/root/dbbackups"
+S3_BUCKET="s3://my-bucket/daily"
+
+# Generate timestamp
+TIMESTAMP=$(date +"%Y_%m_%d__%H_%M_%S")
+
+# Define dump file name
+DUMP_FILE="dbbackup_${TIMESTAMP}.sql"
+DUMP_PATH="$BACKUP_DIR/$DUMP_FILE"
+
+# Execute pg_dump inside the container and save dump to a file, port on which db container is running
+docker exec -t $CONTAINER_NAME pg_dump -U $DB_USER -d $DB_NAME -p $CONTAINER_PORT > $DUMP_PATH
+
+# Copy the dump file to an S3 bucket, aws cli should be configured and the user shouldhave access to put object in the bucket
+aws s3 cp $DUMP_PATH $S3_BUCKET/$DUMP_FILE
+
+# RETENTION POLICY
+RETENTION_DAYS=7
+find $BACKUP_DIR -name "dbbackup_*.sql" -mtime +$RETENTION_DAYS -exec rm {} \;
+
+echo "Script Executed Successfully"
+
+
+# RESTORING BACKUP IN LOCAL PGADMIN
+# 1. create a new database where you want to restore 
+# 2. right click on the database and open psql tool
+# 4. run this command -  \i '<BACKUP-PATH>'    example: \i 'E:/BACKUPS/<backupfilename>.sql'
