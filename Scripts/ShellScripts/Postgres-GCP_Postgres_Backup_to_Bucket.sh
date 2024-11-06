@@ -2,6 +2,11 @@
 
 # NOTE:
 # pg client should exist on the machine where this script will execute, and version should match to that of cloud db server
+    # Install pg client like this 
+    # sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+    # wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+    # sudo apt update
+    # sudo apt install postgresql-client-<version> -y   (example - sudo apt install postgresql-client-15 -y)
 # gsutil should be installed for copying files to storage bucket and it should have access to that bucket
 # vm should also be able to access the secrets from secrets manager
 
@@ -76,5 +81,4 @@ echo "Database backup completed and uploaded to $DEST_BUCKET"
 # RESTORE POSTGRES DATABASE EXPORT/BACKUP (.SQL TYPE) IN LOCAL PGADMIN
 # - create a new database where you want to restore 
 # - right click on the database and open psql tool
-# - run this command - CREATE ROLE cloudsqlsuperuser LOGIN;
 # - run this command -  \i 'E:/path/<file name>.sql'
