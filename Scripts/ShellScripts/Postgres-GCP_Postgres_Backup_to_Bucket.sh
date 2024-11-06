@@ -68,3 +68,13 @@ rm $BACKUP_FILE
 echo "Local backup file removed."
 
 echo "Database backup completed and uploaded to $DEST_BUCKET"
+
+
+
+####
+
+# RESTORE POSTGRES DATABASE EXPORT/BACKUP (.SQL TYPE) IN LOCAL PGADMIN
+# - create a new database where you want to restore 
+# - right click on the database and open psql tool
+# - run this command - CREATE ROLE cloudsqlsuperuser LOGIN;
+# - run this command -  \i 'E:/path/<file name>.sql'
