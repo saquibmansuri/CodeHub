@@ -1,0 +1,23 @@
+A swap file is a file on your storage disk that your operating system can use as additional "virtual" memory when your physical RAM is low. 
+It essentially extends your system's memory by temporarily storing less-used data from RAM on disk, freeing up actual RAM for active processes.
+Although it is comparitively slow than actual RAM, but still it works
+
+-----Steps to configure it-----
+
+- Create a Swap File
+  sudo fallocate -l 1G /swapfile
+
+- Set Correct Permissions
+  sudo chmod 600 /swapfile
+
+- Set Up the Swap Area
+  sudo mkswap /swapfile
+
+- Enable the Swap File
+  sudo swapon /swapfile
+
+- Verify Swap Space
+  swapon --show
+
+- Make Swap Permanent. To ensure the swap persists across reboots, add it to /etc/fstab
+  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
