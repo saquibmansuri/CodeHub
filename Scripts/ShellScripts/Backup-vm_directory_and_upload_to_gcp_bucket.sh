@@ -1,16 +1,18 @@
 #!/bin/bash
 
-# Define the directory to be zipped and the destination bucket
-# Note: the virtual machine should have access to read and write files to the gcp bucket 
-SOURCE_DIR="/home/ubuntu"
-DEST_BUCKET="gs://backups/vmfiles/prodvm/"
-ZIP_FILE="prodvm_backup_$(date +%Y-%m-%d).zip"
+# Note: gsutil should be installed on the system and it should have permissions to copy objects to destination bucket
+# Define the directories to be zipped and the destination bucket
+# Add directories as needed, separated by spaces
+DIRECTORIES_TO_BACKUP=(
+    "/path/to/dir1"
+    "/path/to/dir2"
+    "/path/to/dir3"
+)
+DEST_BUCKET="gs://bucketname/vmfiles/"
+ZIP_FILE="vm_files_backup_$(date +%Y_%m_%d).zip"
 
-# Navigate to the source directory
-cd $SOURCE_DIR
-
-# Create a zip file of all the contents in the source directory
-zip -r $ZIP_FILE . 
+# Create the zip file with the specified directories
+zip -r $ZIP_FILE "${DIRECTORIES_TO_BACKUP[@]}" 
 if [ $? -eq 0 ]; then
     echo "Zip file created successfully."
 else
