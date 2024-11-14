@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# THIS SCRIPT IS USED TO FETCH ALL THE SECRETS WITH SOME PREFIX WITH THEIR VALUES FROM AZURE KEYVAULT
+# This script will be used in the ci/cd pipelines for fetching secrets from azure keyvault with desired prefix
 # Note: the service principal should have access to the keyvault to fetch secrets
 # The script can be executed like this - ./scriptname.sh "keyvaultname" "prefix" "filepath"
-# Example - ./script.sh "mykeyvault" "prod-" ".env"
 
 
 # Check if the correct number of arguments are provided
@@ -34,7 +33,7 @@ fi
 # Loop through each secret name and process only those with the specified prefix
 for secret_name in $all_secrets; do
     # Remove any carriage return characters
-    secret_name=$(echo "$secret_name" | tr -d '\r')  # removing '\r' as this creates issue in windows terminals
+    secret_name=$(echo "$secret_name" | tr -d '\r')  # removing'\r as some windows shell add this in the end'
 
     if [[ "$secret_name" == "$PREFIX"* ]]; then
         echo "Processing secret: $secret_name"
@@ -45,7 +44,7 @@ for secret_name in $all_secrets; do
 
         # Check for errors in fetching the secret
         if [ $ret_val -ne 0 ]; then
-            echo "Error fetching secret value - '$secret_name'"
+            echo "Error fetching secret '$secret_name'"
             continue
         fi
 
@@ -55,11 +54,14 @@ for secret_name in $all_secrets; do
             continue
         fi
 
-        # Remove the prefix from the secret name and write to .env file
+        # Remove the prefix from the secret name and replace dashes with underscores
         trimmed_name=${secret_name#"$PREFIX"}
-        echo "$trimmed_name=\"$secret_value\"" >> "$ENV_FILE"
+        formatted_name=${trimmed_name//-/_} # Replace dashes with underscores
+
+        # Write to .env file
+        echo "$formatted_name=\"$secret_value\"" >> "$ENV_FILE"
         echo "Success"
     fi
 done
 
-echo "All secrets with '$PREFIX' have been fetched successfully"
+echo "Secrets have been fetched successfully"
