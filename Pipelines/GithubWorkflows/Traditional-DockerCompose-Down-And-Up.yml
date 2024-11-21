@@ -1,3 +1,5 @@
+
+## FOR GCP
 # DEPLOYING BASIC DOTNET APP ON VIRTUAL MACHINE USING SIMPLE COMPOSE DOWN AND UP STRATEGY 
 
 name: Build & Deploy
@@ -136,4 +138,74 @@ jobs:
       for i in {1..5}; do sudo docker system prune -af && break || sleep 3; done
       # For recreating particular services only use this command
       # sudo docker compose -f docker-compose-app.yml up -d --force-recreate --no-deps fe be
+
+
+####################################################################################################################################################
+
+## FOR AWS
+
+name: Build & Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: AWS Login
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: myprivaterepo
+          IMAGE_TAG: ${{ github.sha }}
+        run: |        
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:app.$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:app.$IMAGE_TAG
+          echo "appimage=$ECR_REGISTRY/$ECR_REPOSITORY:app.$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Copy Updated File To Server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: 22
+          overwrite: true
+          source: "docker-compose.yml"
+          target: "myapp/"
+
+      - name: Rollout New Version
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: 22
+          command_timeout: 30m
+          script: |
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+            cd myapp
+            sed -i 's#APP_IMAGE=.*#APP_IMAGE=${{ steps.build-image.outputs.apiimage }}#' .env
+            sudo docker compose pull 
+            sudo docker compose up -d --force-recreate --no-deps be
+            sudo docker system prune -af
       
+################################################################################################################################################
