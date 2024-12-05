@@ -10,3 +10,4 @@ services:
     user: '$UID:$GID'
     volumes:
       - /home/ubuntu/pgadmin/data:/var/lib/pgadmin
+    restart: always
