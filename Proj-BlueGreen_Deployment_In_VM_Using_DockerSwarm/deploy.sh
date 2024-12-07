@@ -5,6 +5,8 @@ stack="dev"
 
 # List of services and their health check URLs
 services=("appfe" "appbe")
+
+# In some cases localhost doesnot work, so try this in that case -  http://127.0.0.1:7001/api/HealthCheck/health
 health_check_urls_blue=("http://localhost:5001/dashboard" "http://localhost:7001/api/HealthCheck/health")
 health_check_urls_green=("http://localhost:5002/dashboard" "http://localhost:7002/api/HealthCheck/health")
 
