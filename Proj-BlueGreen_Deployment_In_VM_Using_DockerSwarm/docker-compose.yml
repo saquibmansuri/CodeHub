@@ -1,0 +1,83 @@
+version: '3.9'
+services:
+  appfe_blue:
+    #build: 
+      #context: .
+      #dockerfile: fe.Dockerfile
+    image: <image>
+    #container_name: appfe_blue
+    env_file:
+      - fe.env # env values are in this file
+    #restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GELF_ADDRESS} # this is greylog vm ip address:port
+        tag: "appfe" # tag is important as it will be used to filter logs
+    deploy:
+      mode: replicated
+      replicas: 1
+    ports:
+      - "5001:8080"
+
+  appbe_blue:
+    #build: 
+      #context: .
+      #dockerfile: be.Dockerfile
+    image: <image>
+    #container_name: appbe_blue
+    env_file:
+      - be.env # appsettings values are in this file
+    #restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GELF_ADDRESS} # this is greylog vm ip address:port
+        tag: "appbe" # tag is important as it will be used to filter logs
+    deploy:
+      mode: replicated
+      replicas: 1
+    ports:
+      - "7001:8080"
+
+  #############################################################################################################################
+
+  appfe_green:
+    #build: 
+      #context: .
+      #dockerfile: fe.Dockerfile
+    image: <image>
+    #container_name: appfe_green
+    env_file:
+      - fe.env # appsettings values are in this file
+    #restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GELF_ADDRESS} # this is greylog vm ip address:port
+        tag: "appfe" # tag is important as it will be used to filter logs
+    deploy:
+      mode: replicated
+      replicas: 1
+    ports:
+      - "5002:8080"
+
+  appbe_green:
+    #build: 
+      #context: .
+      #dockerfile: be.Dockerfile
+    image: <image>
+    #container_name: appbe_green
+    env_file:
+      - be.env # appsettings values are in this file
+    #restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: ${GELF_ADDRESS} # this is greylog vm ip address:port
+        tag: "appbe" # tag is important as it will be used to filter logs
+    deploy:
+      mode: replicated
+      replicas: 1
+    ports:
+      - "7002:8080"
