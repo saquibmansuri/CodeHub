@@ -14,7 +14,7 @@ COPY fe.conf /etc/nginx/conf.d/
 RUN rm /usr/share/nginx/html/index.html
 
 # Copying the static files to the desired directory
-COPY /dist/browser/. /usr/share/nginx/html/myapp
+COPY /dist/path/to/staticfiles/. /usr/share/nginx/html/myapp
 
 # Expose port 80 (default Nginx port)
 EXPOSE 80
@@ -24,10 +24,10 @@ EXPOSE 80
 #server {
 #    listen       80;
 #    #listen  [::]:80;
-#    server_name  localhost; #<subdomain.sentra.world>
+#    server_name  localhost;
 
 #    location / {
-#        root   /usr/share/nginx/html/sentra;
+#        root   /usr/share/nginx/html/myapp;
 #        index  index.html index.htm;
 #        try_files $uri $uri/ /index.html =404;
 #    }
