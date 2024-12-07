@@ -1,0 +1,10 @@
+services:
+  fe:
+    image: ${FE_IMAGE} # image name will be read by .env file
+    #build:
+    #context: .
+    #dockerfile: fe.Dockerfile
+    container_name: fe
+    restart: always
+    ports:
+      - '6000:80'
