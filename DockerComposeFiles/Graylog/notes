@@ -12,7 +12,11 @@ Once the stream is created then create a rule for the stream with these values
 Then go to 'inputs' tab and create the input, there are a lot of options, so choose the one which is suitable.
 For the below example, which sends logs over udp using gelf, create a 'GELF UDP' input
 
-
+Bonus tip:
+Go to System>Indices
+Then edit all indices one by one and update these to save storage on disk (set value according to your preference)
+Max. in storage: 2 days
+Min. in storage: 1 days
 
 Now example if you want to send logs from docker container of your application then send it like this
 (make sure that the traffic is allowed from application vm to graylog vm on udp:12201 since we will be using that, you can whitelist more according to your needs)
