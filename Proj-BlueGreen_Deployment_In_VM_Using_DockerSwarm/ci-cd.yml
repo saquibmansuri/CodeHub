@@ -1,0 +1,167 @@
+# DEPLOYING APP ON VM WITH BLUE GREEN DEPLOYMENT STRATEGY USING DOCKER SWARM
+# THIS EXAMPLE USES GCP VM, A LITTLE CHANGE IN STEPS WOULD BE REQUIRED ACCORDING TO THE CLOUD PROVIDER
+
+name: Deploy APP on VM
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+env:
+  SERVICE_ACCOUNT_USERNAME: _json_key
+  GCP_ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
+  GCP_ARTIFACT_REPOSITORY: apprepository
+  GCP_VM_SSH_PORT: 22
+  IMAGE_TAG: ${{ github.sha }}
+  GCP_PROJECT_ID: myproject
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Configure GCP Credentials
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_CREDENTIALS }}
+
+      - name: Login to GCP Artifact Registry
+        uses: docker/login-action@v3
+        id: login-registry
+        with:
+          registry: ${{ env.GCP_ARTIFACT_REGISTRY }}
+          username: ${{ env.SERVICE_ACCOUNT_USERNAME }}
+          password: ${{ secrets.GCP_SERVICE_ACCOUNT_CREDENTIALS }}
+
+      - name: Build, Tag and Push Images to GCP Artifact Repository
+        id: build-image
+        run: |
+          docker build -t ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appfe:${{ env.IMAGE_TAG }} -t ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appfe:latest -f fe.Dockerfile .
+          docker build -t ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appbe:${{ env.IMAGE_TAG }} -t ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appbe:latest -f be.Dockerfile .
+          docker push ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appfe:${{ env.IMAGE_TAG }}
+          docker push ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appfe:latest
+          docker push ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appbe:${{ env.IMAGE_TAG }}
+          docker push ${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appbe:latest
+          echo "feimage=${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appfe:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+          echo "beimage=${{ env.GCP_ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REPOSITORY }}/appbe:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
+
+      - name: Fetching Secrets And Updating Env Files in VM1
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM1_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp
+            # These scripts will fetch secrets from gcp secrets manager and load it into respective env files
+            sudo chmod +x feenvscript.sh
+            sudo ./feenvscript.sh
+            sudo chmod +x beenvscript.sh
+            sudo ./beenvscript.sh
+
+      - name: Update Docker Image And Environment Variables For The Swarm Services In VM1
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM1_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp
+            source update-services.sh
+            update_service "mystack" "appfe" "${{ steps.build-image.outputs.feimage }}" "fe.env"
+            update_service "mystack" "appbe" "${{ steps.build-image.outputs.beimage }}" "be.env"
+
+      - name: Copy Updated Docker Compose File In GCP VM1
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.GCP_VM1_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          overwrite: true
+          source: "docker-compose.yml"
+          target: "myapp/"
+
+      - name: Rolling Out Update in VM1
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM1_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp 
+            # This script will deploy the new version, verify healthcheck and rollback if healthcheck fails
+            sudo chmod +x deploy.sh
+            sudo ./deploy.sh
+            for i in {1..5}; do sudo docker system prune -af && break || sleep 3; done
+
+      - name: Fetching Secrets And Updating Env Files In VM2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM2_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp
+            # These scripts will fetch secrets from gcp secrets manager and load it into respective env files
+            sudo chmod +x feenvscript.sh
+            sudo ./feenvscript.sh
+            sudo chmod +x beenvscript.sh
+            sudo ./beenvscript.sh
+
+      - name: Update Docker Image And Environment Variables For The Swarm Services In VM2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM2_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp
+            source update-services-staging.sh
+            update_service "mystack" "appfe" "${{ steps.build-image.outputs.feimage }}" "fe.env"
+            update_service "mystack" "appbe" "${{ steps.build-image.outputs.beimage }}" "be.env"
+
+      - name: Copy Updated Docker Compose File to GCP VM2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.GCP_VM2_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          overwrite: true
+          source: "docker-compose-staging.yml"
+          target: "myapp/"
+
+      - name: Rolling Out Update in VM2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM2_IP }}
+          username: "ubuntu"
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          port: ${{ env.GCP_VM_SSH_PORT }}
+          script: |
+            sudo gcloud auth configure-docker us-central1-docker.pkg.dev
+            cd myapp
+            # This script will deploy the new version, verify healthcheck and rollback if healthcheck fails
+            sudo chmod +x deploy.sh
+            sudo ./deploy.sh
+            for i in {1..5}; do sudo docker system prune -af && break || sleep 3; done
+            
