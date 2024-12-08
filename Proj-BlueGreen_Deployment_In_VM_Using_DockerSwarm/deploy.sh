@@ -5,10 +5,9 @@ stack="dev"
 
 # List of services and their health check URLs
 services=("appfe" "appbe")
-
-# In some cases localhost doesnot work, so try this in that case -  http://127.0.0.1:7001/api/HealthCheck/health
-health_check_urls_blue=("http://localhost:5001/dashboard" "http://localhost:7001/api/HealthCheck/health")
-health_check_urls_green=("http://localhost:5002/dashboard" "http://localhost:7002/api/HealthCheck/health")
+# In some cases 127.0.0.1 will not work, so use http://localhost
+health_check_urls_blue=("http://127.0.0.1:5000/Dashboard" "http://127.0.0.1:7000/api/HealthCheck/health")
+health_check_urls_green=("http://127.0.0.1:5001/Dashboard" "http://127.0.0.1:7001/api/HealthCheck/health")
 
 # Declare the associative array for service statuses to ensure that the script manages associative arrays properly
 # service_statuses stores the deployment status for each service
@@ -19,9 +18,13 @@ perform_health_check() {
   url=$1
   echo "Performing Health Check For Service-"$service" URL-"$url", For The New Version"
   for i in {1..5}; do
-    status_code=$(curl --write-out "%{http_code}" --silent --output /dev/null "$url")
+    response=$(curl --write-out "%{http_code}" --silent --output /dev/stderr "$url")
+    status_code="${response##* }" # Get the last word in response, assuming it's the status code
+    echo "Attempt $i: Received HTTP status code: $status_code"
+
     if [ "$status_code" -eq 200 ]; then
-      echo "Health Check Passed For Service-"$service" URL-"$url" As It Returned 200 Status Code, This Means New Version Is Stable"      return 0
+      echo "Health Check Passed For Service-"$service" URL-"$url" As It Returned 200 Status Code, This Means New Version Is Stable"
+      return 0
     else
       echo "Health Check Failed For Service-"$service" URL-"$url", Retrying..."
       sleep 30
@@ -31,24 +34,26 @@ perform_health_check() {
   return 1
 }
 
-
 # Determine the active version and deploy the other version for each service
 for i in "${!services[@]}"; do
   service="${services[$i]}"
   echo "Checking The Active Version For The Service-"$service"..."
 
-  blue_replicas=$(sudo docker service ls --filter name=${stack}_${service}_blue --format "{{.Replicas}}" | awk -F '/' '{print $1}')  green_replicas=$(sudo docker service ls --filter name=${stack}_${service}_green --format "{{.Replicas}}" | awk -F '/' '{print $1}')
+  blue_replicas=$(sudo docker service ls --filter name=${stack}_${service}_blue --format "{{.Replicas}}" | awk -F '/' '{print $1}')
+  green_replicas=$(sudo docker service ls --filter name=${stack}_${service}_green --format "{{.Replicas}}" | awk -F '/' '{print $1}')
   echo "Number Of Current Active Blue Replicas Of the Service-"$service" = $blue_replicas"
   echo "Number Of Current Active Green Replicas Of the Service-"$service" = $green_replicas"
 
   if [ $blue_replicas -gt 0 ]; then
-    echo "Currently, Blue Version Of The Service-"$service" Is Active. So, Deploying Green Version With Updated Code/Docker Image."    export REPLICAS_BLUE=$blue_replicas
+    echo "Currently, Blue Version Of The Service-"$service" Is Active. So, Deploying Green Version With Updated Code/Docker Image."
+    export REPLICAS_BLUE=$blue_replicas
     export REPLICAS_GREEN=1
     new_version="green"
     old_version="blue"
     health_check_url="${health_check_urls_green[$i]}"
   elif [ $green_replicas -gt 0 ]; then
-    echo "Currently, Green Version Of The Service-"$service" Is Active. So, Deploying Blue Version With Updated Code/Docker Image."    export REPLICAS_BLUE=1
+    echo "Currently, Green Version Of The Service-"$service" Is Active. So, Deploying Blue Version With Updated Code/Docker Image."
+    export REPLICAS_BLUE=1
     export REPLICAS_GREEN=$green_replicas
     new_version="blue"
     old_version="green"
@@ -78,19 +83,18 @@ for i in "${!services[@]}"; do
     sudo docker service scale ${stack}_${service}_${old_version}=0
     service_statuses[$service]="NEW VERSION DEPLOYED SUCCESSFULLY !!!"
   else
-    echo "Deployment Failed Of The New Version-"$new_version" Of The Service-"$service". Now Rolling Back To The Previous Version."    sudo docker service scale ${stack}_${service}_${new_version}=0
+    echo "Deployment Failed Of The New Version-"$new_version" Of The Service-"$service". Now Rolling Back To The Previous Version."
+    sudo docker service scale ${stack}_${service}_${new_version}=0
     #sudo docker service scale ${stack}_${service}_${old_version}=1 #No need to run old service as it is already running until new version passes the healthcheck
     service_statuses[$service]="NEW VERSION DEPLOYMENT FAILED !!! ROLLED BACK TO PREVIOUS STABLE VERSION"
   fi
 done
-
 
 # Print final status of each service
 echo "Deployment Summary:"
 for service in "${!service_statuses[@]}"; do
   echo "$service: ${service_statuses[$service]}"
 done
-
 
 # -- Webhook Notification Start --
 # Prepare JSON payload for webhook notification
@@ -102,5 +106,5 @@ json_payload+="\"}"
 
 # Send JSON payload to webhook
 echo "Notifying On Teams"
-curl -H "Content-Type: application/json" -d "$json_payload" <webhook_url>
+curl -H "Content-Type: application/json" -d "$json_payload" <teams_channel_webhook_url>
 # -- Webhook Notification End --
