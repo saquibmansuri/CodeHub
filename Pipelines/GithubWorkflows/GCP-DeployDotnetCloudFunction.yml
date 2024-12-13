@@ -1,0 +1,48 @@
+# Reference: https://github.com/google-github-actions/deploy-cloud-functions
+
+name: Deploy - Dotnet Function on GCP Cloud Function - for Dev Environment
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: "actions/checkout@v4"
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Configure GCP credentials
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_CREDENTIALS }}
+
+      - name: Deploy Cloud Function
+        id: "deploy-gcp-function"
+        uses: "google-github-actions/deploy-cloud-functions@v2"
+        with:
+          name: "my-cloud-function"
+          runtime: "dotnet8"
+          entry_point: "myfunction-entrypoint"
+          project_id: myporjectid
+          service_account_email: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          vpc_connector: "dev-vpc-conn"
+          source_dir: "myfunctiondirectory/"
+          env_vars: "var1=value, var2=value2"
+          build_environment_variables: "GOOGLE_BUILDABLE=myfunctiondirectory/myfunction.csproj"
+          memory_mb: 8192
+          timeout: 300
+          min_instances: 1
+          max_instances: 2
+          https_trigger_security_level: "secure_always"
+          ingress_settings: "ALLOW_ALL"
