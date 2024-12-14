@@ -1,0 +1,43 @@
+name: Deploy to AWS Lambda Function
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    name: Deploy Lambda Function
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build and Publish
+        run: |
+          cd directory-that-contains-sln-file
+          dotnet restore
+          cd directory-that-contains-csproj-file
+          dotnet publish -c Release -r linux-x64 --self-contained false -p:PublishReadyToRun=false -o ./publish
+          cd publish
+          zip -r ../deployment.zip *
+
+      - name: Deploy to Lambda
+        uses: appleboy/lambda-action@v0.2.0
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: us-east-1
+          function_name: myfunction
+          zip_file: directory-that-contains-sln-file/directory-that-contains-csproj-file/deployment.zip
+          memory_size: 3008
+          timeout: 120
+          handler: directory-that-contains-sln-file::directory-that-contains-csproj-file.Function::FunctionHandler
+          runtime: dotnet8
+          debug: true
+          publish: true
