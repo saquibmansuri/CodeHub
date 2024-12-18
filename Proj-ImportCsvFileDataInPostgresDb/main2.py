@@ -1,18 +1,23 @@
-# THIS SCRIPT DOESNOT CONTAIN REVERT DATA LOGIC
+# VERSION 2 OF THE ORIGINAL main.py
+
 
 import pandas as pd
-from sqlalchemy import create_engine, MetaData, Table
-from sqlalchemy.sql import text
 import numpy as np
+import string
+import random
+from sqlalchemy import create_engine, text
 
 # Database configuration
 DB_CONFIG = {
-    'dbname': 'mydb',
-    'user': 'myuser',
-    'password': 'mypassword',
-    'host': 'myhost',
+    'dbname': '',
+    'user': '',
+    'password': '',
+    'host': '',
     'port': '5432'
 }
+
+def generate_session_id():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
 
 def connect_db():
     print("Connecting to the database...")
@@ -25,7 +30,6 @@ def infer_sql_type(pandas_type, column_data):
     if column_data.isnull().all():
         return 'VARCHAR'
     if pd.api.types.is_integer_dtype(pandas_type):
-        # Check if any value exceeds the INTEGER limit
         if column_data.max() > np.iinfo(np.int32).max:
             return 'BIGINT'
         return 'INTEGER'
@@ -41,82 +45,117 @@ def infer_sql_type(pandas_type, column_data):
 def sanitize_column_name(column_name):
     return column_name.replace("/", "_").replace(" ", "_").replace("-", "_").replace(".", "_")
 
-def create_table_with_inferred_schema(df, table_name, conn):
+def create_table_with_inferred_schema(df, table_name, engine, session_id):
     print("Inferring data types and sanitizing column names...")
     df.columns = [sanitize_column_name(col) for col in df.columns]
+    df['import_session_id'] = session_id  # Add the session_id column to dataframe
 
     sql_types = {col: infer_sql_type(df[col].dtype, df[col]) for col in df.columns}
-    
     for col, sql_type in sql_types.items():
         print(f"Column '{col}' inferred as SQL type '{sql_type}'")
 
-    columns_with_types = ", ".join([f'"{col}" {sql_type}' for col, sql_type in sql_types.items()])  # Double-quote columns too
-    create_table_sql = f'CREATE TABLE "{table_name}" ({columns_with_types});'  # Use double quotes for the table name
+    columns_with_types = ", ".join([f'"{col}" {sql_type}' for col, sql_type in sql_types.items()])
+    create_table_sql = f'CREATE TABLE "{table_name}" ({columns_with_types});'
     
     print(f'Creating table "{table_name}" in the database...')
-    with conn.begin():
+    with engine.connect() as conn:
         conn.execute(text(create_table_sql))
-    print(f'Table "{table_name}" created successfully.')
+    print(f'Table "{table_name}" created successfully with session_id column.')
 
-def preprocess_dataframe(df):
-    # Example: convert specific columns to appropriate types if known
-    # df['some_column'] = df['some_column'].astype('int64')  # Adjust as needed
-    return df
+def check_and_add_session_column(table_name, engine, session_id):
+    with engine.connect() as conn:
+        check_column_sql = f"SELECT column_name FROM information_schema.columns WHERE table_name='{table_name}' and column_name='import_session_id';"
+        result = conn.execute(text(check_column_sql)).fetchone()
+        if not result:
+            print("Adding 'import_session_id' column to existing table...")
+            add_column_sql = f'ALTER TABLE "{table_name}" ADD COLUMN "import_session_id" VARCHAR;'
+            conn.execute(text(add_column_sql))
+            print("Column added successfully.")
+        else:
+            print("'import_session_id' column already exists in the table.")
 
-def insert_data_in_batches(df, table_name, conn, batch_size=50000):
+def insert_data_with_rollback(df, table_name, engine, session_id, batch_size=50000):
     total_rows = len(df)
     print(f"Total rows to insert: {total_rows}")
     success = True  # Flag to track the success of data insertion
-    
-    for start in range(0, total_rows, batch_size):
-        end = min(start + batch_size, total_rows)
-        batch_df = df[start:end]
-        print(f"Inserting rows {start + 1} to {end}...")
+
+    with engine.connect() as conn:
+        trans = conn.begin()  # Begin one transaction for the entire import session
         try:
-            batch_df.to_sql(table_name, conn, index=False, if_exists='append')
-            print(f"Rows {start + 1} to {end} inserted successfully.")
+            for start in range(0, total_rows, batch_size):
+                end = min(start + batch_size, total_rows)
+                batch_df = df.iloc[start:end].copy()
+                batch_df['import_session_id'] = session_id
+
+                print(f"Inserting rows {start + 1} to {end}...")
+                try:
+                    batch_df.to_sql(table_name, conn, index=False, if_exists='append', method='multi')
+                    print(f"Rows {start + 1} to {end} inserted successfully.")
+                except Exception as e:
+                    print(f"Error in inserting rows {start + 1} to {end}.")
+                    print(f"Error message: {str(e)}")
+                    trans.rollback()
+                    success = False
+                    return success
+
+            trans.commit()
         except Exception as e:
-            print(f"An error occurred during batch insertion: {e}")
-            success = False  # Set success to False if an error occurs
-    
-    return success  # Return the success status
+            print(f"An error occurred during the batch insertion process: {str(e)}")
+            trans.rollback()
+            success = False
+
+    return success
+
+def delete_all_records_by_session_id(table_name, session_id, engine):
+    with engine.connect() as conn:
+        trans = conn.begin()
+        try:
+            table_name = f'"{table_name}"'
+            delete_sql = f"DELETE FROM {table_name} WHERE import_session_id = :session_id"
+            rows_deleted = conn.execute(text(delete_sql), {'session_id': session_id}).rowcount
+            print(f"Deleted {rows_deleted} rows.")
+            trans.commit()
+        except Exception as e:
+            print(f"An error occurred during deletion: {str(e)}")
+            trans.rollback()
 
 def main():
-    csv_file_path = input("Enter the path to your CSV file: ")
-    print("Reading the CSV file for column names and datatypes...")
-    
-    df = pd.read_csv(csv_file_path)
-    df = preprocess_dataframe(df)  # Preprocess the DataFrame if necessary
-    print(f"CSV file '{csv_file_path}' successfully loaded in memory with {len(df)} rows and {len(df.columns)} columns.")
-    
+    print("Select an operation: \n1. Fresh Upload\n2. Append in Existing Table\n3. Revert Data")
+    choice = input("Enter your choice (1, 2, or 3): ").strip()
     engine = connect_db()
-    conn = engine.connect()
 
-    create_new_table = input("Do you want to create a new table? (yes/no): ").strip().lower()
+    if choice in ['1', '2']:
+        session_id = generate_session_id()
+        print(f"Generated session ID for this operation: {session_id}")
+        csv_file_path = input("Enter the path to your CSV file: ")
+        print("Reading the CSV file for column names and datatypes...")
+        df = pd.read_csv(csv_file_path, low_memory=False)
+        print(f"CSV file '{csv_file_path}' successfully loaded in memory with {len(df)} rows and {len(df.columns)} columns.")
 
-    if create_new_table == 'yes':
+    if choice == '1':
         table_name = input("Enter the name for the new table: ")
-        create_table_with_inferred_schema(df, table_name, conn)
-        print("Starting to copy data in batches of 50,000 rows...")
-        success = insert_data_in_batches(df, table_name, conn)
-    elif create_new_table == 'no':
+        create_table_with_inferred_schema(df, table_name, engine, session_id)
+        success = insert_data_with_rollback(df, table_name, engine, session_id)
+
+    elif choice == '2':
         table_name = input("Enter the name of the existing table to append data to: ")
-        try:
-            print(f"Appending data to existing table '{table_name}' in batches of 50,000 rows...")
-            success = insert_data_in_batches(df, table_name, conn)
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            success = False  # Set success to False if an error occurs
+        check_and_add_session_column(table_name, engine, session_id)
+        success = insert_data_with_rollback(df, table_name, engine, session_id)
+
+    elif choice == '3':
+        table_name = input("Enter the table name for data deletion: ")
+        session_id_to_delete = input("Enter the import_session_id to identify records to delete: ")
+        delete_all_records_by_session_id(table_name, session_id_to_delete, engine)
+        success = True
+
     else:
-        print("Invalid option selected. Please choose 'yes' or 'no'.")
-        success = False  # Set success to False for invalid options
-    
-    conn.close()
+        print("Invalid choice. Please restart the script and choose a valid option.")
+        success = False
+
     if success:
-        print("DATA IMPORT SUCCESSFUL WITHOUT ERRORS")
+        print("Operation completed successfully without errors.")
     else:
-        print("DATA IMPORT FAILED WITH ERRORS")
-    print("Database connection closed.")
+        print("Operation failed with errors.")
 
 if __name__ == '__main__':
     main()
