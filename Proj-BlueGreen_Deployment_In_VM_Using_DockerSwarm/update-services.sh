@@ -69,6 +69,7 @@ update_service () {
     echo "This is the updated image name- $NEW_IMAGE"
     echo "Printing Updated Image Which Will Be Used By The New Green Version For Service-$SERVICE_NAME"
     sudo docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' ${STACK_NAME}_${SERVICE_NAME}_green
+    sudo docker service update --with-registry-auth --image "${NEW_IMAGE}" "${STACK_NAME}_${SERVICE_NAME}_green"
 
   elif [ $GREEN_REPLICAS -gt 0 ]; then
     echo "Currently Green Version Is Active With Replicas-$GREEN_REPLICAS For Service-$SERVICE_NAME"
@@ -85,6 +86,7 @@ update_service () {
     echo "This is the updated image name- $NEW_IMAGE"
     echo "Printing Updated Image Which Will Be Used By The Blue Version For Service-$SERVICE_NAME"
     sudo docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' ${STACK_NAME}_${SERVICE_NAME}_blue
+    sudo docker service update --with-registry-auth --image "${NEW_IMAGE}" "${STACK_NAME}_${SERVICE_NAME}_blue"
 
   else
     echo "Couldn't Find Any Active Replica For The Service-$SERVICE_NAME"
