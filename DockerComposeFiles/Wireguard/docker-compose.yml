@@ -1,0 +1,18 @@
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000  # Your user ID (to get this puid simply run this command in vm - id)
+      - PGID=1000  # Your group ID (to get this pgid simply run this command in vm - id)
+      - TZ=UTC     # Set to UTC for neutral timezone
+      - PEERS=client1  # Name of the peer/client configuration
+    volumes:
+      - ./config:/config  # Persist WireGuard config data, this will create all necessary files by default in this directory, then you can modify files in this directory later on
+    ports:
+      - 51820:51820/udp  # Map UDP port for WireGuard
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: always
