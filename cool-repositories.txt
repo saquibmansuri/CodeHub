@@ -18,3 +18,6 @@ https://www.youtube.com/watch?v=uUupRagM7m0&list=PL2We04F3Y_41jYdadX55fdJplDvgNG
 
 # Open Source Configuration & Secrets Manager
 https://envkey.com/
+
+# Azure Api Management service capability as an AI Gateway
+https://github.com/Azure-Samples/AI-Gateway
