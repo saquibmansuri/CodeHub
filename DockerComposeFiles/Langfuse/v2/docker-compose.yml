@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: langfuse
+    environment:
+      - DATABASE_URL=postgresql://username:password@host:5432/db
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=         # create unique string like this in linux - openssl rand -base64 32
+      - AUTH_DISABLE_SIGNUP=true # comment this during the first time to create the first user
+      - SALT=                    # create unique string like this in linux - openssl rand -hex 16
+    ports:
+      - "3987:3000"
+    restart: always
