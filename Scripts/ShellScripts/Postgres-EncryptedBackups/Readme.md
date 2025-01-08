@@ -19,10 +19,12 @@ Follow the on-screen prompts to select the key type, size, expiration, and enter
 The script provided in the repository automates the process of backing up a PostgreSQL database, encrypting the backup, and uploading it to an AWS S3 bucket.  
 As mentioned earlier, this is just an example of encryption, you can use other services as well according to your needs.
 
-### Remove GPG Key from Server
-After securing a backup of your .gnupg folder somewhere remove the key from the server so nobody can decrypt if server access is compromised (recommended):  
-`gpg --delete-secret-keys <key-id>`  
-Replace <key-id> with the ID of the key you want to remove.
+### Export GPG Key from Server
+Export public key:  
+`gpg --export -a [Your-Key-ID or email] > publickey.asc`  
+Export secret key:
+'gpg --export-secret-keys -a [Your-Key-ID or email] > privatekey.asc'  
+
 
 ### Restore Encrypted File
  1. Linux  
