@@ -1,56 +1,49 @@
-# Learn how to send emails using github workflows
-
 name: PR Notification
 
 on:
   pull_request:
-    branches:
-      - staging
-      - master
-      - dev
+    branches: [ dev, staging, main ]
     types: [opened, reopened, synchronize]
 
 jobs:
-  notify:
+  check:
     runs-on: ubuntu-latest
     steps:
 
-      # Notify on teams channel by sending email on the team channel email or email directly to any email address
-      - name: Notify on Teams Channel
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch all branches and commits so that it has a base to compare against.
+
+      - name: Setup email recipient
+        run: |
+          if [ "${{ github.base_ref }}" = "dev" ]; then
+            echo "EMAIL_TO=${{ secrets.SMTP_EMAIL_TO_DEV }}" >> $GITHUB_ENV
+          elif [ "${{ github.base_ref }}" = "staging" ]; then
+            echo "EMAIL_TO=${{ secrets.SMTP_EMAIL_TO_STAGING }}" >> $GITHUB_ENV
+          elif [ "${{ github.base_ref }}" = "main" ]; then
+            echo "EMAIL_TO=${{ secrets.SMTP_EMAIL_TO_PROD }}" >> $GITHUB_ENV
+          fi
+
+      - name: Notify the Team
         uses: hilarion5/send-mail@v1
         with:
           smtp-server: ${{ secrets.SMTP_SERVER }}
           smtp-port: 587
           smtp-secure: false
           from-email: ${{ secrets.SMTP_EMAIL_FROM }}
-          to-email: ${{ secrets.SMTP_EMAIL_TO }}
+          to-email: ${{ env.EMAIL_TO }}
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "PR Created for Branch - ${{ github.head_ref }}"
+          subject: "Pull Request Notification"
           body: |
-            PR is about to be merged in ${{ github.head_ref }}
-            PR URL: ${{ github.event.pull_request.html_url }}
-            Note: If anyone has any concerns and queries then please respond immediately or it will be merged automatically after 15 mins.
+            This is an email from github actions: ci-cd pipeline.
+            Please review and inform the team if you have any questions.
+            A Pull Request is created for the branch -- ${{ github.base_ref }}
 
+            PR: ${{ github.base_ref }}  <<<-------  ${{ github.head_ref }} 
+            PR Url: ${{ github.event.pull_request.html_url }}
             PR Title - ${{ github.event.pull_request.title }}
 
-            PR Description
+            PR Description / Features OR Bug Fixes to be Released
             ${{ github.event.pull_request.body }}
-
-     # Another email sending action
-      - name: Notify on Email 
-        if: failure() # this line makes sure if any of the above step fails , this action will be triggered 
-        uses: dawidd6/action-send-mail@v2
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}  # Your actual email address
-          password: ${{ secrets.EMAIL_APP_PASSWORD }}  # Use App Password here (not actual password )
-          subject: '${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}'
-          body: '${{ github.job }} job in workflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}'
-          to: example@org.com
-          from: devops  # Your name or the name you'd like to show
-
-      - name: Notify WhatsApp Group
-        run: |
-          echo "Whatsapp notification integration coming soon"
