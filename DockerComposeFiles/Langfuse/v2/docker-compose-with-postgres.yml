@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:17 # use latest version
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    ports:
+      - "5433:5432"
+    volumes:
+      - /root/langfuse/data/postgres:/var/lib/postgresql/data
+    restart: always
+
+  langfuse:
+    image: langfuse/langfuse:2
+    container_name: langfuse
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/db
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=          # create unique string like this in linux - openssl rand -base64 32
+      - AUTH_DISABLE_SIGNUP=false # Uncomment this initially to set up the first user
+      - SALT=                     # create unique string like this in linux - openssl rand -hex 16
+    ports:
+      - "3987:3000"
+    depends_on:
+      - postgres
+    restart: always
