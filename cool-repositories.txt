@@ -21,3 +21,6 @@ https://envkey.com/
 
 # Azure Api Management service capability as an AI Gateway
 https://github.com/Azure-Samples/AI-Gateway
+
+# Awesome compose projects
+https://github.com/docker/awesome-compose
