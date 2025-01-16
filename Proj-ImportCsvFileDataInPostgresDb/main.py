@@ -49,7 +49,6 @@ def create_table_with_inferred_schema(df, table_name, engine, session_id):
     df.columns = [sanitize_column_name(col) for col in df.columns]
     df['import_session_id'] = session_id  # Add the session_id column to dataframe
 
-    # Print column names and inferred SQL types
     sql_types = {col: infer_sql_type(df[col].dtype, df[col]) for col in df.columns}
     for col, sql_type in sql_types.items():
         print(f"Column '{col}' inferred as SQL type '{sql_type}'")
@@ -81,43 +80,43 @@ def insert_data_with_rollback(df, table_name, engine, session_id, batch_size=500
 
     with engine.connect() as conn:
         trans = conn.begin()  # Begin one transaction for the entire import session
-
         try:
-            # Process each batch
             for start in range(0, total_rows, batch_size):
                 end = min(start + batch_size, total_rows)
                 batch_df = df.iloc[start:end].copy()
-                batch_df['import_session_id'] = session_id  # Ensure session_id is in the DataFrame correctly
+                batch_df['import_session_id'] = session_id
 
                 print(f"Inserting rows {start + 1} to {end}...")
-                batch_df.to_sql(table_name, conn, index=False, if_exists='append', method='multi')
-                print(f"Rows {start + 1} to {end} inserted successfully.")
+                try:
+                    batch_df.to_sql(table_name, conn, index=False, if_exists='append', method='multi')
+                    print(f"Rows {start + 1} to {end} inserted successfully.")
+                except Exception as e:
+                    print(f"Error in inserting rows {start + 1} to {end}.")
+                    print(f"Error message: {str(e)}")
+                    trans.rollback()
+                    success = False
+                    return success
 
-            trans.commit()  # Commit the entire transaction if all batches succeed
+            trans.commit()
         except Exception as e:
-            print(f"An error occurred during batch insertion: {e}")
-            trans.rollback()  # Rollback the entire transaction if any batch fails
+            print(f"An error occurred during the batch insertion process: {str(e)}")
+            trans.rollback()
             success = False
 
     return success
 
 def delete_all_records_by_session_id(table_name, session_id, engine):
     with engine.connect() as conn:
-        trans = conn.begin()  # Begin a transaction explicitly
-
+        trans = conn.begin()
         try:
             table_name = f'"{table_name}"'
-            
-            # Single DELETE statement for all rows with matching session_id
             delete_sql = f"DELETE FROM {table_name} WHERE import_session_id = :session_id"
             rows_deleted = conn.execute(text(delete_sql), {'session_id': session_id}).rowcount
             print(f"Deleted {rows_deleted} rows.")
-            
-            # Commit the transaction after deletion
             trans.commit()
         except Exception as e:
-            print(f"An error occurred during deletion: {e}")
-            trans.rollback()  # Rollback the transaction in case of error
+            print(f"An error occurred during deletion: {str(e)}")
+            trans.rollback()
 
 def main():
     print("Select an operation: \n1. Fresh Upload\n2. Append in Existing Table\n3. Revert Data")
@@ -129,7 +128,7 @@ def main():
         print(f"Generated session ID for this operation: {session_id}")
         csv_file_path = input("Enter the path to your CSV file: ")
         print("Reading the CSV file for column names and datatypes...")
-        df = pd.read_csv(csv_file_path)
+        df = pd.read_csv(csv_file_path, low_memory=False)
         print(f"CSV file '{csv_file_path}' successfully loaded in memory with {len(df)} rows and {len(df.columns)} columns.")
 
     if choice == '1':
@@ -159,4 +158,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
