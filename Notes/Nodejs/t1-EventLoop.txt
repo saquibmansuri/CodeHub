@@ -1,0 +1,11 @@
+Event loop 
+
+There is an event queue, and an event loop.
+All the requests from the clients are parked in the event queue.
+The event loop periodically checks for events in this event queue.
+
+If the request is a non-blocking request (asynchronous request: which doesnot require a thread for processing), then it processes and sends the response to the client.
+If the request is a blocking request (synchronous request), then it goes to a thread pool and requests for a worker to process its request, 
+if the worker is available, then it is assigned and processed response is sent back to the user.
+
+There are limited number of workers/threads in a thread pool which is equal to total nummber of cpu cores of the server
