@@ -2,7 +2,7 @@ Reference: https://www.geeksforgeeks.org/difference-between-node-js-and-javascri
 
 JavaScript and Node.js are both crucial in modern web development, but they serve different purposes and are used in different environments. JavaScript is a programming language primarily used for client-side web development, while Node is a runtime environment that allows JavaScript to be executed on the server side.
 
-
+-----------------------------
 What is JavaScript?
 JavaScript is a high-level, interpreted programming language that conforms to the ECMAScript specification. 
 It is a versatile language commonly used to create interactive effects within web browsers.
@@ -19,7 +19,7 @@ Web Development: JavaScript is used to create interactive and dynamic web pages.
 Web Applications: JavaScript frameworks like Angular, React, and Vue.js are used to build single-page applications (SPAs).
 Mobile Applications: Frameworks like React Native use JavaScript to develop mobile applications.
 
-
+--------------------------
 What is Node.js?
 Node.js is an open-source, cross-platform runtime environment that allows you to execute JavaScript code outside of a browser. It is built on Chrome’s V8 JavaScript engine.
 
@@ -36,7 +36,26 @@ APIs: Node.js is often used to create RESTful APIs and microservices.
 Real-Time Applications: Applications like chat applications, online gaming, and collaborative tools benefit from Node.js’s event-driven architecture.
 Command-Line Tools: Node.js can be used to build command-line tools and utilities.
 
-
+------------------------
 Express JS 
 Express is a small framework that sits on top of Node JS’s web server functionality to simplify its APIs and add helpful new features. It makes it easier to organize your application’s functionality with middleware and routing. It adds helpful utilities to Node JS’s HTTP objects. It facilitates the rendering of dynamic HTTP objects.
 
+------------------------
+Typescript
+JavaScript, initially designed as a client-side language, expanded to server-side use. However, its growing complexity and limitations in Object-Oriented Programming hindered its enterprise adoption. To address this, TypeScript was created to enhance JavaScript, providing static typing and features for robust enterprise-level server-side development. 
+
+Features of TypeScript
+- Transpilation to JavaScript: TypeScript code is transpiled into JavaScript for browser interpretation, enabling browsers to read and display the code.
+- JavaScript to TypeScript Conversion: Code in JavaScript can be converted to TypeScript by changing the file extension from .js to .ts.
+- Versatile TypeScript Usage: TypeScript can be compiled to run on any browser, device, or operating system, making it adaptable to diverse environments.
+- JavaScript Library Support: TypeScript seamlessly supports existing JavaScript code, allows the integration of popular JavaScript libraries, and facilitates calling TypeScript code from native JavaScript.
+
+Difference Between TypeScript and JavaScript
+- TypeScript is known as an Object-oriented programming language whereas JavaScript is a prototype-based language.
+- TypeScript has a feature known as Static typing but JavaScript does not support this feature.
+- TypeScript supports Interfaces but JavaScript does not.
+
+Advantages of using TypeScript over JavaScript
+- TypeScript always points out the compilation errors at the time of development (pre-compilation). Because of this getting runtime errors is less likely, whereas JavaScript is an interpreted language.
+- TypeScript supports static/strong typing. This means that type correctness can be checked at compile time. This feature is not available in JavaScript.
+- TypeScript is nothing but JavaScript and some additional features i.e. ES6 features. It may not be supported in your target browser but the TypeScript compiler can compile the .ts files into ES3, ES4, and ES5 also.
