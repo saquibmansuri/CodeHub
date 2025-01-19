@@ -1,0 +1,31 @@
+How javascript runs on browser and can run as a backend also?
+
+JavaScript's capability to run both in the browser and on the backend is facilitated by different environments that interpret and execute JavaScript code. Here's how it works:
+
+JavaScript in Browsers
+Originally, JavaScript was designed to run in web browsers. Each major web browser has its JavaScript engine that interprets and executes JavaScript code. These engines are:
+- V8 in Google Chrome and Opera.
+- SpiderMonkey in Mozilla Firefox.
+- JavaScriptCore (also known as Nitro) in Safari.
+- Chakra (formerly) in Microsoft Edge before it was rebuilt based on Chromium.
+
+In the browser, JavaScript interacts with the Document Object Model (DOM) to manipulate HTML and CSS, enabling dynamic content and interactive web pages. 
+It executes in the client-side environment, meaning it runs on the user's computer after the web page has been downloaded from the server.
+
+
+
+JavaScript on the Backend (Node.js)
+The expansion of JavaScript into the realm of server-side scripting is primarily due to Node.js, which was introduced in 2009. 
+Node.js is not a separate programming language but rather a runtime environment that allows JavaScript to be executed on the server side.
+
+Node.js uses Google's V8 JavaScript engine (the same engine that powers Chrome) but extends its capabilities with various modules that provide additional functionalities, which are not available in the browser. 
+These modules allow JavaScript to interact with the file system, handle HTTP requests, connect to databases, and much more.
+Event-driven and Non-blocking I/O Model: Node.js operates on a single-threaded event loop, using non-blocking I/O calls, allowing it to handle many operations concurrently, making it suitable for building scalable network applications.
+
+
+
+Common Language, Different APIs
+Even though the same JavaScript code syntax is used in both environments, the APIs available in the browser and in Node.js differ:
+
+Browser APIs include the DOM, WebSockets, and Web Storage, among others. These are not available in Node.js because they are specific to the web browser environment.
+Node.js APIs include file system manipulation, network requests, and other server-side functionalities. These are not available in browsers because they could pose security risks or are simply irrelevant in a client-side context.
