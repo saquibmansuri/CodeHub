@@ -1,3 +1,5 @@
+Reference: https://www.youtube.com/watch?v=y0aTs56DJWk
+
 Event loop 
 
 There is an event queue, and an event loop.
