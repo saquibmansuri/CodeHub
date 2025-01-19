@@ -35,3 +35,8 @@ Web Servers: Node.js is used to build fast and scalable web servers.
 APIs: Node.js is often used to create RESTful APIs and microservices.
 Real-Time Applications: Applications like chat applications, online gaming, and collaborative tools benefit from Node.js’s event-driven architecture.
 Command-Line Tools: Node.js can be used to build command-line tools and utilities.
+
+
+Express JS 
+Express is a small framework that sits on top of Node JS’s web server functionality to simplify its APIs and add helpful new features. It makes it easier to organize your application’s functionality with middleware and routing. It adds helpful utilities to Node JS’s HTTP objects. It facilitates the rendering of dynamic HTTP objects.
+
