@@ -1,0 +1,37 @@
+Reference: https://www.geeksforgeeks.org/difference-between-node-js-and-javascript/
+
+JavaScript and Node.js are both crucial in modern web development, but they serve different purposes and are used in different environments. JavaScript is a programming language primarily used for client-side web development, while Node is a runtime environment that allows JavaScript to be executed on the server side.
+
+
+What is JavaScript?
+JavaScript is a high-level, interpreted programming language that conforms to the ECMAScript specification. 
+It is a versatile language commonly used to create interactive effects within web browsers.
+
+Key Features of JavaScript:
+Client-Side Scripting: JavaScript is primarily used for client-side scripting to create dynamic web pages.
+Event-Driven: JavaScript can handle events like clicks, form submissions, and mouse movements.
+Prototype-Based: JavaScript supports prototype-based object orientation, allowing objects to inherit properties and methods.
+Lightweight: JavaScript is lightweight and designed to be executed quickly in the browser.
+First-Class Functions: Functions in JavaScript are first-class citizens, meaning they can be assigned to variables, passed as arguments, and returned from other functions.
+
+Use Cases of JavaScript:
+Web Development: JavaScript is used to create interactive and dynamic web pages.
+Web Applications: JavaScript frameworks like Angular, React, and Vue.js are used to build single-page applications (SPAs).
+Mobile Applications: Frameworks like React Native use JavaScript to develop mobile applications.
+
+
+What is Node.js?
+Node.js is an open-source, cross-platform runtime environment that allows you to execute JavaScript code outside of a browser. It is built on Chrome’s V8 JavaScript engine.
+
+Key Features of Node.js:
+Server-Side Scripting: Node.js is primarily used for server-side scripting to build scalable network applications.
+Event-Driven: Node.js uses an event-driven, non-blocking I/O model, making it efficient for I/O-bound tasks.
+Single-Threaded: Node.js operates on a single-threaded event loop, allowing it to handle multiple connections concurrently.
+Module-Based: Node.js has a built-in module system (CommonJS), which helps in organizing code into reusable modules.
+Package Management: Node.js includes npm (Node Package Manager), which is the largest ecosystem of open-source libraries in the world.
+
+Use Cases of Node.js:
+Web Servers: Node.js is used to build fast and scalable web servers.
+APIs: Node.js is often used to create RESTful APIs and microservices.
+Real-Time Applications: Applications like chat applications, online gaming, and collaborative tools benefit from Node.js’s event-driven architecture.
+Command-Line Tools: Node.js can be used to build command-line tools and utilities.
