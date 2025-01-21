@@ -42,4 +42,4 @@ jobs:
           
           # only add the below parameters for 'flexible comsumption' tier of azure function
           # sku : "flexconsumption"
-          # remote-build: false
+          # remote-build: true
