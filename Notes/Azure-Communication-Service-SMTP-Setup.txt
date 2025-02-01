@@ -1,0 +1,12 @@
+azure smtp setup with azure communication service - https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/email/send-email-smtp/smtp-authentication
+
+app registration - "myapp"
+secret value - <myapp secret key>
+email - <email from created/found in communication service>
+smtp host - smtp.azurecomm.net
+smtp port - 587
+smtp username - <Azure Communication Services Resource name>.<Entra Application ID>.<Entra Tenant ID>
+smtp password - <myapp secret key>
+ 
+Final Syntax - 
+## EMAIL_SERVER=smtp://username:password@smtp.example.com:587
