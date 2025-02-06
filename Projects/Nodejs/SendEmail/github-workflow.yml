@@ -1,0 +1,41 @@
+name: Sample Workflow
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest   
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4  
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          check-latest: true
+
+      - name: Send Email with Azure Communication Service
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: '587'
+          SMTP_SECURE: 'false'
+          FROM_EMAIL: ${{ secrets.SMTP_EMAIL_FROM }}
+          TO_EMAIL: ${{ secrets.SMTP_EMAIL_TO }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_ATTACHMENT_PATH: './dist/index.html'
+          EMAIL_ATTACHMENT_FILENAME: 'index.html'
+          EMAIL_SUBJECT: 'Sample Email'
+          EMAIL_BODY: |
+            Hi,
+
+            Note: This is an automated email from ci-cd pipeline.
+            Please find the sample file attached to this email.
+
+            Regards,
+            DevOps Team
+        run: node sendEmail.js
