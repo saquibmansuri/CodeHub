@@ -27,8 +27,7 @@ jobs:
           TO_EMAIL: ${{ secrets.SMTP_EMAIL_TO }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          EMAIL_ATTACHMENT_PATH: './dist/index.html'
-          EMAIL_ATTACHMENT_FILENAME: 'index.html'
+          EMAIL_ATTACHMENT_PATH: './dist/, ./package.json'
           EMAIL_SUBJECT: 'Sample Email'
           EMAIL_BODY: |
             Hi,
