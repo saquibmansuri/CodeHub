@@ -1,5 +1,15 @@
 # This file contains all the useful & cool repositories/blogs that I've discovered
 
+# Trending AI tools
+trai.ai
+aide.dev
+bolt
+repl.it
+lovable.dev
+cursor
+windsurf
+github copilot
+
 # Docker-Autoheal
 https://github.com/willfarrell/docker-autoheal
 
