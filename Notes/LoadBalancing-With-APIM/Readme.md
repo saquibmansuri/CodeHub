@@ -143,9 +143,10 @@ Note: Remember to remove {api-key} if thats not required in your case.
    }
    ```
 
-### 6. Testing in Postman  
+### 7. Testing Load Balancing Setup Using Python Code  
 For testing/verifying the load balancer setup, go to the file in this directory - "test-loadbalancer-setup.ipynb"
 Change the apim url and subscription key, and run the code.
+You will see clearly where the request went and I've also added logic which would show a colorful graph to display the results
 
 ## How It Works
 
