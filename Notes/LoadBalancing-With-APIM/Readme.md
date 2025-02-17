@@ -143,6 +143,10 @@ Note: Remember to remove {api-key} if thats not required in your case.
    }
    ```
 
+### 6. Testing in Postman  
+For testing/verifying the load balancer setup, go to the file in this directory - "test-loadbalancer-setup.ipynb"
+Change the apim url and subscription key, and run the code.
+
 ## How It Works
 
 1. **Load Balancing:** Uses a random number generator to distribute requests between two endpoints.
