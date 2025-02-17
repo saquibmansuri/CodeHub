@@ -72,34 +72,47 @@ Note: Remember to remove {api-key} if thats not required in your case.
         <set-header name="Content-Type" exists-action="override">
             <value>application/json</value>
         </set-header>
+        <set-variable name="selected-backend" value="@(new Random().Next(2))" />
         <choose>
-            <when condition="@(new Random().Next(2) == 0)">
+            <when condition="@(context.Variables.GetValueOrDefault<int>("selected-backend") == 0)">
                 <set-backend-service base-url="{{endpoint-1}}" />
+                <set-variable name="backend-name" value="Endpoint-1" />
             </when>
             <otherwise>
                 <set-backend-service base-url="{{endpoint-2}}" />
+                <set-variable name="backend-name" value="Endpoint-2" />
             </otherwise>
         </choose>
+        <set-header name="X-Selected-Backend" exists-action="override">
+            <value>@(context.Variables.GetValueOrDefault<string>("backend-name"))</value>
+        </set-header>
     </inbound>
     <backend>
-        <retry count="1" interval="0" first-fast-retry="true" 
-               condition="@(context.Response.StatusCode == 429 || context.Response.StatusCode == 503)">
-            <forward-request buffer-request-body="true" />
-        </retry>
+        <forward-request timeout="300" buffer-request-body="true" />
     </backend>
     <outbound>
         <base />
-        <set-header name="X-Powered-By" exists-action="delete" />
+        <set-header name="X-Selected-Backend" exists-action="override">
+            <value>@(context.Variables.GetValueOrDefault<string>("backend-name"))</value>
+        </set-header>
     </outbound>
     <on-error>
         <base />
-        <choose>
-            <when condition="@(context.Response.StatusCode == 503)">
-                <return-response>
-                    <set-status code="503" reason="Service Unavailable" />
-                </return-response>
-            </when>
-        </choose>
+        <set-header name="X-Selected-Backend" exists-action="override">
+            <value>@(context.Variables.GetValueOrDefault<string>("backend-name"))</value>
+        </set-header>
+        <set-variable name="errorMessage" value="@(context.LastError.Message)" />
+        <return-response>
+            <set-status code="@(context.Response.StatusCode)" reason="@(context.Response.StatusReason)" />
+            <set-header name="Content-Type" exists-action="override">
+                <value>application/json</value>
+            </set-header>
+            <set-body>@{
+                return new JObject(
+                    new JProperty("error", context.LastError.Message)
+                ).ToString();
+            }</set-body>
+        </return-response>
     </on-error>
 </policies>
 ```
