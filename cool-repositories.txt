@@ -34,3 +34,8 @@ https://github.com/Azure-Samples/AI-Gateway
 
 # Awesome compose projects
 https://github.com/docker/awesome-compose
+
+# Manage multiple github accounts using SSH Keys
+https://gist.github.com/rahularity/86da20fe3858e6b311de068201d279e3
+
+
