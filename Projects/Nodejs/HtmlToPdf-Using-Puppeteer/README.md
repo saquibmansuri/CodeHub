@@ -25,7 +25,7 @@ A Node.js application using Puppeteer to download PDFs from web pages. This appl
 
    ```bash
    git clone <repository-url>
-   cd pdf-downloader
+   cd <project-directory>
    ```
 
 2. Install dependencies:
