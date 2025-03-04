@@ -1,0 +1,10 @@
+services:
+  pdf-downloader:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./downloads:/usr/src/app/downloads
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped 
