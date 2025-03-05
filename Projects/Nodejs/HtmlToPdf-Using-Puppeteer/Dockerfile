@@ -1,6 +1,6 @@
-FROM node:20-bullseye
+FROM node:22-bullseye
 
-# Install Chrome dependencies
+# Install Chrome dependencies and additional fonts for emoji support
 RUN apt-get update && apt-get install -y \
     chromium \
     chromium-sandbox \
@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     fonts-thai-tlwg \
     fonts-kacst \
     fonts-freefont-ttf \
+    fonts-noto-color-emoji \
+    fonts-noto-cjk \
     libxss1 \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
@@ -32,4 +34,4 @@ RUN mkdir -p downloads
 
 EXPOSE 3000
 
-CMD [ "npm", "start" ] 
+CMD [ "npm", "start" ]
