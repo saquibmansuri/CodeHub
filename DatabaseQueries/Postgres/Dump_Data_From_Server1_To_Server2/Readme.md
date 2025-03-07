@@ -13,7 +13,7 @@ tail -f restore_output.log #for logs
 tail -f restore_progress.log #for progress  
 
 ## Step3 - Get stats
-Run stats.sh  
+Run get_stats.sh  
 
 ## Step4 - Compare Stats
 Run compare_stats.sh
