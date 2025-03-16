@@ -15,6 +15,7 @@ https://github.com/willfarrell/docker-autoheal
 
 # All trending devops tools
 https://landscape.cncf.io/
+https://github.com/wmariuss/awesome-devops
 
 # Custom NAT
 https://fck-nat.dev/stable/
@@ -38,4 +39,8 @@ https://github.com/docker/awesome-compose
 # Manage multiple github accounts using SSH Keys
 https://gist.github.com/rahularity/86da20fe3858e6b311de068201d279e3
 
+# Devops stack practice exercises
+https://github.com/bregman-arie/devops-exercises
 
+# Devops roadmap, learn devops
+https://github.com/milanm/DevOps-Roadmap
