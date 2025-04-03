@@ -44,3 +44,10 @@ https://github.com/bregman-arie/devops-exercises
 
 # Devops roadmap, learn devops
 https://github.com/milanm/DevOps-Roadmap
+
+# Html to pdf api
+https://gotenberg.dev/
+
+# Yet to figure out
+https://coolify.io/
+https://kamal-deploy.org/
