@@ -51,3 +51,7 @@ https://gotenberg.dev/
 # Yet to figure out
 https://coolify.io/
 https://kamal-deploy.org/
+
+# Microsoft Azure graphrag setup
+https://github.com/Azure-Samples/graphrag-accelerator
+
