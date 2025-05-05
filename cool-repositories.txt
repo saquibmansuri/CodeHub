@@ -55,3 +55,6 @@ https://kamal-deploy.org/
 # Microsoft Azure graphrag setup
 https://github.com/Azure-Samples/graphrag-accelerator
 
+# Autoheal unhealthy docker containers
+https://github.com/willfarrell/docker-autoheal
+
