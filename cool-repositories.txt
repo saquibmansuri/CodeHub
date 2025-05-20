@@ -58,3 +58,5 @@ https://github.com/Azure-Samples/graphrag-accelerator
 # Autoheal unhealthy docker containers
 https://github.com/willfarrell/docker-autoheal
 
+# GoogleCloud Offering - intelligent interface, translating user intent into precise Kubernetes operations
+https://github.com/GoogleCloudPlatform/kubectl-ai
