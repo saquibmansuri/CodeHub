@@ -1,0 +1,52 @@
+name: Deploy Python Function via Zip Deploy
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "function-code-directory/**"
+
+jobs:
+  deploy:
+    name: Zip & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13" # mention correct python version here
+
+      - name: Install dependencies
+        run: |
+          cd function-code-directory
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -t .
+          # Remove unnecessary files to reduce package size
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find . -name "*.pyc" -delete 2>/dev/null || true
+          find . -name "*.pyo" -delete 2>/dev/null || true
+
+      - name: Create deployment package
+        run: |
+          cd function-code-directory
+          zip -r ../deployment.zip . -x "*.git*" "*.md" "*.txt"
+
+      - name: Deploy to Lambda
+        uses: appleboy/lambda-action@v0.2.0
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: us-east-1
+          function_name: my-lambda-function-name
+          zip_file: deployment.zip
+          memory_size: 512
+          timeout: 300
+          handler: lambda_function.lambda_handler
+          runtime: python3.13
+          debug: true
+          publish: true
