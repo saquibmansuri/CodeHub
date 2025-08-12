@@ -10,6 +10,13 @@ cursor
 windsurf
 github copilot
 
+
+# AWS MCP Official Github Repo
+https://github.com/awslabs/mcp
+
+# Azure MCP Official Github Repo
+https://github.com/Azure/azure-mcp
+
 # Docker-Autoheal
 https://github.com/willfarrell/docker-autoheal
 
