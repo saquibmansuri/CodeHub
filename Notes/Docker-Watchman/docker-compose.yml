@@ -1,0 +1,21 @@
+services:
+  api:
+    image: nginx:alpine
+    restart: always
+
+  fe:
+    image: nginx:alpine
+    restart: always
+
+  watchman:
+    image: docker:cli
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Mounts the host’s Docker socket (/var/run/docker.sock) so the container can talk directly to the host Docker daemon.
+    command: >
+      sh -c "
+        docker events --filter 'event=start' --filter 'label=com.docker.compose.service=api' |
+        while read line; do
+          echo 'API service got restarted — so restarting FE service...';
+          docker restart $(docker ps -q -f label=com.docker.compose.service=fe);
+        done
+      "
