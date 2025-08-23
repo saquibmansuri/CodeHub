@@ -1,0 +1,825 @@
+{
+  "name": "N8N Nodes Walkthrough",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "32c29ce0-1a89-4cbf-983b-584f5d147080",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "welcome",
+              "name": "message",
+              "value": "Hello! This workflow was triggered manually!",
+              "type": "string"
+            },
+            {
+              "id": "timestamp",
+              "name": "triggered_at",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b6dbcc7-2faf-4241-bace-bd0d0aa4e75e",
+      "name": "Set Welcome Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        192,
+        224
+      ],
+      "id": "376330ee-6c4b-4149-87da-31401569b9a3",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "event": "folderUpdated"
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        528,
+        256
+      ],
+      "id": "f508d6c2-1580-463a-a58a-2cb97d064442",
+      "name": "Google Drive Trigger",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Core Trigger Nodes\n\n**Manual Trigger** - Manually start workflows for testing and one-time executions\n\n**Schedule Trigger** - Automatically run workflows on a time-based schedule (hourly, daily, weekly, etc.)\n\n**Google Drive Trigger** - Monitor Google Drive folders for file changes and trigger workflows automatically\n",
+        "height": 448,
+        "width": 1088
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        -48
+      ],
+      "typeVersion": 1,
+      "id": "03266031-da35-41ec-b1f5-bfaa20a38cf1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n              \"users\": [\n                {\n                  \"id\": 1,\n                  \"name\": \"Alice Johnson\",\n                  \"age\": 25,\n                  \"city\": \"New York\",\n                  \"department\": \"Engineering\",\n                  \"salary\": 75000,\n                  \"email\": \"alice.johnson@company.com\",\n                  \"phone\": \"+1-555-0101\",\n                  \"hire_date\": \"2022-03-15\",\n                  \"is_active\": true,\n                  \"skills\": [\"JavaScript\", \"Python\", \"React\"],\n                  \"manager\": \"John Smith\",\n                  \"office_location\": \"NYC-Floor-12\"\n                },\n                {\n                  \"id\": 2,\n                  \"name\": \"Bob Wilson\",\n                  \"age\": 30,\n                  \"city\": \"Los Angeles\",\n                  \"department\": \"Marketing\",\n                  \"salary\": 68000,\n                  \"email\": \"bob.wilson@company.com\",\n                  \"phone\": \"+1-555-0102\",\n                  \"hire_date\": \"2021-08-22\",\n                  \"is_active\": true,\n                  \"skills\": [\"SEO\", \"Content Marketing\", \"Analytics\"],\n                  \"manager\": \"Sarah Davis\",\n                  \"office_location\": \"LA-Floor-5\"\n                },\n                {\n                  \"id\": 3,\n                  \"name\": \"Charlie Brown\",\n                  \"age\": 35,\n                  \"city\": \"Chicago\",\n                  \"department\": \"Sales\",\n                  \"salary\": 82000,\n                  \"email\": \"charlie.brown@company.com\",\n                  \"phone\": \"+1-555-0103\",\n                  \"hire_date\": \"2020-01-10\",\n                  \"is_active\": true,\n                  \"skills\": [\"B2B Sales\", \"CRM\", \"Negotiation\"],\n                  \"manager\": \"Mike Johnson\",\n                  \"office_location\": \"CHI-Floor-8\"\n                },\n                {\n                  \"id\": 4,\n                  \"name\": \"Diana Prince\",\n                  \"age\": 28,\n                  \"city\": \"San Francisco\",\n                  \"department\": \"Design\",\n                  \"salary\": 72000,\n                  \"email\": \"diana.prince@company.com\",\n                  \"phone\": \"+1-555-0104\",\n                  \"hire_date\": \"2022-06-01\",\n                  \"is_active\": true,\n                  \"skills\": [\"UI/UX\", \"Figma\", \"Prototyping\"],\n                  \"manager\": \"Alex Chen\",\n                  \"office_location\": \"SF-Floor-3\"\n                },\n                {\n                  \"id\": 5,\n                  \"name\": \"Edward Miller\",\n                  \"age\": 42,\n                  \"city\": \"Boston\",\n                  \"department\": \"Finance\",\n                  \"salary\": 95000,\n                  \"email\": \"edward.miller@company.com\",\n                  \"phone\": \"+1-555-0105\",\n                  \"hire_date\": \"2018-11-12\",\n                  \"is_active\": true,\n                  \"skills\": [\"Financial Analysis\", \"Excel\", \"Budgeting\"],\n                  \"manager\": \"Lisa Thompson\",\n                  \"office_location\": \"BOS-Floor-15\"\n                },\n                {\n                  \"id\": 6,\n                  \"name\": \"Fiona Clark\",\n                  \"age\": 26,\n                  \"city\": \"Austin\",\n                  \"department\": \"Engineering\",\n                  \"salary\": 78000,\n                  \"email\": \"fiona.clark@company.com\",\n                  \"phone\": \"+1-555-0106\",\n                  \"hire_date\": \"2023-02-20\",\n                  \"is_active\": true,\n                  \"skills\": [\"Node.js\", \"AWS\", \"Docker\"],\n                  \"manager\": \"John Smith\",\n                  \"office_location\": \"AUS-Floor-7\"\n                },\n                {\n                  \"id\": 7,\n                  \"name\": \"George Lee\",\n                  \"age\": 33,\n                  \"city\": \"Seattle\",\n                  \"department\": \"Product\",\n                  \"salary\": 89000,\n                  \"email\": \"george.lee@company.com\",\n                  \"phone\": \"+1-555-0107\",\n                  \"hire_date\": \"2021-04-18\",\n                  \"is_active\": false,\n                  \"skills\": [\"Product Management\", \"Agile\", \"Analytics\"],\n                  \"manager\": \"Rachel Green\",\n                  \"office_location\": \"SEA-Floor-9\"\n                },\n                {\n                  \"id\": 8,\n                  \"name\": \"Hannah White\",\n                  \"age\": 29,\n                  \"city\": \"Miami\",\n                  \"department\": \"HR\",\n                  \"salary\": 65000,\n                  \"email\": \"hannah.white@company.com\",\n                  \"phone\": \"+1-555-0108\",\n                  \"hire_date\": \"2022-09-05\",\n                  \"is_active\": true,\n                  \"skills\": [\"Recruitment\", \"Employee Relations\", \"Compliance\"],\n                  \"manager\": \"David Brown\",\n                  \"office_location\": \"MIA-Floor-2\"\n                }\n              ],\n            }",
+        "options": {}
+      },
+      "id": "fc298266-ba9b-4a98-b92b-865121de4bd5",
+      "name": "Create Sample Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "users",
+        "options": {}
+      },
+      "id": "9afebce3-6fcd-477c-bff3-f553827821c7",
+      "name": "Split Users Array",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        368,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "name"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        688,
+        848
+      ],
+      "id": "79f510ef-f013-4a61-b3bb-72c14685d9bb",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c56c3b0e-2352-491c-8cb0-cf185e4e59ad",
+              "name": "first_name",
+              "value": "={{ $json.name.split(\" \")[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "30a485c8-7ec7-4464-8275-34ccb7177207",
+              "name": "last_name",
+              "value": "={{ $json.name.split(\" \")[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        688,
+        1040
+      ],
+      "id": "9b00b20d-236d-4c3e-a08a-d738ab46346c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "83ce4191-a7b6-4c29-8b5e-b96ced03385f",
+              "leftValue": "={{$json.first_name}}",
+              "rightValue": "Alice",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        944
+      ],
+      "id": "3fa66118-87d1-4106-84e6-840f63624b37",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  item.json.hire_date = Date();\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        1120
+      ],
+      "id": "83b410af-263f-47d5-945d-7cd53e5dbbb0",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "content": "## Data Processing Nodes\n\n**Create Sample Data** - Generate mock JSON data for testing and development\n\n**Split Users Array** - Break down arrays into individual items for processing\n\n**Aggregate** - Combine and summarize data from multiple items\n\n**Edit Fields** - Transform data by adding, modifying, or extracting specific fields\n\n**If** - Create conditional logic to route data based on specific criteria\n\n**Code** - Execute custom JavaScript for complex data transformations\n",
+        "height": 704,
+        "width": 1408
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "929a2224-0ea0-40b7-8825-4543471b0a6a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Connectivity and API Nodes\n\n**Webhook** - Receive HTTP requests from external services to trigger workflows\n\n**Respond to Webhook** - Send HTTP responses back to webhook callers\n\n**HTTP Request** - Make API calls to external services and retrieve data\n",
+        "height": 400,
+        "width": 912
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        1424
+      ],
+      "typeVersion": 1,
+      "id": "c18485a6-8dbb-431c-bf97-d43e605db461",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "7d55811a-6687-45d8-bf31-26cf573cc51c",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -64,
+        1632
+      ],
+      "id": "ad8a965e-dd56-4756-be09-ce2c2cbdb054",
+      "name": "Webhook",
+      "webhookId": "7d55811a-6687-45d8-bf31-26cf573cc51c"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"response\": \"{{ $json.body.data }}\"\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        384,
+        1632
+      ],
+      "id": "95f0b0c7-7b3f-45b3-90cf-10aa0f160d0e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dummyjson.com/posts/add",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "LLM WorkFlows"
+            },
+            {
+              "name": "userId",
+              "value": "12"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        1488
+      ],
+      "id": "69513531-3c6d-4f15-ab4a-db07a2eec303",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "content": "## Storage Nodes\n\n**Upload file (Google Drive)** - Store files and documents in Google Drive cloud storage\n\n**Create spreadsheet (Google Sheets)** - Generate and manage spreadsheets for data organization\n\n**Insert rows in a table (Postgres)** - Store structured data in PostgreSQL databases",
+        "height": 480,
+        "width": 1360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        2016
+      ],
+      "typeVersion": 1,
+      "id": "3a43a983-2f4c-4e7f-a129-3973824dc2df",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -64,
+        2208
+      ],
+      "id": "fcc4d246-3758-406a-83ed-fa2e18da2855",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7W00jfmja5Obsxec",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "spreadsheet",
+        "title": "store_data",
+        "sheetsUi": {
+          "sheetValues": [
+            {
+              "title": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        96,
+        2320
+      ],
+      "id": "6ee9dc20-e060-4940-98e6-7243efbd6c22",
+      "name": "Create spreadsheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "q53ssd4V5vqemxhF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        608,
+        2128
+      ],
+      "id": "714d0a87-0e43-47c1-9cec-7fbaf26684e0",
+      "name": "Insert rows in a table",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## AI Nodes\n\n**AI Agent** - Autonomous AI that can use tools and make decisions to complete complex tasks\n\n**Basic LLM Chain** - Simple language model interface for text generation and analysis",
+        "height": 400,
+        "width": 816
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        2560
+      ],
+      "typeVersion": 1,
+      "id": "31cdb18e-e1fe-4587-8591-0c06d4965f80",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        2736
+      ],
+      "id": "2fe6180b-cd2e-4817-b662-0ec091c82ec1",
+      "name": "AI Agent",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -128,
+        2736
+      ],
+      "id": "5edcbd04-4dbd-4875-b21f-f3a3d9bb8614",
+      "name": "Basic LLM Chain",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n              \"users\": [\n                {\n                  \"id\": 1,\n                  \"name\": \"Alice Johnson\",\n                  \"age\": 25,\n                  \"city\": \"New York\",\n                  \"department\": \"Engineering\",\n                  \"salary\": 75000,\n                  \"email\": \"alice.johnson@company.com\",\n                  \"phone\": \"+1-555-0101\",\n                  \"hire_date\": \"2022-03-15\",\n                  \"is_active\": true,\n                  \"skills\": [\"JavaScript\", \"Python\", \"React\"],\n                  \"manager\": \"John Smith\",\n                  \"office_location\": \"NYC-Floor-12\"\n                },\n                {\n                  \"id\": 2,\n                  \"name\": \"Bob Wilson\",\n                  \"age\": 30,\n                  \"city\": \"Los Angeles\",\n                  \"department\": \"Marketing\",\n                  \"salary\": 68000,\n                  \"email\": \"bob.wilson@company.com\",\n                  \"phone\": \"+1-555-0102\",\n                  \"hire_date\": \"2021-08-22\",\n                  \"is_active\": true,\n                  \"skills\": [\"SEO\", \"Content Marketing\", \"Analytics\"],\n                  \"manager\": \"Sarah Davis\",\n                  \"office_location\": \"LA-Floor-5\"\n                },\n                {\n                  \"id\": 3,\n                  \"name\": \"Charlie Brown\",\n                  \"age\": 35,\n                  \"city\": \"Chicago\",\n                  \"department\": \"Sales\",\n                  \"salary\": 82000,\n                  \"email\": \"charlie.brown@company.com\",\n                  \"phone\": \"+1-555-0103\",\n                  \"hire_date\": \"2020-01-10\",\n                  \"is_active\": true,\n                  \"skills\": [\"B2B Sales\", \"CRM\", \"Negotiation\"],\n                  \"manager\": \"Mike Johnson\",\n                  \"office_location\": \"CHI-Floor-8\"\n                },\n                {\n                  \"id\": 4,\n                  \"name\": \"Diana Prince\",\n                  \"age\": 28,\n                  \"city\": \"San Francisco\",\n                  \"department\": \"Design\",\n                  \"salary\": 72000,\n                  \"email\": \"diana.prince@company.com\",\n                  \"phone\": \"+1-555-0104\",\n                  \"hire_date\": \"2022-06-01\",\n                  \"is_active\": true,\n                  \"skills\": [\"UI/UX\", \"Figma\", \"Prototyping\"],\n                  \"manager\": \"Alex Chen\",\n                  \"office_location\": \"SF-Floor-3\"\n                },\n                {\n                  \"id\": 5,\n                  \"name\": \"Edward Miller\",\n                  \"age\": 42,\n                  \"city\": \"Boston\",\n                  \"department\": \"Finance\",\n                  \"salary\": 95000,\n                  \"email\": \"edward.miller@company.com\",\n                  \"phone\": \"+1-555-0105\",\n                  \"hire_date\": \"2018-11-12\",\n                  \"is_active\": true,\n                  \"skills\": [\"Financial Analysis\", \"Excel\", \"Budgeting\"],\n                  \"manager\": \"Lisa Thompson\",\n                  \"office_location\": \"BOS-Floor-15\"\n                },\n                {\n                  \"id\": 6,\n                  \"name\": \"Fiona Clark\",\n                  \"age\": 26,\n                  \"city\": \"Austin\",\n                  \"department\": \"Engineering\",\n                  \"salary\": 78000,\n                  \"email\": \"fiona.clark@company.com\",\n                  \"phone\": \"+1-555-0106\",\n                  \"hire_date\": \"2023-02-20\",\n                  \"is_active\": true,\n                  \"skills\": [\"Node.js\", \"AWS\", \"Docker\"],\n                  \"manager\": \"John Smith\",\n                  \"office_location\": \"AUS-Floor-7\"\n                },\n                {\n                  \"id\": 7,\n                  \"name\": \"George Lee\",\n                  \"age\": 33,\n                  \"city\": \"Seattle\",\n                  \"department\": \"Product\",\n                  \"salary\": 89000,\n                  \"email\": \"george.lee@company.com\",\n                  \"phone\": \"+1-555-0107\",\n                  \"hire_date\": \"2021-04-18\",\n                  \"is_active\": false,\n                  \"skills\": [\"Product Management\", \"Agile\", \"Analytics\"],\n                  \"manager\": \"Rachel Green\",\n                  \"office_location\": \"SEA-Floor-9\"\n                },\n                {\n                  \"id\": 8,\n                  \"name\": \"Hannah White\",\n                  \"age\": 29,\n                  \"city\": \"Miami\",\n                  \"department\": \"HR\",\n                  \"salary\": 65000,\n                  \"email\": \"hannah.white@company.com\",\n                  \"phone\": \"+1-555-0108\",\n                  \"hire_date\": \"2022-09-05\",\n                  \"is_active\": true,\n                  \"skills\": [\"Recruitment\", \"Employee Relations\", \"Compliance\"],\n                  \"manager\": \"David Brown\",\n                  \"office_location\": \"MIA-Floor-2\"\n                }\n              ],\n            }",
+        "options": {}
+      },
+      "id": "4a546d84-3731-4bd5-a869-1f4f0047e0e3",
+      "name": "Create Sample Data1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        368,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "users",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        608,
+        2320
+      ],
+      "id": "b994022f-c60f-4fc5-ac69-7fd4b9d30335",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').item.json.spreadsheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create spreadsheet').item.json.sheets[0].properties.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "age",
+              "displayName": "age",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "salary",
+              "displayName": "salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "hire_date",
+              "displayName": "hire_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "is_active",
+              "displayName": "is_active",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skills",
+              "displayName": "skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "manager",
+              "displayName": "manager",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "office_location",
+              "displayName": "office_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        2320
+      ],
+      "id": "e525c6e4-816b-4c78-8b1d-2e2ac45c8d60",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "q53ssd4V5vqemxhF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "eefcb246-596b-4115-8a75-ccda2f6ce258",
+              "name": "body.data",
+              "value": "={{ $json.body.data }} is executing this workflow",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        1632
+      ],
+      "id": "99c6521f-43f6-4e0a-90b7-0dc2af5c2582",
+      "name": "Set Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Welcome Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Welcome Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Welcome Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sample Data": {
+      "main": [
+        [
+          {
+            "node": "Split Users Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Users Array": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sample Data1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Create Sample Data1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fc8f29ec-4817-4798-8fd2-c1d2d79750c0",
+  "meta": {
+    "instanceId": "899396e891cc34e50afafd214dc6b5733cee3fbb2e8f9e0b39dfe1f4c7e2272a"
+  },
+  "id": "s1QUIpVMSSfai4NE",
+  "tags": []
+}

@@ -1,0 +1,747 @@
+{
+  "name": "Topic Research with AI Reflect-Refine Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Topic Content Generation",
+        "formDescription": "Enter a topic to generate and refine content with AI research",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "topic",
+              "fieldType": "textInput",
+              "placeholder": "e.g., AI automation, electric vehicles, quantum computing",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "content_type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Blog Article"
+                  },
+                  {
+                    "option": "Marketing Content"
+                  },
+                  {
+                    "option": "Technical Analysis"
+                  },
+                  {
+                    "option": "Industry Report"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "target_audience",
+              "placeholder": "e.g., business executives, developers, general public"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -1584,
+        224
+      ],
+      "id": "39d2cd9d-e56f-4e97-9e89-a10b41898f15",
+      "name": "Topic Input Form",
+      "webhookId": "topic-content-form"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "ideas",
+              "type": "array",
+              "value": "={{ $json.output || [] }}"
+            },
+            {
+              "id": "2",
+              "name": "turn",
+              "type": "number",
+              "value": 1
+            },
+            {
+              "id": "3",
+              "name": "done",
+              "type": "string",
+              "value": "No"
+            },
+            {
+              "id": "4",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $('Topic Input Form').item.json.topic }}"
+            },
+            {
+              "id": "5",
+              "name": "research_data",
+              "type": "string",
+              "value": "={{ $('Message a model').item.json.message || $('Message a model').item.json.content || $('Message a model').item.json.output || 'No research data available' }}"
+            },
+            {
+              "id": "6",
+              "name": "max_turns",
+              "type": "number",
+              "value": 3
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        176
+      ],
+      "id": "5569d780-b3ca-4ab2-b47e-db41a264a53b",
+      "name": "Initialize Loop Data",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              },
+              "leftValue": "={{ $json.turn }}",
+              "rightValue": "={{ $json.max_turns }}"
+            },
+            {
+              "id": "2",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "caseSensitive": false
+              },
+              "leftValue": "={{ $json.done }}",
+              "rightValue": "Yes"
+            },
+            {
+              "id": "3",
+              "operator": {
+                "type": "array",
+                "operation": "lengthEqual"
+              },
+              "leftValue": "={{ $json.ideas }}",
+              "rightValue": 0
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        336
+      ],
+      "id": "dacdd4bf-5b14-4a6b-b127-39e7179c62c0",
+      "name": "Check Exit Conditions",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a critical content analyst. Review these content ideas for the topic: {{ $json.topic }}\n\nIdeas to review:\n{{ JSON.stringify($json.ideas, null, 2) }}\n\nProvide constructive criticism for each idea:\n1. What are the weaknesses?\n2. What is missing?\n3. How can each be improved?\n4. Are they engaging enough for the target audience?\n\nBe concise, specific and actionable in your feedback.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        48,
+        -48
+      ],
+      "id": "f30a58ce-053c-46a4-95b6-85d5c3cae52d",
+      "name": "Content Critic",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the original ideas and critic feedback, create 2 improved content concepts.\n\nOriginal Ideas:\n{{ JSON.stringify($('Initialize Loop Data').item.json.ideas, null, 2) }}\n\nResearch Data:\n{{ $('Initialize Loop Data').item.json.research_data.substring(0, 1000) }}...\n\nCritic Feedback:\n{{ $json.text }}\n\nTopic: {{ $('Initialize Loop Data').item.json.topic }}\n\nCreate refined ideas that address the criticism and incorporate latest research.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        512,
+        -48
+      ],
+      "id": "d1481159-edaa-4958-9526-69e5ada230b5",
+      "name": "Content Refiner",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"title\": \"Improved Title 1\",\n    \"angle\": \"Enhanced approach with better angle\",\n    \"key_points\": [\"Enhanced point 1\", \"Enhanced point 2\", \"Enhanced point 3\"],\n    \"improvements\": \"Description of what was improved from original\"\n  },\n  {\n    \"title\": \"Improved Title 2\",\n    \"angle\": \"Refined approach\",\n    \"key_points\": [\"Refined point 1\", \"Refined point 2\", \"Refined point 3\"],\n    \"improvements\": \"Description of improvements made\"\n  }\n]",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        640,
+        224
+      ],
+      "id": "e3d9af4a-8fe0-4bd0-bda7-1692d9c42813",
+      "name": "Refiner Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Evaluate these refined content ideas for the topic: {{ $('Initialize Loop Data').item.json.topic }}\n\nRefined Ideas:\n{{ JSON.stringify($json.output, null, 2) }}\n\nIteration: {{ $('Initialize Loop Data').item.json.turn }}\n\nRank the 3 ideas and determine if they are compelling enough for publication or need further refinement. Consider:\n- Originality and uniqueness\n- Relevance to target audience\n- Actionable value\n- Market appeal\n\nDecide if quality is sufficient (done = Yes) or needs more work (done = No).",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        976,
+        -48
+      ],
+      "id": "71b8f6e6-2e0b-4989-bb3f-c1ad29a58b8a",
+      "name": "Content Evaluator",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process evaluation results and prepare for next iteration\nlet processedResult;\n\ntry {\n  const evaluation = $json.output || {};\n  \n  // Get CURRENT turn from the loop data\n  const loopData = $('Initialize Loop Data').item.json;\n  const currentTurn = loopData.turn || 1;\n  const maxTurns = loopData.max_turns || 3;\n  \n  // Increment the turn counter\n  const nextTurn = currentTurn + 1;\n  \n  // Extract evaluation data with fallbacks\n  const ideas = evaluation.ideas || [];\n  const done = evaluation.done || \"No\";\n  const qualityAssessment = evaluation.quality_assessment || \"No assessment provided\";\n  const recommendations = evaluation.recommendations || \"Continue refinement\";\n  \n  // Force completion if we've hit max turns or have no ideas\n  const shouldForceComplete = nextTurn > maxTurns || ideas.length === 0;\n  const finalDone = shouldForceComplete ? \"Yes\" : done;\n  \n  console.log(`TURN PROCESSING: ${currentTurn} -> ${nextTurn}, Done: ${finalDone}, Max: ${maxTurns}`);\n  \n  processedResult = {\n    ideas: ideas,\n    turn: nextTurn,\n    done: finalDone,\n    topic: loopData.topic,\n    research_data: loopData.research_data,\n    max_turns: maxTurns,\n    quality_assessment: qualityAssessment,\n    recommendations: recommendations,\n    iteration_complete: currentTurn\n  };\n  \n} catch (error) {\n  // Error handling - force completion\n  console.error('Process Iteration Error:', error);\n  processedResult = {\n    ideas: [],\n    turn: 99, // Force high number to trigger exit\n    done: \"Yes\",\n    topic: \"Error Processing\",\n    research_data: \"Error occurred\",\n    max_turns: 3,\n    quality_assessment: \"Processing error occurred\",\n    recommendations: \"Please review workflow configuration\",\n    error: error.message\n  };\n}\n\nreturn [{ json: processedResult }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        336
+      ],
+      "id": "e0df1b6e-9b56-4c2a-88af-d58daf2da35e",
+      "name": "Process Iteration Results",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "ideas",
+              "type": "array",
+              "value": "={{ $json.ideas }}"
+            },
+            {
+              "id": "2",
+              "name": "turn",
+              "type": "number",
+              "value": "={{ $json.turn }}"
+            },
+            {
+              "id": "3",
+              "name": "done",
+              "type": "string",
+              "value": "={{ $json.done }}"
+            },
+            {
+              "id": "4",
+              "name": "topic",
+              "type": "string",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "id": "5",
+              "name": "research_data",
+              "type": "string",
+              "value": "={{ $json.research_data }}"
+            },
+            {
+              "id": "6",
+              "name": "max_turns",
+              "type": "number",
+              "value": "={{ $json.max_turns }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        624
+      ],
+      "id": "703f509a-3ce4-4178-b685-3948baf85234",
+      "name": "Update Loop Data",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a comprehensive final report based on the refined content ideas:\n\nTopic: {{ $json.topic }}\n\nFinal Ideas:\n{{ JSON.stringify($json.ideas, null, 2) }}\n\nResearch Data:\n{{ $json.research_data.substring(0, 1500) }}...\n\n\nIterations Completed: {{ $json.iteration_complete || 'Unknown' }}\n\nGenerate:\n1. Executive Summary\n2. Top 3 Content Recommendations (detailed)\n3. Content Strategy Suggestions\n4. Key Research Insights\n5. Implementation Timeline\n6. Success Metrics\n7. Next Steps\n\nFormat as a professional report with clear sections.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        112,
+        576
+      ],
+      "id": "6fe50566-6424-4c87-93a3-ba5c7ecbd7de",
+      "name": "Generate Final Report",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"ideas\": [\n    {\n      \"title\": \"Best refined title\",\n      \"angle\": \"Most compelling angle\",\n      \"key_points\": [\"Strong point 1\", \"Strong point 2\", \"Strong point 3\"],\n      \"rank\": 1,\n      \"score\": 9.2\n    },\n    {\n      \"title\": \"Second best title\",\n      \"angle\": \"Good angle\",\n      \"key_points\": [\"Good point 1\", \"Good point 2\", \"Good point 3\"],\n      \"rank\": 2,\n      \"score\": 8.7\n    },\n    {\n      \"title\": \"Third title\",\n      \"angle\": \"Decent angle\",\n      \"key_points\": [\"Point 1\", \"Point 2\", \"Point 3\"],\n      \"rank\": 3,\n      \"score\": 8.1\n    }\n  ],\n  \"done\": \"Yes\",\n  \"turn\": 2,\n  \"quality_assessment\": \"Overall quality and readiness assessment\",\n  \"recommendations\": \"Next steps or final recommendations\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        256
+      ],
+      "id": "49909273-2595-4644-9870-2bb4b5b2a2c0",
+      "name": "Evaluator Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "sonar",
+        "messages": {
+          "message": [
+            {
+              "content": "=Research the topic: {{ $('Topic Input Form').item.json.topic }}. \n\nProvide comprehensive research including:\n- Latest trends and developments\n- Key insights and market analysis\n- Recent news and expert opinions\n- Statistical data and facts\n- Current challenges and opportunities\n- Future outlook and predictions\n\nTarget audience: {{ $('Topic Input Form').item.json.target_audience || 'general audience' }}\nContent type: {{ $('Topic Input Form').item.json.content_type || 'general content' }}\n\nFocus on current, actionable information that would be valuable for content creation. {{ $json.topic }}"
+            }
+          ]
+        },
+        "simplify": true,
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.3,
+          "topP": 0.9,
+          "returnRelatedQuestions": true,
+          "searchRecency": "month"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        -1136,
+        112
+      ],
+      "id": "bf69a02b-0913-419b-80b2-b2b0d43515c7",
+      "name": "Message a model",
+      "credentials": {
+        "perplexityApi": {
+          "id": "27YuTvRmuTIdv0b7",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 4000,
+          "temperature": 0.8
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        432
+      ],
+      "id": "f7575cec-8192-455e-872e-ad57896e2d0e",
+      "name": "Google Gemini Model 1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Jluu2NCdnFOVbWr2",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"title\": \"Example Title 1\",\n    \"angle\": \"Unique approach or perspective\",\n    \"key_points\": [\"Key insight 1\", \"Key insight 2\", \"Key insight 3\"]\n  },\n  {\n    \"title\": \"Example Title 2\",\n    \"angle\": \"Different approach\",\n    \"key_points\": [\"Key insight A\", \"Key insight B\", \"Key insight C\"]\n  }\n]",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -672,
+        384
+      ],
+      "id": "e74b67cf-9b9d-4f6c-92af-bbfab452f802",
+      "name": "Ideas Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on this research about \n\n{{ $('Topic Input Form').item.json.topic }}:\n\n{{ $('Message a model').item.json.message || $('Message a model').item.json.content || $('Message a model').item.json.output || 'No research available' }}\n\nGenerate 2 distinct content ideas for {{ $('Topic Input Form').item.json.content_type || 'content' }}. Target audience: {{ $('Topic Input Form').item.json.target_audience || 'general audience' }}.\n\nEach idea should have a compelling title, unique angle, and key points. {{ $('Topic Input Form').item.json.topic }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -784,
+        80
+      ],
+      "id": "613eb4cf-b83e-40d8-886a-11603f24b069",
+      "name": "Generate Initial Ideas",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514",
+          "cachedResultName": "Claude 4 Sonnet"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        720
+      ],
+      "id": "fbdfa8a4-f04b-4579-babe-90b7d5eedc52",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "HBCSsakCRfnDhyzN",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# 🌐 REAL-TIME RESEARCH ENGINE\n\n**Node:** Perplexity AI\n**Purpose:** Comprehensive market research\n\n**Features:**\n• Real-time web search capability\n• Industry size & growth data\n• Expert opinions compilation\n\n**Output:** 1200-1500 word structured research report\n**Quality:** Current data within 12 months\n**Sources:** Industry reports, news, academic papers",
+        "height": 604,
+        "width": 456
+      },
+      "id": "54e18b13-9152-4957-98c4-f052a5c5f316",
+      "name": "🌐 Research Engine Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1376,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 💡 CONTENT IDEATION ENGINE\n\n**Node:** Google Gemini (Creative)\n**Purpose:** Generate 3 content concepts\n\n\n**Content Framework:**\n• Research-backed ideas\n• Audience-focused approach",
+        "height": 536,
+        "width": 372,
+        "color": 4
+      },
+      "id": "8f2cf140-ccb0-4e78-a5ab-37c8e07dd317",
+      "name": "💡 Content Ideation Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        -240
+      ]
+    },
+    {
+      "parameters": {
+        "content": "#  PROFESSIONAL CONTENT CRITIC\n\n**Node:** Anthropic (Analytical)\n**Purpose:** Critical analysis of content ideas\n\n**Analysis Framework:**\n1. **Strength Assessment**\n2. **Weakness Identification**\n3. **Improvement Opportunities**\n\n\n**Output:** Structured professional feedback for refinement",
+        "height": 592,
+        "width": 446,
+        "color": 5
+      },
+      "id": "d2ac92cb-a26b-4c94-801e-e12b95c9d9cb",
+      "name": "🔍 Content Critic Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# CONTENT ENHANCEMENT ENGINE\n\n**Node:** Anthropic Claude 4 (Refiner)\n**Purpose:** Transform ideas into publication-ready concepts",
+        "height": 588,
+        "width": 408,
+        "color": 6
+      },
+      "id": "d6b3d429-8fde-4bc5-8d07-e5addaf909f0",
+      "name": "⚡ Content Refiner Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        416,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# CONTENT EVALUATOR\n\n**Node:**Anthropic Claude 4 (Editorial)\n**Purpose:** Final quality assessment\n",
+        "height": 592,
+        "width": 382
+      },
+      "id": "cf3b2e24-0bfd-407b-a441-493b2e013ba7",
+      "name": "⭐ Quality Evaluator Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 📊 EXECUTIVE STRATEGY REPORT\n\n**Node:** Google Gemini (Business)\n**Purpose:** Professional strategy document generation\n\n**Report Structure:**\n1. **Executive Summary** (key findings)\n2. **Content Recommendations** (top 3 ranked)\n3. **Research Insights** (synthesized data)\n4. **Strategy Framework** (positioning & engagement)\n5. **Implementation Timeline** (3-phase approach)\n6. **Success Metrics** (KPIs & measurements)\n7. **Strategic Recommendations** (next steps)\n",
+        "height": 720,
+        "width": 392
+      },
+      "id": "f79ceae6-e558-4c7e-884c-94646a6f1730",
+      "name": "📊 Executive Report Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        16,
+        176
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Topic Input Form": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Loop Data": {
+      "main": [
+        [
+          {
+            "node": "Check Exit Conditions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Exit Conditions": {
+      "main": [
+        [
+          {
+            "node": "Generate Final Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Content Critic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Critic": {
+      "main": [
+        [
+          {
+            "node": "Content Refiner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Refiner": {
+      "main": [
+        [
+          {
+            "node": "Content Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refiner Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Content Refiner",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Evaluator": {
+      "main": [
+        [
+          {
+            "node": "Process Iteration Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Iteration Results": {
+      "main": [
+        [
+          {
+            "node": "Update Loop Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Loop Data": {
+      "main": [
+        [
+          {
+            "node": "Check Exit Conditions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluator Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Content Evaluator",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Generate Initial Ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Model 1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Ideas Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate Initial Ideas",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ideas Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Initial Ideas",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Initial Ideas": {
+      "main": [
+        [
+          {
+            "node": "Initialize Loop Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Final Report",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Evaluator Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Refiner Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Content Critic",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Content Refiner",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Content Evaluator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ba28c0f5-031a-4310-88ae-289bc8a7661e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "899396e891cc34e50afafd214dc6b5733cee3fbb2e8f9e0b39dfe1f4c7e2272a"
+  },
+  "id": "oSpfAnFAJZD7y3Md",
+  "tags": []
+}

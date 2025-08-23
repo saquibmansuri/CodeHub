@@ -1,0 +1,600 @@
+{
+  "name": "PRD Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "prd_file",
+        "options": {}
+      },
+      "id": "76deac70-f897-4d7a-a223-098036083aba",
+      "name": "Extract PRD Content",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prd_content",
+              "name": "prd_content",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            },
+            {
+              "id": "analysis_timestamp",
+              "name": "analysis_timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0500d8ca-e91f-41c5-9d6e-da8035ff0c94",
+      "name": "Set PRD Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Meeting Transcription Analysis",
+        "formDescription": "Upload a meeting transcription file (.txt) to automatically generate a summary, extract concerns, and identify action items.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "prd_file",
+              "fieldType": "file",
+              "acceptFileTypes": ".txt",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Recepient",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -752,
+        688
+      ],
+      "id": "caeaa791-258a-4418-8c7a-751c7bc774bc",
+      "name": "On Form Submission",
+      "webhookId": "meeting-transcription-form"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        128,
+        864
+      ],
+      "id": "978bc9d1-bae4-4e8c-a1a3-1f90a8d08bb0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bX2gDRiJcJTPLPnM",
+          "name": "Google Gemini(PaLM) Api account - Prod"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1072,
+        592
+      ],
+      "id": "12c363e3-31e6-45f6-84df-e6ef86ef6854",
+      "name": "Consolidate All Analysis1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        624
+      ],
+      "id": "07993957-22c1-4922-8510-b494159c6e49",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"summary_frontend_analysis\":\"Summarize frontend analysis\",\n  \"summary_backend_analysis\":\"Summarize backend analysis\",\n  \"summary_devops_analysis\":\"Summarize devops analysis\",\n  \"summary_solution_architech_analysis\":\"Summarize solution architech analysis\",\n  \"overall_analysis\":\"Overall analysis of PRD and its feasiblity\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1536,
+        768
+      ],
+      "id": "6e9500af-39c6-4fc9-bcad-bf246c5172db",
+      "name": "Structured Output Parser4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=As a Senior Frontend Engineer, analyze this PRD from a frontend development perspective. Focus on:\n\n1. **UI/UX Requirements**: Identify specific user interface requirements, user experience considerations, and interaction patterns\n2. **Technical Feasibility**: Assess the complexity of proposed frontend features and identify potential technical challenges\n3. **Performance Impact**: Consider how the requirements might affect frontend performance, load times, and user experience\n4. **Accessibility**: Evaluate accessibility requirements and compliance considerations\n5. **Browser Compatibility**: Identify any cross-browser compatibility concerns\n6. **State Management**: Analyze data flow and state management requirements\n7. **API Integration**: Review frontend-backend integration points\n8. **Timeline Assessment**: Provide realistic development time estimates for frontend components\n\nPRD Content:\n{{ $('Set PRD Data').item.json.prd_content }}\n\nProvide your analysis in a structured format with specific recommendations and potential risks.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        384,
+        144
+      ],
+      "id": "dd612e10-da4a-4101-a434-c04d5362ac15",
+      "name": "Frontend Analysis"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=As a Senior Backend Engineer, analyze this PRD from a backend development perspective. Focus on:\n\n1. **Data Architecture**: Analyze data storage requirements, database schema implications, and data relationships\n2. **API Design**: Evaluate required APIs, endpoints, authentication, and integration patterns\n3. **Scalability**: Assess system scalability requirements and potential bottlenecks\n4. **Security**: Identify security considerations, authentication/authorization requirements, and data protection needs\n5. **Performance**: Analyze backend performance requirements, caching strategies, and optimization opportunities\n6. **Infrastructure**: Consider hosting, deployment, and infrastructure requirements\n7. **Third-party Integrations**: Evaluate external service dependencies and integration complexity\n8. **Data Migration**: Identify any data migration or compatibility concerns\n9. **Timeline Assessment**: Provide realistic development time estimates for backend components\n\nPRD Content:\n{{ $('Set PRD Data').item.json.prd_content }}\n\nProvide your analysis in a structured format with specific technical recommendations and implementation strategies.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        400,
+        336
+      ],
+      "id": "be8c2d79-ad5c-4fa6-8ef2-0337d297820f",
+      "name": "Backend Anaylsis"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=As a Senior DevOps Engineer, analyze this PRD from an infrastructure and operations perspective. Focus on:\n\n1. **Infrastructure Requirements**: Assess hosting, compute, storage, and network requirements\n2. **Deployment Strategy**: Evaluate deployment patterns, CI/CD pipeline requirements, and release strategies\n3. **Monitoring & Observability**: Identify monitoring, logging, alerting, and observability needs\n4. **Security & Compliance**: Analyze security infrastructure, compliance requirements, and audit trails\n5. **Scalability & Auto-scaling**: Assess auto-scaling requirements and load balancing strategies\n6. **Disaster Recovery**: Evaluate backup, disaster recovery, and business continuity requirements\n7. **Cost Optimization**: Identify potential cost implications and optimization opportunities\n8. **Operational Complexity**: Assess operational overhead and maintenance requirements\n9. **Timeline Assessment**: Provide realistic estimates for infrastructure setup and deployment pipelines\n\nPRD Content:\n{{ $('Set PRD Data').item.json.prd_content }}\n\nProvide your analysis in a structured format with specific infrastructure recommendations and operational considerations.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        400,
+        544
+      ],
+      "id": "c580a6f5-d986-4604-96c3-1f50a10fb808",
+      "name": "DevOps Analysis"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=As a Senior Solution Architect, analyze this PRD from a high-level system design perspective. Focus on:\n\n1. **System Architecture**: Design overall system architecture, component interactions, and technology stack recommendations\n2. **Integration Patterns**: Evaluate integration patterns, data flow, and communication protocols\n3. **Non-functional Requirements**: Assess performance, scalability, reliability, and availability requirements\n4. **Technology Selection**: Recommend appropriate technologies, frameworks, and tools\n5. **Risk Assessment**: Identify technical risks, dependencies, and mitigation strategies\n6. **Trade-off Analysis**: Analyze technical trade-offs and architectural decisions\n7. **Future Extensibility**: Evaluate how the system can evolve and scale in the future\n8. **Cross-cutting Concerns**: Address security, logging, caching, and other cross-cutting concerns\n9. **Implementation Roadmap**: Suggest phased implementation approach and architectural milestones\n\nPRD Content:\n{{ $('Set PRD Data').item.json.prd_content }}\n\nProvide your analysis in a structured format with architectural diagrams descriptions, technology recommendations, and implementation strategy.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        384,
+        736
+      ],
+      "id": "cfdff775-9b77-4118-aaa7-e2181753c733",
+      "name": "Solution Architech Analysis"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"frontend_engineer_parameters\": [\n    {\n      \"parameter\": \"User Interface (UI) and User Experience (UX)\",\n      \"description\": \"Clarity and flow of the customer-facing interface, including the voice and tone of the automated agent. Is the experience intuitive and helpful?\",\n      \"judgement_criteria\": [\n        \"How well is the conversation flow designed?\",\n        \"Is there a clear visual/auditory indication of the agent's actions (e.g., 'checking stock...', 'transferring call...')?\",\n        \"Is the design responsive and accessible?\"\n      ]\n    },\n    {\n      \"parameter\": \"Frontend Performance\",\n      \"description\": \"The speed and efficiency of the user-facing application.\",\n      \"judgement_criteria\": [\n        \"Is the response time for the agent's replies fast enough (<2s)?\",\n        \"Are there any unnecessary delays in the UI (e.g., during transitions or updates)?\"\n      ]\n    },\n    {\n      \"parameter\": \"State Management\",\n      \"description\": \"How the application manages the user's conversation state.\",\n      \"judgement_criteria\": [\n        \"Is the conversation history preserved correctly?\",\n        \"How does the system handle interruptions or timeouts?\",\n        \"Can it resume a conversation smoothly?\"\n      ]\n    }\n    ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        256
+      ],
+      "id": "5db9c302-6b17-4261-bf13-dddc2c9f3de4",
+      "name": "FE Analysis Output"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"backend_engineer_parameters\": [\n    {\n      \"parameter\": \"API Design and Integration\",\n      \"description\": \"The design of the internal and external APIs that power the agent.\",\n      \"judgement_criteria\": [\n        \"Are the APIs for the IMS and telephony system well-defined and robust?\",\n        \"Is the data format for API requests and responses efficient (e.g., JSON vs. XML)?\",\n        \"How is authentication and authorization handled for these integrations?\"\n      ]\n    },\n    {\n      \"parameter\": \"Database Schema\",\n      \"description\": \"The structure of the database that stores FAQs, user data, and conversation logs.\",\n      \"judgement_criteria\": [\n        \"Is the schema normalized and scalable?\",\n        \"Is it optimized for quick retrieval of FAQs and conversation history?\",\n        \"How is data integrity ensured?\"\n      ]\n    },\n    {\n      \"parameter\": \"Performance and Scalability\",\n      \"description\": \"The backend's ability to handle concurrent requests and grow with the business.\",\n      \"judgement_criteria\": [\n        \"Can the system handle a high volume of concurrent user sessions?\",\n        \"Is the database able to handle the expected load?\",\n        \"Are there caching mechanisms in place to improve performance?\"\n      ]\n    },\n    {\n      \"parameter\": \"Error Handling and Logging\",\n      \"description\": \"The system's ability to gracefully handle errors and log them for debugging.\",\n      \"judgement_criteria\": [\n        \"Is there a comprehensive logging system for tracking API calls and errors?\",\n        \"How does the system handle failures in third-party integrations (e.g., if the IMS is down)?\",\n        \"Are there clear error messages for the frontend to display?\"\n      ]\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        432
+      ],
+      "id": "6714c09d-0d6c-4a48-8c63-147f2c0be7af",
+      "name": "BE Analysis Output"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"devops_engineer_parameters\": [\n    {\n      \"parameter\": \"Infrastructure Provisioning and Management\",\n      \"description\": \"How the underlying infrastructure for the application will be set up, configured, and maintained.\",\n      \"judgement_criteria\": [\n        \"Is the infrastructure defined as code (IaC)?\",\n        \"Are the environments (dev, staging, production) consistent?\",\n        \"How is resource scaling managed to handle varying load?\"\n      ]\n    },\n    {\n      \"parameter\": \"CI/CD Pipeline\",\n      \"description\": \"The automation of the software delivery process from code commit to deployment.\",\n      \"judgement_criteria\": [\n        \"Is there a clear pipeline for building, testing, and deploying the application?\",\n        \"How are different environments targeted?\",\n        \"Is the process automated and reliable?\"\n      ]\n    },\n    {\n      \"parameter\": \"Monitoring and Logging\",\n      \"description\": \"The systems in place to observe the health and performance of the application and its infrastructure.\",\n      \"judgement_criteria\": [\n        \"Are key metrics (CPU, memory, request latency) being monitored?\",\n        \"Is there a centralized logging system for all services?\",\n        \"Are alerts configured for critical failures or performance degradations?\"\n      ]\n    },\n    {\n      \"parameter\": \"Security and Compliance\",\n      \"description\": \"The implementation of security best practices throughout the development and operational lifecycles.\",\n      \"judgement_criteria\": [\n        \"Are secrets and credentials managed securely (e.g., using a vault)?\",\n        \"How is network traffic secured?\",\n        \"Are there automated security scans (SAST/DAST) in the pipeline?\"\n      ]\n    },\n    {\n      \"parameter\": \"Backup and Disaster Recovery\",\n      \"description\": \"The plan for backing up data and recovering the system in the event of a failure.\",\n      \"judgement_criteria\": [\n        \"Is there an automated backup strategy for the database?\",\n        \"What is the Recovery Time Objective (RTO) and Recovery Point Objective (RPO)?\",\n        \"Is there a documented disaster recovery plan?\"\n      ]\n    }\n  ],\n  \"judgement\": {\n    \"summary\": \"The PRD provides a solid functional foundation, but the DevOps team needs to translate these requirements into a robust, automated, and secure operational framework.\",\n    \"devops_engineer_judgement\": \"The PRD touches on performance and future scalability, which are key concerns for a DevOps engineer. However, it lacks specific details on the operational requirements. For example, there's no mention of deployment strategy, infrastructure needs (e.g., Kubernetes, serverless), or a monitoring plan. **Action:** The DevOps engineer must collaborate with the solution architect and backend team to design a CI/CD pipeline, choose a containerization strategy (if applicable), set up a monitoring and alerting system, and plan for scaling and disaster recovery. They need to ensure the system is not only functional but also reliable and easy to operate in production.\"\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        640
+      ],
+      "id": "7ec281c5-5710-4c53-bd30-d69099394cb1",
+      "name": "DevOps Analysis Output"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"solution_architect_parameters\": [\n    {\n      \"parameter\": \"Overall System Architecture\",\n      \"description\": \"The high-level design of the entire system, ensuring all components work together seamlessly.\",\n      \"judgement_criteria\": [\n        \"Is the architecture scalable and resilient?\",\n        \"Does it meet the performance requirements (e.g., <2s latency)?\",\n        \"Is it cost-effective in terms of hosting and resource utilization?\"\n      ]\n    },\n    {\n      \"parameter\": \"Technology Stack Selection\",\n      \"description\": \"The choice of technologies for different components (NLP engine, database, backend framework, etc.).\",\n      \"judgement_criteria\": [\n        \"Are the chosen technologies appropriate for the project's goals?\",\n        \"Are they well-supported and maintainable?\",\n        \"Do they integrate well with each other and the existing systems?\"\n      ]\n    },\n    {\n      \"parameter\": \"Security and Compliance\",\n      \"description\": \"The measures taken to protect user data and ensure the system is secure.\",\n      \"judgement_criteria\": [\n        \"How is customer data handled and protected (e.g., during conversation logging)?\",\n        \"Are there measures to prevent unauthorized access to the IMS?\",\n        \"Does the system comply with relevant data privacy regulations?\"\n      ]\n    },\n    {\n      \"parameter\": \"Future-proofing\",\n      \"description\": \"How well the architecture is designed to accommodate future features and growth.\",\n      \"judgement_criteria\": [\n        \"Is the design modular enough to add new features like order tracking?\",\n        \"Can it be easily adapted to support multi-language capabilities?\",\n        \"Is the architecture flexible enough for new integrations in the future?\"\n      ]\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        864
+      ],
+      "id": "5b21c98f-896d-44e8-a20a-e5eb900e7ca8",
+      "name": "Solution Analysis Output"
+    },
+    {
+      "parameters": {
+        "content": "📋 **INPUT STAGE**\n\n**Form Trigger Node**\n• Type: n8n-nodes-base.formTrigger\n• Version: 2.2\n• Purpose: Creates a web form for file uploads\n\n**Setup:**\n• No credentials needed\n• Auto-generates webhook URL\n• File validation: .txt files only\n• Required field: prd_file\n\n**Features:**\n• Responsive form UI\n• File type validation\n• Required field enforcement\n• Automatic webhook creation\n\n**Usage:** Share the generated form URL with users to upload PRD documents for analysis",
+        "height": 544,
+        "width": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -912,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "9688ca6d-c0a2-4254-8ee3-48d5dbdb189d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "🔄 **DATA PROCESSING STAGE**\n\n**Extract From File Node**\n• Type: n8n-nodes-base.extractFromFile\n• Version: 1\n• Purpose: Extracts text content from uploaded files\n\n**Set Node**\n• Type: n8n-nodes-base.set\n• Version: 3.4\n• Purpose: Structures data for downstream processing\n\n**Setup:**\n• No credentials required\n• Configure binary property name: 'prd_file'\n• Set operation to 'text' extraction\n\n**Data Flow:**\n• File → Text Content\n• Add timestamp\n• Prepare for AI analysis\n\n**Key Features:**\n• Supports multiple file formats\n• Automatic text extraction\n• Data normalization",
+        "height": 688,
+        "width": 464,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -496,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "9510458b-3613-4c4d-ad98-8d432020453d",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "🤖 **AI ANALYSIS STAGE**\n\n**Google Gemini Chat Model**\n• Type: @n8n/n8n-nodes-langchain.lmChatGoogleGemini\n• Version: 1\n• Model: gemini-2.5-pro\n\n**Setup Required:**\n• Google PaLM API credentials\n• API key from Google AI Studio\n• Configure rate limits\n\n**LLM Chain Nodes (4x):**\n• Frontend Analysis Chain\n• Backend Analysis Chain  \n• DevOps Analysis Chain\n• Solution Architect Chain\n\n**Structured Output Parsers (4x):**\n• Type: @n8n/n8n-nodes-langchain.outputParserStructured\n• Version: 1.3\n• Purpose: JSON schema validation\n\n**Features:**\n• Role-based analysis prompts\n• Structured JSON outputs\n• Parallel processing\n• Context-aware responses\n\n**Analysis Focuses:**\n• Frontend: UI/UX, Performance, State Management\n• Backend: APIs, Database, Security, Scalability\n• DevOps: Infrastructure, CI/CD, Monitoring\n• Solution Architect: System Design, Technology Stack",
+        "height": 992,
+        "width": 784,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "5c7c64f1-da94-4260-83aa-f3a8e5fa4265",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=As a Technical Product Manager, create an executive summary based on all the engineering analyses. Synthesize the feedback from:\n\n1. **Frontend Engineer Analysis**: {{ $json.data[0].output.frontend_engineer_parameters}}\n\n2. **Backend Engineer Analysis**: {{\n$json.data[1].output.backend_engineer_parameters}}\n\n3. **DevOps Engineer Analysis**: {{$json.data[2].output.devops_engineer_parameters}}\n\n4. **Solution Architect Analysis**: {{  $json.data[3].output.solution_architect_parameters}}\n\nCreate a comprehensive executive summary that includes:\n\n1. **Overall Feasibility Assessment**: High-level feasibility rating with justification\n2. **Key Technical Risks**: Top 5 technical risks identified across all analyses\n3. **Critical Dependencies**: External dependencies and integration points\n4. **Resource Requirements**: Team composition and skill requirements\n5. **Timeline Synthesis**: Consolidated timeline estimates from all engineering perspectives\n6. **Budget Implications**: High-level cost considerations and optimization opportunities\n7. **Recommended Implementation Approach**: Phased rollout strategy and MVP recommendations\n8. **Success Metrics**: Technical KPIs and success criteria\n9. **Next Steps**: Immediate action items and technical proof-of-concepts needed\n\nFormat the summary for executive consumption with clear sections, bullet points, and actionable recommendations.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1392,
+        624
+      ],
+      "id": "a0bcd058-95be-4f26-a8c1-1d0ba842ae04",
+      "name": "Tech. Product Manager"
+    },
+    {
+      "parameters": {
+        "content": "📊 **CONSOLIDATION STAGE**\n\n**Merge Node**\n• Type: n8n-nodes-base.merge\n• Version: 3.2\n• Purpose: Combines 4 analysis streams\n\n**Aggregate Node**\n• Type: n8n-nodes-base.aggregate\n• Version: 1\n• Purpose: Consolidates all analysis data\n\n**Tech Product Manager Chain**\n• Type: @n8n/n8n-nodes-langchain.chainLlm\n• Version: 1.7\n• Purpose: Executive summary generation\n\n**Setup:**\n• Merge: Set to 4 inputs\n• Aggregate: Use 'aggregateAllItemData'\n• Uses same Gemini model\n\n**Features:**\n• Parallel input processing\n• Data consolidation\n• Executive-level synthesis\n• Structured final output\n\n**Output Includes:**\n• Feasibility assessment\n• Risk analysis\n• Resource requirements\n• Implementation roadmap",
+        "height": 784,
+        "width": 528,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        816,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "50e38a55-c37c-4f5b-8b33-08b38be9aec9",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "📧 **OUTPUT STAGE**\n\n**Structured Output Parser**\n• Type: @n8n/n8n-nodes-langchain.outputParserStructured\n• Version: 1.3\n• Purpose: Final analysis formatting\n\n**Gmail Node**\n• Type: n8n-nodes-base.gmail\n• Version: 2.1\n• Purpose: Email delivery of results\n\n**Setup Required:**\n• Gmail OAuth2 credentials\n• Google Cloud Console setup\n• OAuth scope: Gmail send\n\n**Configuration:**\n• Recipient: Dynamic (uses Email)\n• Subject: Dynamic (uses filename)\n• Content: Overall analysis summary\n\n**Features:**\n• Automatic email sending\n• Dynamic subject lines\n• Professional formatting\n• Credential security\n\n**Email Content:**\n• Executive summary\n• Key recommendations\n• File reference\n• Timestampe",
+        "height": 784,
+        "width": 464,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1712,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "a6fd5d08-39c1-4cb5-98b8-b254de1950db",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On Form Submission').item.json['Email Recepient']}}",
+        "subject": "=PRD Anaysis for {{ $('On Form Submission').item.binary.prd_file.fileName}}",
+        "emailType": "text",
+        "message": "={{ $json.output.overall_analysis }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1920,
+        624
+      ],
+      "id": "ec69da8c-735d-42ad-8e95-d9177dfc7fd4",
+      "name": "Send Email",
+      "webhookId": "3ebaf4dc-5cb2-4572-9248-2e1100a239f1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "6zp8Phw4hOudJCc1",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract PRD Content": {
+      "main": [
+        [
+          {
+            "node": "Set PRD Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set PRD Data": {
+      "main": [
+        [
+          {
+            "node": "Frontend Analysis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Backend Anaylsis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DevOps Analysis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Solution Architech Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Extract PRD Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Frontend Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Backend Anaylsis",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "DevOps Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Solution Architech Analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Tech. Product Manager",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidate All Analysis1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Tech. Product Manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Tech. Product Manager",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Frontend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Consolidate All Analysis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backend Anaylsis": {
+      "main": [
+        [
+          {
+            "node": "Consolidate All Analysis1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "DevOps Analysis": {
+      "main": [
+        [
+          {
+            "node": "Consolidate All Analysis1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Solution Architech Analysis": {
+      "main": [
+        [
+          {
+            "node": "Consolidate All Analysis1",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "FE Analysis Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Frontend Analysis",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BE Analysis Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Backend Anaylsis",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DevOps Analysis Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "DevOps Analysis",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solution Analysis Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Solution Architech Analysis",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tech. Product Manager": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "28f9f543-687d-4571-b7ab-9047ae9b64cb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "899396e891cc34e50afafd214dc6b5733cee3fbb2e8f9e0b39dfe1f4c7e2272a"
+  },
+  "id": "BXOYDnZ6547Kvsjp",
+  "tags": []
+}

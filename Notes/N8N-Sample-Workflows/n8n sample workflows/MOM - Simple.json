@@ -1,0 +1,248 @@
+{
+  "name": "MOM - Simple one",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Meeting Transcription Analysis",
+        "formDescription": "Upload a meeting transcription file (.txt) to automatically generate a summary, extract concerns, and identify action items.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "meeting_transcription",
+              "fieldType": "file",
+              "acceptFileTypes": ".txt",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "meeting_title",
+              "placeholder": "Enter meeting title (optional)"
+            },
+            {
+              "fieldLabel": "recipient_email",
+              "fieldType": "email",
+              "placeholder": "Email address to send results",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        976
+      ],
+      "id": "bbf6a476-b81f-4adc-a9ec-38b5bbeaf254",
+      "name": "On Form Submission",
+      "webhookId": "72bee6fd-d75c-4923-9806-cf2996cb5d8f"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "meeting_transcription",
+        "destinationKey": "transcription_text",
+        "options": {
+          "keepSource": "both"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        960
+      ],
+      "id": "098caebf-d12e-483f-9b60-c63956e27ff9",
+      "name": "Extract Transcription",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operationMode": "nodeInputBinary",
+        "chunkSize": 2400,
+        "options": {
+          "batching": {
+            "batchSize": 5
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        512
+      ],
+      "id": "6666a9ce-aa5c-46f7-ad9f-316c8c55cfaa",
+      "name": "Generate Summary",
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        672,
+        752
+      ],
+      "id": "b33c39f3-0fc0-42cb-9257-702179a0d139",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "cwMXjKM5bWZ7qM8P",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.recipient_email }}",
+        "subject": "=Meeting Analysis: {{ $json.meeting_title }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        body { \n            font-family: Arial, sans-serif; \n            line-height: 1.5; \n            color: #333; \n            margin: 0;\n            padding: 20px;\n            background-color: #ffffff;\n        }\n        .email-container {\n            max-width: 700px;\n            margin: 0 auto;\n        }\n        .header { \n            border-bottom: 2px solid #e9ecef;\n            padding-bottom: 15px;\n            margin-bottom: 25px;\n        }\n        .header h2 {\n            margin: 0 0 10px 0;\n            color: #2c3e50;\n            font-size: 22px;\n        }\n        .meeting-info {\n            color: #6c757d;\n            font-size: 14px;\n        }\n        .greeting {\n            margin-bottom: 25px;\n            line-height: 1.6;\n        }\n        .section { \n            margin-bottom: 30px; \n        }\n        .section-title { \n            color: #2c3e50; \n            font-size: 16px; \n            font-weight: bold; \n            margin-bottom: 15px; \n            border-bottom: 1px solid #dee2e6; \n            padding-bottom: 5px;\n        }\n        .summary-box {\n            background-color: #f8f9fa;\n            padding: 20px;\n            border-left: 3px solid #007bff;\n            margin-bottom: 20px;\n        }\n        .concern-item { \n            background-color: #fff3cd; \n            padding: 15px; \n            margin: 10px 0; \n            border-left: 3px solid #ffc107; \n        }\n        .concern-item h4 {\n            margin: 0 0 10px 0;\n            font-size: 15px;\n            color: #856404;\n        }\n        .action-item { \n            background-color: #d1ecf1; \n            padding: 15px; \n            margin: 15px 0; \n            border-left: 3px solid #17a2b8; \n        }\n        .action-item.high-priority { \n            border-left-color: #dc3545; \n            background-color: #f8d7da; \n        }\n        .action-item h4 {\n            margin: 0 0 8px 0;\n            font-size: 15px;\n            color: #0c5460;\n        }\n        .action-item.high-priority h4 {\n            color: #721c24;\n        }\n        .assignee { \n            font-weight: bold; \n            color: #28a745; \n        }\n        .deadline { \n            color: #dc3545; \n            font-weight: bold;\n        }\n        .priority {\n            font-weight: bold;\n            text-transform: uppercase;\n            font-size: 12px;\n        }\n        .follow-up {\n            background-color: #e2e3e5;\n            padding: 15px;\n            border-left: 3px solid #6c757d;\n            margin: 15px 0;\n        }\n        .follow-up h4 {\n            margin: 0 0 8px 0;\n            font-size: 15px;\n            color: #495057;\n        }\n        ul { \n            margin: 8px 0;\n            padding-left: 20px;\n        }\n        li {\n            margin-bottom: 5px;\n        }\n        .signature {\n            margin-top: 40px;\n            padding-top: 20px;\n            border-top: 1px solid #dee2e6;\n        }\n        .footer {\n            margin-top: 30px;\n            padding-top: 15px;\n            border-top: 1px solid #dee2e6;\n            font-size: 12px;\n            color: #6c757d;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"email-container\">\n        <div class=\"header\">\n            <h2>Meeting Summary</h2>\n            <div class=\"meeting-info\">\n                <strong>Subject:</strong> {{ $json.meeting_title }}<br>\n                <strong>Date:</strong> {{ new Date($json.timestamp).toLocaleDateString() }}<br>\n                <strong>To:</strong> {{ $json.recipient_email }}\n            </div>\n        </div>\n\n        <div class=\"greeting\">\n            Dear Team,<br><br>\n            Please find below the summary of our recent meeting along with action items and next steps.\n        </div>\n\n        <div class=\"section\">\n            <div class=\"section-title\">Meeting Summary</div>\n            <div class=\"summary-box\">\n                {{ $json.summary }}\n            </div>\n        </div>\n\n        <div class=\"section\">\n            <div class=\"section-title\">Concerns and Issues</div>\n            \n            {{ Object.keys($json.concerns.by_category).map(category => \n                '<div class=\"concern-item\">' +\n                '<h4>' + category + '</h4>' +\n                '<ul>' + \n                $json.concerns.by_category[category].map(concern => '<li>' + concern + '</li>').join('') + \n                '</ul>' +\n                '</div>'\n            ).join('') }}\n        </div>\n\n        <div class=\"section\">\n            <div class=\"section-title\">Action Items</div>\n            \n            {{ $json.action_items.items.map(item => \n                '<div class=\"action-item' + (item.priority === 'High' ? ' high-priority' : '') + '\">' +\n                '<h4>' + item.task + '</h4>' +\n                (item.assignee ? '<p><span class=\"assignee\">Assignee:</span> ' + item.assignee + '</p>' : '') +\n                (item.deadline ? '<p><span class=\"deadline\">Deadline:</span> ' + item.deadline + '</p>' : '') +\n                (item.priority ? '<p><span class=\"priority\">Priority:</span> ' + item.priority + '</p>' : '') +\n                (item.context ? '<p><strong>Context:</strong> ' + item.context + '</p>' : '') +\n                '</div>'\n            ).join('') }}\n\n            {{ $json.action_items.follow_up_meetings ? \n                $json.action_items.follow_up_meetings.map(meeting => \n                    '<div class=\"follow-up\">' +\n                    '<h4>Follow-up Meeting: ' + meeting.purpose + '</h4>' +\n                    '<p><strong>Participants:</strong> ' + meeting.participants.join(', ') + '</p>' +\n                    '<p><strong>Timeline:</strong> ' + meeting.timeline + '</p>' +\n                    '</div>'\n                ).join('') : '' }}\n        </div>\n\n        {{ $json.action_items.decisions_requiring_action.length > 0 ? \n            '<div class=\"section\">' +\n            '<div class=\"section-title\">Key Decisions</div>' +\n            '<ul>' +\n            $json.action_items.decisions_requiring_action.map(decision => '<li>' + decision + '</li>').join('') +\n            '</ul>' +\n            '</div>' : '' }}\n\n        <div class=\"signature\">\n            <p>Please review your assigned action items and reach out if you have any questions.</p>\n            <p>Best regards<br>\n        </div>\n\n        <div class=\"footer\">\n            <p><strong>Processing Status:</strong> \n            Summary: {{ $json.processing_status.summary_success ? 'Completed' : 'Failed' }} | \n            Concerns: {{ $json.processing_status.concerns_success ? 'Completed' : 'Failed' }} | \n            Actions: {{ $json.processing_status.action_items_success ? 'Completed' : 'Failed' }}</p>\n        </div>\n    </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1584,
+        688
+      ],
+      "id": "44007166-c300-4375-990f-3183188e9490",
+      "name": "Send Analysis Email",
+      "webhookId": "23458af6-1488-4dca-9efd-ed2bcf11e998",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2Z3iyh3g5THKjaDd",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## 📥 INPUT STAGE\n\n**Form Trigger Node**\n- Type: n8n-nodes-base.formTrigger\n- Version: 2.2\n- Purpose: Creates a web form for file upload\n\n**Setup Requirements:**\n- No credentials needed\n- Configure webhook ID: 'meeting-transcription-form'\n- Form accepts .txt files only\n- Requires email input for results\n\n**Features:**\n- File upload validation\n- Email validation\n- Optional meeting title field\n- Automatic webhook generation\n\n**Usage:** Users access form URL to upload meeting transcripts",
+        "height": 640,
+        "width": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -496,
+        464
+      ],
+      "typeVersion": 1,
+      "id": "e16a747e-dec0-4947-8590-e27d5a2b9bfb",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 AI PROCESSING PIPELINE\n\n### **Google Gemini Chat Model**\n- Type: @n8n/n8n-nodes-langchain.lmChatGoogleGemini\n- Version: 1.0\n- **SETUP REQUIRED:** Google PaLM API credentials\n- Credential ID: hkB6yKuaTIFf2FSl\n\n### **Summarization Chain**\n- Type: @n8n/n8n-nodes-langchain.chainSummarization\n- Version: 2.1\n- Purpose: Generates executive summary\n- Input: Binary data from transcription\n- Mode: nodeInputBinary\n",
+        "height": 1104,
+        "width": 768,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        368,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "37f19054-d7bd-4df6-87cf-2c5e3fe5c86e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 📧 EMAIL OUTPUT\n\n**Gmail Node**\n- Type: n8n-nodes-base.gmail\n- Version: 2.1\n- **SETUP REQUIRED:** Gmail OAuth2 credentials\n- Credential ID: RSgjq8n7ZJ3lr95k\n\n**Configuration:**\n- Dynamic recipient from form input\n- Subject: 'Meeting Analysis: {title}'\n- HTML formatted email\n- Error handling: continueRegularOutput\n\n**Email Features:**\n- Professional HTML template\n- Color-coded sections\n- Executive summary\n- Categorized concerns\n- Priority-marked action items\n- Processing status indicators\n- Responsive design\n\n**Template Sections:**\n- Header with meeting info\n- Executive summary\n- Concerns by category\n- Action items with priority\n- Follow-up meetings\n- Processing status\n\n**Setup Steps:**\n1. Create Gmail OAuth2 app\n2. Configure credentials in n8n\n3. Test email delivery\n4. Verify HTML rendering",
+        "height": 800,
+        "width": 656,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1296,
+        256
+      ],
+      "typeVersion": 1,
+      "id": "634a9fe8-53f0-4594-800b-44753dd01304",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## 📄 DATA EXTRACTION\n\n**Extract From File Node**\n- Type: n8n-nodes-base.extractFromFile\n- Version: 1.0\n- Operation: binaryToPropery\n\n**Setup Configuration:**\n- Source: 'meeting_transcription' (from form)\n- Destination: 'transcription_text'\n- Options: keepSource = 'both'\n- Error handling: continueRegularOutput\n- Always output data: true\n\n**Purpose:**\n- Converts uploaded file to text\n- Extracts content from .txt files\n- Maintains original binary data\n- Base64 decoding for text processing\n\n**Supported Formats:**\n- Text files (.txt)\n- Preserves file encoding\n- Handles large transcriptions\n\n**Output:**\n- Text content in JSON property\n- Available for AI processing\n- Error-resistant extraction",
+        "height": 784,
+        "width": 432,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -112,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "f3de95df-ed21-4eff-bcc0-e2a859d9175f",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Extract Transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Transcription": {
+      "main": [
+        [
+          {
+            "node": "Generate Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Analysis Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1ce6376f-27ba-4d48-a95b-17689bef6756",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "899396e891cc34e50afafd214dc6b5733cee3fbb2e8f9e0b39dfe1f4c7e2272a"
+  },
+  "id": "CAvMKziqZlhUXiLL",
+  "tags": []
+}
