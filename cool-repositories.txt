@@ -10,6 +10,11 @@ cursor
 windsurf
 github copilot
 
+# Static Website Generator AI
+https://rollout.site
+
+# AI Meme Generator
+https://supermeme.ai
 
 # AWS MCP Official Github Repo
 https://github.com/awslabs/mcp
