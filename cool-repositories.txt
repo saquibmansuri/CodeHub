@@ -10,6 +10,9 @@ cursor
 windsurf
 github copilot
 
+# Cloud Certification Exams Prep - Free Sample Questions
+https://www.examprepper.co
+
 # Static Website Generator AI
 https://rollout.site
 
@@ -21,6 +24,9 @@ https://github.com/awslabs/mcp
 
 # Azure MCP Official Github Repo
 https://github.com/Azure/azure-mcp
+
+# Hashicorp Terraform Official MCP Github Repo
+https://github.com/hashicorp/terraform-mcp-server
 
 # Docker-Autoheal
 https://github.com/willfarrell/docker-autoheal
