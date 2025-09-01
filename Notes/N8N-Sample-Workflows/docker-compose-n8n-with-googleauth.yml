@@ -1,0 +1,104 @@
+services:
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    container_name: oauth2_proxy
+    ports:
+      - "4180:4180"
+    environment:
+      - OAUTH2_PROXY_EMAIL_DOMAINS=*
+      - OAUTH2_PROXY_UPSTREAMS=http://n8n:5678
+      - OAUTH2_PROXY_REDIRECT_URL=https://n8n.mycompany.com/oauth2/callback
+      - OAUTH2_PROXY_CLIENT_ID=123456789-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com
+      - OAUTH2_PROXY_CLIENT_SECRET=thisistheclientsecret
+      - OAUTH2_PROXY_COOKIE_SECRET=thisiscookiesecret
+      - OAUTH2_PROXY_PROVIDER=google
+      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
+      - OAUTH2_PROXY_SKIP_PROVIDER_BUTTON=true #uncomment this to bypass the oauth default page
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.oauth.rule=Host(`${SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.oauth.entrypoints=websecure
+      - traefik.http.routers.oauth.tls=true
+      - traefik.http.routers.oauth.tls.certresolver=mytlschallenge
+      - traefik.http.services.oauth.loadbalancer.server.port=4180
+      - traefik.http.middlewares.oauth-auth.forwardauth.address=http://oauth2-proxy:4180
+      - traefik.http.middlewares.oauth-auth.forwardauth.authResponseHeaders=X-Auth-Request-User,X-Auth-Request-Email
+      - traefik.http.middlewares.oauth-auth.forwardauth.trustForwardHeader=true
+
+  traefik:
+    image: "traefik"
+    restart: always
+    command:
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - traefik_data:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    ports:
+      - "127.0.0.1:5678:5678"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=Host(`${SUBDOMAIN}.${DOMAIN_NAME}`)
+      - traefik.http.routers.n8n.tls=true
+      - traefik.http.routers.n8n.entrypoints=websecure
+      - traefik.http.routers.n8n.tls.certresolver=mytlschallenge
+      - traefik.http.routers.n8n.middlewares=oauth-auth@docker,n8n-headers@docker
+      - traefik.http.middlewares.n8n-headers.headers.SSLRedirect=true
+      - traefik.http.middlewares.n8n-headers.headers.STSSeconds=315360000
+      - traefik.http.middlewares.n8n-headers.headers.browserXSSFilter=true
+      - traefik.http.middlewares.n8n-headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.n8n-headers.headers.forceSTSHeader=true
+      - traefik.http.middlewares.n8n-headers.headers.SSLHost=${DOMAIN_NAME}
+      - traefik.http.middlewares.n8n-headers.headers.STSIncludeSubdomains=true
+      - traefik.http.middlewares.n8n-headers.headers.STSPreload=true
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./local-files:/files
+
+volumes:
+  n8n_data:
+  traefik_data:
+
+
+
+#####################
+#.env content
+#####################
+# DOMAIN_NAME and SUBDOMAIN together determine where n8n will be reachable from
+# The top level domain to serve from
+#DOMAIN_NAME=mycompany.com
+
+# The subdomain to serve from
+#SUBDOMAIN=n8n
+
+# Optional timezone to set which gets used by Cron and other scheduling nodes
+# New York is the default value if not set
+#GENERIC_TIMEZONE=Europe/Berlin
+
+# The email address to use for the TLS/SSL certificate creation
+#SSL_EMAIL=saquib@mycompany.com
