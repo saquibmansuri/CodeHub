@@ -18,5 +18,6 @@ sudo certbot certonly --standalone \
 
 ## You cant define ports, container names for your services, and using proxy is necessary
 
-
-
+## cronjob to renew ssl certificate
+sudo crontab -e
+0 1 * * * certbot renew --quiet && docker compose -f /home/ubuntu/prod/docker-compose.yml restart nginx-proxy
