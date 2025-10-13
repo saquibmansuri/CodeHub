@@ -1,0 +1,71 @@
+name: Build & Deploy (FE & BE)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: 
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch environment variables and Create .env
+        run: |
+          echo "Fething environment variables from github repository..."
+          echo "${{ vars.PRODUCTION_ENV }}" > .env
+
+      - name: Rsync deployments
+        uses: burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avzr --delete
+          path: .
+          remote_path: /home/ubuntu/prod
+          remote_host: ${{ secrets.PROD_SERVER_IP }}
+          remote_user: ${{ secrets.PROD_SERVER_USERNAME }}
+          remote_key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+
+      - name: Check what is modified
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'Backend/**'
+            frontend:
+              - 'Frontend/**'
+            pipeline:
+              - '.github/workflows/deploy-production.yml'
+          base: ${{ github.event.before }}
+
+      - name: Restart Backend (If Backend/ OR pipeline is modified)
+        if: steps.changes.outputs.backend == 'true' || steps.changes.outputs.pipeline == 'true'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ secrets.PROD_SERVER_USERNAME }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          command_timeout: 30m
+          script: |
+            cd /home/ubuntu/prod/
+            sudo docker compose -f docker-compose.yml build backend
+            sudo docker rollout -f docker-compose.yml -w 60 --env-file .env backend
+            for i in {1..10}; do sudo docker system prune -af && break || sleep 2; done
+
+      - name: Restart Frontend (If Frontend/ OR pipeline is modified)
+        if: steps.changes.outputs.frontend == 'true' || steps.changes.outputs.pipeline == 'true'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ secrets.PROD_SERVER_USERNAME }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          command_timeout: 30m
+          script: |
+            cd /home/ubuntu/prod/
+            sudo docker compose -f docker-compose.yml build --build-arg MY_KEY='${{ secrets.MY_KEY }}' frontend
+            sudo docker rollout -f docker-compose.yml -w 30 --env-file .env frontend
+            sudo docker compose -f docker-compose.yml restart nginx-proxy
+            for i in {1..10}; do sudo docker system prune -af && break || sleep 2; done
