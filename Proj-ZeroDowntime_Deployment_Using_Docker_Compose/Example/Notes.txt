@@ -1,0 +1,22 @@
+## Install docker rollout and beaware to add your user or root in the group, else docker wont recognize the rollout commands
+
+## Install certbot for generating ssl certificates
+
+# this creates 1 single certificate with two domains, it will only generate certs, not attach it, so need to load it in the nginx.conf 
+sudo certbot certonly --standalone \
+  -d fe.mycompany.com \
+  -d be.mycompany.com
+
+# this creates seperate certificate for the two domains, it will only generate certs, not attach it, so need to load it in the nginx.conf
+sudo certbot certonly --standalone \
+  -d fe.mycompany.com
+
+sudo certbot certonly --standalone \
+  -d be.mycompany.com
+
+## If healthcheck is not defined in compose then rollout will just wait for container to start, default time 10seconds, so its better to add healthcheck, although its not required
+
+## You cant define ports, container names for your services, and using proxy is necessary
+
+
+
