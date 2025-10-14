@@ -16,6 +16,9 @@ sudo certbot certonly --standalone \
 
 ## If healthcheck is not defined in compose then rollout will just wait for container to start, default time 10seconds, so its better to add healthcheck, although its not required
 
+## Install curl in dockerfile in final stage like this, for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 ## You cant define ports, container names for your services, and using proxy is necessary
 
 ## cronjob to renew ssl certificate
