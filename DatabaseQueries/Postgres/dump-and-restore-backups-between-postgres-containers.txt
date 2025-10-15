@@ -1,0 +1,53 @@
+# Postgres Database Dump and Restore (via Docker Containers)
+This guide explains how to take a database dump from one Postgres container and restore it into another
+
+## 🧩 1. Take a Dump from Source Container
+
+Run the following command from the host machine:
+
+```bash
+docker exec -t <source_container_id> pg_dump -U <source_user> <source_dbname> > ./<dump_filename>.dump
+```
+
+### Example
+```bash
+docker exec -t a1b2c3d4e5f6 pg_dump -U devdbuser devdb > ./devdb.dump
+```
+
+This creates a plain SQL dump file (`.dump`) in your current directory on the host.
+
+----------------------------------------------------------------------------------------------------------
+
+## 🧩 2. Restore into Target Container
+
+To restore the dump into an existing (empty) database in another container:
+Note: versions should be same of postgres
+
+```bash
+docker exec -i <target_container_id> psql -U <target_user> -d <target_dbname> < ./<dump_filename>.dump
+```
+
+### Example
+```bash
+docker exec -i f6e5d4c3b2a1 psql -U proddbuser -d proddb < ./devdb.dump
+```
+
+This imports all schema and data into the existing database.
+
+---
+
+## ⚙️ Notes
+
+- Ensure the target database already exists and is empty.
+- Both source and target containers must be running.
+- Works best when both containers run compatible Postgres versions.
+
+---
+
+## ✅ Quick Reference
+
+| Action  | Command                                                                              |
+|-------- |--------------------------------------------------------------------------------------|
+| Dump    | `docker exec -t <src_id> pg_dump -U <src_user> <src_dbname> > ./<dumpfilename>.dump` |
+| Restore | `docker exec -i <tgt_id> psql -U <tgt_user> -d <tgt_dbname> < ./<dumpfilename>.dump` |
+
