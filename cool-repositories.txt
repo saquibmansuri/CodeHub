@@ -78,3 +78,7 @@ https://github.com/willfarrell/docker-autoheal
 
 # GoogleCloud Offering - intelligent interface, translating user intent into precise Kubernetes operations
 https://github.com/GoogleCloudPlatform/kubectl-ai
+
+# Cloud audit tool for security
+Prowler - https://prowler.com/
+
