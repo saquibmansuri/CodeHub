@@ -82,3 +82,6 @@ https://github.com/GoogleCloudPlatform/kubectl-ai
 # Cloud audit tool for security
 Prowler - https://prowler.com/
 
+# Redis to Redis data transfer
+https://redis.io/docs/latest/integrate/riot/
+
