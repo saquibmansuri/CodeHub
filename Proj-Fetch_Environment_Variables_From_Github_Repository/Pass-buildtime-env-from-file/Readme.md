@@ -35,8 +35,8 @@ This is done via the `script.sh`:
 ```bash
 #!/bin/bash
 
-DOCKERFILE="fe.Dockerfile"
-ENV_FILE="frontend.env"
+DOCKERFILE="Dockerfile"
+ENV_FILE=".env"
 
 awk -v envfile="$ENV_FILE" '
 BEGIN {
@@ -75,7 +75,7 @@ BEGIN {
 
 * Inserts `ARG <var>` and `ENV <var>=$<var>` **after each WORKDIR** in your Dockerfile
 * Avoids duplicates for variables already defined from `.env`
-* Preserves any **manually defined ARG/ENV** lines in the Dockerfile
+* Preserves any **manually defined ARG/ENV** lines in the Dockerfile (pre existing)
 * Works for **multi-stage Dockerfiles** automatically
 
 **Usage:**
@@ -86,6 +86,26 @@ chmod +x script.sh
 ```
 
 After running this, your Dockerfile is ready for the build process.
+### Example Dockerfile (Single Stage) After Running `script.sh`
+
+```dockerfile
+FROM node:24-alpine
+
+WORKDIR /app
+ARG saquib
+ENV saquib=$saquib
+ARG var1
+ENV var1=$var1
+ARG var2
+ENV var2=$var2
+
+ENV PORT=3000 # this alreadt exists and stays untouched
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+```
+
 
 ---
 
