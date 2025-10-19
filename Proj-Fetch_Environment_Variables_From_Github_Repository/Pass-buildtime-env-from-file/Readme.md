@@ -2,7 +2,7 @@
 
 ## 📘 Overview
 
-Some frontend frameworks (like **Vite**, **astro*, etc.) require environment variables **at build time**, not runtime.
+Some frontend frameworks (like **vite**, **astro**, etc.) require environment variables **at build time**, not runtime.
 Using `env_file:` in Docker Compose only applies at runtime — so these frameworks won’t pick up the variables during build.
 
 This guide shows how to automatically pass all variables from a `.env` file as Docker build arguments.
@@ -35,8 +35,8 @@ This is done via the `script.sh`:
 ```bash
 #!/bin/bash
 
-DOCKERFILE="Dockerfile"
-ENV_FILE=".env"
+DOCKERFILE=${1:-Dockerfile}
+ENV_FILE=${2:-.env}
 
 awk -v envfile="$ENV_FILE" '
 BEGIN {
@@ -69,11 +69,13 @@ BEGIN {
     }
 }
 ' "$DOCKERFILE" > "$DOCKERFILE.tmp" && mv "$DOCKERFILE.tmp" "$DOCKERFILE"
+
+rm -f "$DOCKERFILE.tmp"
 ```
 
 ### Purpose of the Script
 
-* Inserts `ARG <var>` and `ENV <var>=$<var>` **after each WORKDIR** in your Dockerfile
+* Inserts `ARG <var>` and `ENV <var>=$<var>` **after each WORKDIR** in your Dockerfile (to handle multistage scenarios)
 * Avoids duplicates for variables already defined from `.env`
 * Preserves any **manually defined ARG/ENV** lines in the Dockerfile (pre existing)
 * Works for **multi-stage Dockerfiles** automatically
@@ -82,7 +84,10 @@ BEGIN {
 
 ```bash
 chmod +x script.sh
+# for using defalt values
 ./script.sh
+# for using custom file names
+./script.sh fe.Dockerfile fe.env
 ```
 
 After running this, your Dockerfile is ready for the build process.
@@ -99,7 +104,7 @@ ENV var1=$var1
 ARG var2
 ENV var2=$var2
 
-ENV PORT=3000 # this alreadt exists and stays untouched
+ENV PORT=3000 # this already exists and stays untouched
 COPY package*.json ./
 RUN npm install
 COPY . .
@@ -143,6 +148,7 @@ docker compose -f docker-compose-custom.yml build $(grep -vE '^#|^$' .env | xarg
 * Replace `myapp` with your service name.
 * Remove `-f docker-compose-custom.yml`, only use this flag if your file is not named as `docker-compose.yml`.
 * Run `script.sh` **before building**, so the Dockerfile has all the required ARG + ENV lines.
+* Recommended structure in .env files, var1='value1'
 
 ---
 
@@ -151,9 +157,13 @@ docker compose -f docker-compose-custom.yml build $(grep -vE '^#|^$' .env | xarg
 All `.env` variables are passed to the Docker build automatically, without needing to pass them manually OR adding in compose file manually:
 
 ```
---build-arg saquib --build-arg var1 --build-arg var2 ...
+--build-arg var1='value1' --build-arg var2='value2' --build-arg var3='value3' ...
+
+# FLOW
+build-arg (flag) --> ARG (in dockerfile) --> ENV (in dockerfile)
 ```
 
 ---
 
-This integrates **both the Compose command method and the Dockerfile preparation**, so your frontend builds like Vite can pick up environment variables at build time.
+This integrates **both the Compose command method and the Dockerfile preparation**, so your frontend builds like Vite can pick up environment variables at build time.  
+I HOPE DOCKER GIVES US SOME INBUILT FUNCTIONALITY TO HANDLE THIS IN AN UPDATE, FINGERS CROSSED :)
