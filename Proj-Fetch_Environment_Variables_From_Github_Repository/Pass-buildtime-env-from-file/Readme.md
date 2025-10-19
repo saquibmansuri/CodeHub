@@ -84,7 +84,7 @@ rm -f "$DOCKERFILE.tmp"
 
 ```bash
 chmod +x script.sh
-# for using defalt values
+# for using default values
 ./script.sh
 # for using custom file names
 ./script.sh fe.Dockerfile fe.env
