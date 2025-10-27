@@ -1,34 +1,56 @@
 #!/bin/bash
+set -e
+# ============================
+# Docker PostgreSQL Backup to S3
+# ============================
 
-# Container name
-CONTAINER_NAME="mydb"
-
-# Container port
-CONTAINER_PORT=5435
-
-# Define database credentials
-DB_USER="myuser"
-DB_PASSWORD="myuserpassword"
+# Variables
+CONTAINER_NAME="my_container_db"
+DB_PORT=5432
+DB_USER="admin"
+DB_PASSWORD="password"
 DB_NAME="mydb"
-BACKUP_DIR="/root/backups"
+S3_BUCKET="s3://mybucket/prod/"
+BACKUP_DIR="/home/ubuntu/backups"
 
 # Generate timestamp
-TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+TIMESTAMP=$(date +"%Y_%m_%d__%H_%M_%S")
+BACKUP_FILE="dbbackup_utc_${TIMESTAMP}.sql"
+BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILE}"
 
-# Define dump file name
-DUMP_FILE="${DB_NAME}_backup_${TIMESTAMP}.sql"
+# Ensure backup directory exists
+mkdir -p "$BACKUP_DIR"
 
-# Execute pg_dump inside the container and save dump to a file, port on which db container is running
-docker exec -t $CONTAINER_NAME pg_dump -U $DB_USER -d $DB_NAME -p $CONTAINER_PORT > $BACKUP_DIR/$DUMP_FILE
+# Create database backup from inside Docker container
+echo "Starting database backup..."
+docker exec -e PGPASSWORD=$DB_PASSWORD "$CONTAINER_NAME" pg_dump -U "$DB_USER" -d "$DB_NAME" -p "$DB_PORT" > "$BACKUP_PATH"
 
-# RETENTION POLCIY
-RETENTION_DAYS=7
-find $BACKUP_DIR -name "${DB_NAME}_backup_*.sql" -mtime +$RETENTION_DAYS -exec rm {} \;
+# Check if backup succeeded
+if [ $? -eq 0 ]; then
+    echo "Database backup successful: $BACKUP_FILE"
+else
+    echo "Database backup failed!" >&2
+    exit 1
+fi
 
-echo "Script Executed Successfully"
+# Upload to S3
+echo "Uploading backup to S3..."
+aws s3 cp "$BACKUP_PATH" "$S3_BUCKET"
 
+# Verify upload success
+if [ $? -eq 0 ]; then
+    echo "Backup uploaded to S3: $S3_BUCKET$BACKUP_FILE"
+else
+    echo "Failed to upload backup to S3!" >&2
+    exit 1
+fi
 
-# RESTORING BACKUP IN LOCAL PGADMIN
-# 1. create a new database where you want to restore 
-# 2. right click on the database and open psql tool
-# 4. run this command -  \i '<BACKUP-PATH>'    example: \i 'E:/BACKUPS/mydb_backup_20241022010002.sql'
+# Delete local file
+rm -f "$BACKUP_PATH"
+
+if [ $? -eq 0 ]; then
+    echo "Local backup file deleted. ✅ Script complete."
+else
+    echo "Failed to delete local backup file!" >&2
+    exit 1
+fi
