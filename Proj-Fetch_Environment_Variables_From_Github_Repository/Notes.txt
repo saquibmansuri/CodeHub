@@ -1,0 +1,8 @@
+# you can also pass like this simply by creating a variable in github repo settings and writing all the variables in single variable in this format
+var1='value1'
+var2='value2'
+------------------------------------------
+
+# then fetch in workflow like this
+echo "Fetching environment variables from github repository..."
+echo "${{ vars.BACKEND_ENV }}" > .env
