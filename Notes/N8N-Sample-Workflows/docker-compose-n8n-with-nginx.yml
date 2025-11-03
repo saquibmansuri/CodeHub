@@ -1,0 +1,29 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    ports:
+      - 5678:5678"
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./local-files:/files
+
+volumes:
+  n8n_data:
+
+
+#### .env ####
+#DOMAIN_NAME=mycompany.com
+#SUBDOMAIN=n8n
+# The above example serve n8n at: https://n8n.mycompany.com
+# Optional timezone to set which gets used by Cron and other scheduling nodes
+# New York is the default value if not set
+#GENERIC_TIMEZONE=Europe/Berlin
