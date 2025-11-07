@@ -1,0 +1,75 @@
+# LEGO DOC
+https://go-acme.github.io/lego/installation/
+
+# Make sure A type record is created
+curl -X "POST" "https://dns.hetzner.com/api/v1/records" \
+            -H 'Content-Type: application/json' \
+            -H 'Auth-API-Token: abc' \
+            -d $'{
+              "value": "1.2.3.4",
+              "ttl": 86400,
+              "type": "A",
+              "name": "app",
+              "zone_id": "abc"
+            }'
+
+
+# SETUP DOCKER AND COMPOSE
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo apt-get install docker-compose-plugin
+
+# SETUP LEGO DOCKER CONTAINER
+export HETZNER_DNS_API_KEY="abc"
+
+docker run --rm --name lego-cert -v ./ssl-cert:/etc/lego \
+  --env HETZNER_API_KEY=$HETZNER_DNS_API_KEY \
+  goacme/lego --email "me@gmail.com" \
+  --domains "app.mycompany.com" --accept-tos --path "/etc/lego" \
+  --dns "hetzner" run
+
+#WITH INCREASED DNS PROPAGATION WAIT TIME
+docker run --rm --name lego-cert -v ./ssl-cert-temp:/etc/lego --env HETZNER_API_KEY=abc --env HETZNER_PROPAGATION_TIMEOUT=600 goacme/lego --email "me@gmail.com" --domains "app.mycompany.com" --accept-tos --path "/etc/lego" --dns "hetzner" run
+
+#WITH INCREASED DNS PROPAGATION WAIT TIME & time between propagation check
+docker run --rm --name lego-cert -v ./ssl-cert-temp:/etc/lego --env HETZNER_API_KEY=abc --env HETZNER_POLLING_INTERVAL=10 --env HETZNER_PROPAGATION_TIMEOUT=600 goacme/lego --email "me@gmail.com" --domains "app.mycompany.com" --domains "app2.mycompany.com" --accept-tos --path "/etc/lego" --dns "hetzner" run
+
+
+---------------------------------------------------
+# TO VERIFY WHERE ARE THE CERTIFICATES
+cd root/ssl-cert/
+
+--------------------------------------------------
+
+# RENEW CERTIFICATE USING DOCKER WITHOUT RENEWHOOK SCRIPT
+
+docker run --rm --name lego-renew -v ./ssl-cert:/etc/lego \
+  --env HETZNER_API_KEY=$HETZNER_DNS_API_KEY \
+  goacme/lego --email "me@gmail.com" \
+  --domains "app.mycompany.com" --accept-tos --path "/etc/lego" \
+  --dns "hetzner" renew  --days 4
+
+# RENEW COMMAND WITH WORKING SHELL SCRIPT 
+NOTE: THE script should start with #!/bin/sh
+      THE script should be in /root/ssl-cert so that is can go in /etc/lego inside container
+
+docker run --rm -v /root/ssl-cert:/etc/lego  --env HETZNER_API_KEY=abc goacme/lego --email 'me@gmail.com' --domains 'app.mycompany.com' --accept-tos --path '/etc/lego' --dns 'hetzner' renew --days 90 --renew-hook='./renewhook.sh'
+
+-------------------------------------------------------------------------------
+# RENEW CERTIFICATE CRONJOB
+1 0 * * * docker run --rm -v /root/ssl-cert:/etc/lego --env HETZNER_API_KEY=abc goacme/lego --email "me@gmail.com" --domains "app.mycompany.com" --accept-tos --path "/etc/lego" --dns "hetzner" renew --days 4
+------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------
+
+# OTHER USEFUL COMMANDS
+
+1. TO FETCH LIST OF DNS RECORDS FROM HETZNER DNS
+
+curl -X "GET" "https://dns.hetzner.com/api/v1/records?zone_id=abc" \
+     -H 'Auth-API-Token: abc'
+
+
+2. DELETE SPECIFIC RECORD FROM HETZNER DNS
+
+curl -X "DELETE" "https://dns.hetzner.com/api/v1/records/<RECORD ID>" \
+     -H 'Auth-API-Token: abc'
