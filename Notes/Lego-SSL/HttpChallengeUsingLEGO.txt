@@ -1,0 +1,95 @@
+# LEGO DOC
+https://go-acme.github.io/lego/installation/
+
+# Make sure A type record is created (hetzner dns)
+curl -X "POST" "https://dns.hetzner.com/api/v1/records" \
+            -H 'Content-Type: application/json' \
+            -H 'Auth-API-Token: abcd' \
+            -d $'{
+              "value": "1.2.3.4",
+              "ttl": 86400,
+              "type": "A",
+              "name": "test",
+              "zone_id": "abcd"
+            }'
+
+
+# CNAME EXAMPLE
+# app.mycompany.com --> xyz.company.com
+curl -X "POST" "https://dns.hetzner.com/api/v1/records" \
+     -H 'Content-Type: application/json' \
+     -H 'Auth-API-Token: abcd' \
+     -d '{
+       "value": "xyz.company.com",
+       "ttl": 86400,
+       "type": "CNAME",
+       "name": "app",
+       "zone_id": "abcd"
+     }'
+
+
+# Install Lego 
+sudo snap install lego
+
+# Install Nginx
+apt install nginx -y
+systemctl start nginx && systemctl enable nginx
+
+# RUN LEGO
+HETZNER_API_KEY=abcd \
+lego --email me@gmail.com --dns hetzner --domains abc.mycompany.com run
+
+# THE ABOVE STEP WILL CREATE CERTIFICATES IN THIS PATH -  /var/snap/lego/common/.lego/certificates/
+
+# SETUP NGINX CONFIG FILE AND MENTION CORRECT SERVER NAME AND CERTIFICATE PATH INSIDE IT
+----------EXAMPLE START ---------------------
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name abc.mycompany.com;
+    return 301 https://$host$request_uri;  # Redirect HTTP to HTTPS
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name abc.mycompany.com;
+
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
+    ssl_certificate /var/snap/lego/common/.lego/certificates/abc.mycompany.com.crt;
+    ssl_certificate_key /var/snap/lego/common/.lego/certificates/abc.mycompany.com.key;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+-------------EXAMPLE ENDS----------------------------------
+
+# RELOAD NGINX
+systemctl reload nginx
+
+----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
+OTHER USEFUL COMMANDS
+
+
+1. TO FETCH LIST OF DNS RECORDS FROM HETZNER DNS
+
+curl -X "GET" "https://dns.hetzner.com/api/v1/records?zone_id=YtZK64JksrinbJy7KRFiVV" \
+     -H 'Auth-API-Token: abc'
+
+
+2. DELETE SPECIFIC RECORD FROM HETZNER DNS
+
+curl -X "DELETE" "https://dns.hetzner.com/api/v1/records/<RECORD ID>" \
+     -H 'Auth-API-Token: abc'
+
+
