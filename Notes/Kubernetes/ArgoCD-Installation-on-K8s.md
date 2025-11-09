@@ -73,7 +73,10 @@ Then open:
 
 #### Get Admin Password
 ```bash
+# For linux based shell
 kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
+# For windows cmd, you have to decode later
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}"
 ```
 
 **Login:**
