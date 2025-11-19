@@ -88,3 +88,19 @@ https://redis.io/docs/latest/integrate/riot/
 # COOL Personal Portfolio App
 https://codewithsadee.github.io/vcard-personal-portfolio/#
 
+# Prometheus and graffana k8s setup using helm
+https://github.com/LondheShubham153/k8s-kind-voting-app/
+https://github.com/LondheShubham153/k8s-kind-voting-app/blob/main/kind-cluster/commands.md
+https://youtu.be/DXZUunEeHqM?si=IxT_O9r2DXBTZib4
+
+# Tools for setting up k8s cluster in local for dev and testing
+Kind, Minikube
+
+# Package python application
+https://pyinstaller.org/en/stable/index.html
+
+# Python app to .exe
+https://pypi.org/project/auto-py-to-exe/
+
+# Free windows time tracking app
+https://clockify.me/
