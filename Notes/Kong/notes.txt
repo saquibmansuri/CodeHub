@@ -1,0 +1,2 @@
+# Kong demo (no frontend, only yml files and how to use kong ingress controller on your cluster) - https://youtu.be/rTcj7znJVZc?si=kjkRLNpz1ylUPS7-
+# Kong demo (frontend kong konnect) - https://youtu.be/hdE-rMAdYVY?si=ZosQBy9BCBAr3c9J
