@@ -104,3 +104,6 @@ https://pypi.org/project/auto-py-to-exe/
 
 # Free windows time tracking app
 https://clockify.me/
+
+# Expose your services using cloudflare tunnel and auth layer on top of it (zero trust demo)
+https://youtu.be/gpWo94XXrhU?si=VUx6cMDzaVtWQQIg
