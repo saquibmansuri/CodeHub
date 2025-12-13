@@ -107,3 +107,8 @@ https://clockify.me/
 
 # Expose your services using cloudflare tunnel and auth layer on top of it (zero trust demo)
 https://youtu.be/gpWo94XXrhU?si=VUx6cMDzaVtWQQIg
+
+# Tool for storing passwords - vaultwarden
+# Tool for storing environment variables for your apps - infisical
+# Tool for auditing your cloud environments - prowler
+# Tool for security and vulnarability scanner - trivy
