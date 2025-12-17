@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app1-svc
+  namespace: gw-poc-ns
+spec:
+  type: ClusterIP # you can use any service type, like node port, clusterip or loadbalancer
+  selector:
+    app: nginx  # Used nginx for poc, you can use your app image
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app2-svc
+  namespace: gw-poc-ns
+spec:
+  type: LoadBalancer # you can use any service type, like node port, clusterip or loadbalancer
+  selector:
+    app: nginx # Used nginx for poc, you can use your app image
+  ports:
+    - port: 80
+      targetPort: 80
