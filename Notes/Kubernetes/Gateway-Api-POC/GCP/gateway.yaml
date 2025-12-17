@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: saquib-gw
+  namespace: gw-poc-ns
+spec:
+  gatewayClassName: gke-l7-rilb  # use this for external gateway: gke-l7-global-external-managed
+  gatewayClassName: 
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+# Uncomment this if you already have a reserved ip that you want to use
+#  addresses:
+#    - type: NamedAddress
+#      value: saquib-lb-gw-ip
