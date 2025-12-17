@@ -6,7 +6,7 @@ metadata:
 spec:
   type: ClusterIP # you can use any service type, like node port, clusterip or loadbalancer
   selector:
-    app: nginx  # Used nginx for poc, you can use your app image
+    app: app1
   ports:
     - port: 80
       targetPort: 80
@@ -19,7 +19,7 @@ metadata:
 spec:
   type: LoadBalancer # you can use any service type, like node port, clusterip or loadbalancer
   selector:
-    app: nginx # Used nginx for poc, you can use your app image
+    app: app2
   ports:
     - port: 80
       targetPort: 80
