@@ -16,6 +16,8 @@ kind: Service
 metadata:
   name: app2-svc
   namespace: gw-poc-ns
+  annotations:
+    cloud.google.com/load-balancer-type: Internal
 spec:
   type: LoadBalancer # you can use any service type, like node port, clusterip or loadbalancer
   selector:
