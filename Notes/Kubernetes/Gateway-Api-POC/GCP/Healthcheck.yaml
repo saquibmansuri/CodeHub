@@ -1,0 +1,42 @@
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: app1-hc
+  namespace: gw-poc-ns
+spec:
+  targetRef:
+    group: ""
+    kind: Service
+    name: app1-svc
+  default:
+    checkIntervalSec: 5
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 2
+    config:
+      type: HTTP
+      httpHealthCheck:
+        port: 80
+        requestPath: /
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: app2-hc
+  namespace: gw-poc-ns
+spec:
+  targetRef:
+    group: ""
+    kind: Service
+    name: app2-svc
+  default:
+    checkIntervalSec: 5
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 2
+    config:
+      type: HTTP
+      httpHealthCheck:
+        port: 80
+        requestPath: /
+  
