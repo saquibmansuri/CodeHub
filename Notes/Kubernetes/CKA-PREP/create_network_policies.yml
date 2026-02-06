@@ -1,0 +1,48 @@
+# Network policies 
+# Network Policies in Kubernetes are used to control the communication between pods. 
+# They define which pods can communicate with each other and the traffic that is allowed between them. 
+# With Network Policies, you can create rules that allow or block traffic between pods based on factors like pod labels, namespaces, and port numbers. 
+# These policies help improve security by restricting communication to only the necessary components within the cluster.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-policy
+spec:
+  podSelector:
+    matchLabels:
+      role: db   # attached policy to this pod
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            name: api-pod
+        namespaceSelector:  # if specific namespace is required then use this
+          matchLabels:
+            name: prod
+
+      - ipBlock:           # if you want to allow ingress traffic from external ip from outide the cluster
+          cidr: 192.168.5.10/32
+
+      ports:
+        - protocol: TCP
+          port: 3306
+        
+  egress:
+    - to:
+      - ipBlock:
+          cidr: 192.168.5.10/32
+      ports:
+        - protocol: TCP
+          port: 80
+
+    - to:
+      - podSelector:
+          matchLabels:
+            name: mysql
+      ports:
+        - protocol: TCP
+          port: 3306

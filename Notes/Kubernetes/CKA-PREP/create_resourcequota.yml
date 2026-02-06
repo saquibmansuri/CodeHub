@@ -1,0 +1,46 @@
+# Purpose: ResourceQuota limits the total amount of resources (CPU, memory, storage, etc.) that can be consumed by all pods and containers in a namespace combined.
+
+# apply to any namespace - kubectl apply -f create_resourcequota.yml 
+# For verifying- kubectl describe 
+# this example is for restricting number of pods created in a namespace- you can do same for more resources
+
+
+# OBJECT BASED LIMITS
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: podquota
+spec:
+  hard:
+    pods: 2
+
+
+
+######################################
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: cpuquota
+spec:
+  hard:
+    request.cpu: 0.5           # Total maximum CPU that all pods can *request* in this namespace (0.5 CPU cores or 500 millicores)
+    request.memory: 500Mi       # Total maximum memory that all pods can *request* in this namespace (500MiB)
+    limits.cpu: 1               # Total maximum CPU that all pods can *use* in this namespace (1 full CPU core)
+    limits.memory: 1Gi          # Total maximum memory that all pods can *use* in this namespace (1GiB or 1024MiB)
+
+
+#######################################
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: myquota
+spec:
+  hard:
+    pods: 10
+    request.cpu: 0.5           # Total maximum CPU that all pods can *request* in this namespace (0.5 CPU cores or 500 millicores)
+    request.memory: 500Mi       # Total maximum memory that all pods can *request* in this namespace (500MiB)
+    limits.cpu: 1               # Total maximum CPU that all pods can *use* in this namespace (1 full CPU core)
+    limits.memory: 1Gi          # Total maximum memory that all pods can *use* in this namespace (1GiB or 1024MiB)
+

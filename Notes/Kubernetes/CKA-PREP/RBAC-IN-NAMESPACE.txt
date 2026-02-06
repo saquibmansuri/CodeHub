@@ -1,0 +1,74 @@
+------------------- DEMO: RBAC IN NAMESPACE --------------------------------------------------
+# AIM: TO CREATE A NAMESPACE 'prod' & allow only 'prodteam' user to do stuff in this namespace
+
+kubectl create namespace prod
+
+# CREATE A FULL ACCESS ROLE FOR PRODTEAM - kubectl apply -f role.yml
+# TO VERIFY IF ROLE WAS CREATED OR NOT- kubectl get roles --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: prod
+  name: prod-full-access
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+
+
+
+# CREATE A ROLE BINDING FOR A PROD TEAM - kubectl apply -f rolebinding.yml
+# TO VERIFY IF ROLEBINDING WAS CREATED  - kubectl get rolebindings --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prod-full-access-binding
+  namespace: prod
+subjects:
+- kind: User
+  name: prodteam
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: prod-full-access
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+# CREATE A ROLE TO RESTRICT ACCESS TO NAMESPACE - kubectl apply -f restrictrole.yml
+# TO VERIFY IF ROLE WAS CREATED OR NOT- kubectl get roles --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: prod
+  name: no-access
+rules: []
+
+
+
+# CREATE A ROLE BINDING FOR A USERS OTHER THAN PRODTEAM - kubectl apply -f restrictrolebinding.yml
+# TO VERIFY IF ROLEBINDING WAS CREATED  - kubectl get rolebindings --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deny-all-binding
+  namespace: prod
+subjects:
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: no-access
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+
+# Now check if any user has access to this 'prod' namespace or not - 
+kubectl auth can-i list pods --namespace=prod --as=prodteam
+kubectl auth can-i create deployments --namespace=prod --as=prodteam
+
+# ATLAST, NO USER EXCEPT 'prodteam' will be able to do anything in 'prod' namespace
+# TO DO ANYTHING IN THIS NAMESPACE, THEN USE '--as' flag
+kubectl apply -f my-pod.yml --as=prodteam

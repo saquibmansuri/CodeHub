@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: firstdeployment
+  annotations:
+    kubernetes.io/change-cause: "custom message"  #this will help in deployment rollback 
+  labels:
+    pupose: apideployment 
+
+spec:
+  revisionHistoryLimit: 10  # This is the default value, this many revisions will be stored during rollout
+  replicas: 5
+  selector:
+    matchLabels:
+      type: apiapp # rc will maintain pods with this label
+  template:
+    metadata:
+      name: myfirstpod
+      labels:
+        type: apiapp
+    spec:
+      containers:
+        - name: firstcontainer
+          image: coolgourav147/nginx-custom
+          env:
+            - name: VAR1
+              value: var1_value
+            - name: VAR2
+              value: var2_value
+
+
+#####################################
+
+# DEPLOYMENT WITH STRATEGY - Rolling updates
+# By default it is ROLLING UPDATE, MEANS IT WILL CREATE ANOTHER REPLICA SET AND CREATE POD IN IT AND DELETE POD FROM OLD REPLICA SET 1 BY 1
+
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: firstdeployment
+  annotations:
+    kubernetes.io/change-cause: "custom message"  #this will help in deployment rollback
+  labels:
+    pupose: apideployment 
+
+spec:
+  revisionHistoryLimit: 10  # This is the default value, this many revisions will be stored during rollout
+  replicas: 5
+  minReadySeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1 # Kubernetes can create set number of additional pod on top of the desired replicas. 
+      maxUnavailable: 1  # How many replicas can be unavailable at a time
+  selector:
+    matchLabels:
+      type: apiapp # rc will maintain pods with this label
+  template:
+    metadata:
+      name: myfirstpod
+      labels:
+        type: apiapp
+    spec:
+      containers:
+        - name: firstcontainer
+          image: coolgourav147/nginx-custom:v2
+          env:
+            - name: VAR1
+              value: var1_value
+            - name: VAR2
+              value: var2_value
+
+
+#################################################
+#Outdated strategy
+# RECREATE STRATEGY
+# This strategy is used when you want to replace the entire set of replicas at once. All old pods will be deleted first and new ones will be created.
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: firstdeployment
+  annotations:
+    kubernetes.io/change-cause: "custom message"  #this will help in deployment rollback
+  labels:
+    pupose: apideployment 
+
+spec:
+  revisionHistoryLimit: 10  # This is the default value, this many revisions will be stored during rollout
+  replicas: 5
+  minReadySeconds: 30
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      type: apiapp # rc will maintain pods with this label
+  template:
+    metadata:
+      name: myfirstpod
+      labels:
+        type: apiapp
+    spec:
+      containers:
+        - name: firstcontainer
+          image: coolgourav147/nginx-custom:v2
+          env:
+            - name: VAR1
+              value: var1_value
+            - name: VAR2
+              value: var2_value
+
+

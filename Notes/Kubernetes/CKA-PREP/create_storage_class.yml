@@ -1,0 +1,47 @@
+# STORAGE CLASS
+# Mainly used for dynamic provisioning, instead of creating static PV
+# A StorageClass in Kubernetes is a way to define different types of storage (e.g., fast SSDs, slow HDDs, network storage) and allows for dynamic provisioning of Persistent Volumes (PVs). 
+# Instead of manually creating PVs, you can define a StorageClass that automatically provisions a PV based on certain parameters, such as the storage type, reclaim policy, and performance characteristics.
+
+
+# Create Storage Class that creates storage on google cloud, there are many other provisioners available , search in the official documentatation
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: google-storage-class
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-standard   # available options - pd-standard, pd-ssd
+  replication-type: none # available options - none, regional-pd
+
+
+# PVC definition
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: google-storage-class
+  resources:
+    requests:
+      storage: 1Gi
+
+
+# Use PVC in POD
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+    - name: my-container
+      image: nginx
+      volumeMounts:
+        - mountPath: "/opt/data/"
+          name: storage-volume
+  volumes:
+    - name: storage-volume
+      persistentVolumeClaim:
+        claimName: myclaim

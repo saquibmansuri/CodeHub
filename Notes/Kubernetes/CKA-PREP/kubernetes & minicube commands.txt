@@ -1,0 +1,691 @@
+KODEKLOUD - KUBERNETES ADMIN COURSE
+https://github.com/kodekloudhub/certified-kubernetes-administrator-course
+
+kubernetes &  minicube commands
+
+---------------------------------------------------
+nodes- these are the machines attached to a kubernetes cluster, 1 will be the master node and others will be the worker nodess
+pods - set of containers
+service - used for networking and load balancing
+replication controller - maintains a desired number of pods , it is old now as the selector is limited to equality-based matching
+replica set - A ReplicaSet is the next generation of ReplicationController and supports both equality-based and set-based selectors.
+deployment - Deployment in Kubernetes is a higher-level abstraction used to manage and automate the deployment of applications in a Kubernetes cluster. It builds on top of ReplicaSets and adds more features, such as rolling updates, rollbacks, and scaling.
+Namespace - A namespace in Kubernetes is like a virtual cluster within a Kubernetes cluster. It allows you to divide the cluster into multiple, isolated environments, where each environment can contain its own set of resources (like pods, services, and deployments) without interfering with other environments.
+ConfigMap - A ConfigMap in Kubernetes is a way to store configuration data separately from the application code. It allows you to inject configuration settings, environment variables, or even entire configuration files into your containers, so you don’t need to hard-code them in your applications.
+---------------------------------------------------
+
+KUBERNETES ARCHITECTURE
+
+1. Master Node:
+Acts as the control plane for the Kubernetes cluster, managing the overall state and configuration. It coordinates and schedules the execution of containers on worker nodes.
+
+2. Worker Nodes:
+Run the containerized applications in pods. They are controlled by the master node and include services like kubelet, kube-proxy, and container runtime.
+
+3. Controller Manager:
+Contains various controllers that regulate the state of the cluster, such as Node, ReplicaSet, and Deployment controllers. It ensures that the desired state matches the current state of the resources.
+
+4. ETCD Cluster:
+A highly available, distributed key-value store that stores all cluster data, including configuration, secrets, and the entire state of the Kubernetes cluster.
+
+5. Kube-scheduler:
+Determines the best available node for a pod based on factors like resource requirements, policies, and constraints, ensuring efficient utilization of resources.
+
+6. Kube-apiserver:
+Serves as the front end for the Kubernetes control plane, exposing the Kubernetes API. It validates and processes API requests, coordinating communication between various components.
+
+7. Kubelet:
+Runs on each worker node, ensuring that containers defined in the pod specs are running and healthy. It interacts with the container runtime and monitors the state of the node.
+
+8. Kube-proxy:
+Manages network communication for services within and outside the cluster. It maintains network rules on nodes to route traffic to appropriate pods and ensure connectivity.
+
+
+---------------------------------------------------
+
+minikube installation - https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download
+
+
+minikube start
+kubectl get po -A
+minikube kubectl -- get po -A
+alias kubectl="minikube kubectl --"
+minikube pause
+minikube unpause
+minikube stop
+minikube config set memory 9001
+minikube delete --all
+minikube dashboard
+	ssh -i sentra-website-aws-kp.pem -L 8001:127.0.0.1:46761 ubuntu@44.214.140.76
+	http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
+kubectl cluster-info
+kubectl get pods
+kubectl get all --selector env=prod,bu=finance,tier=frontend   # listing pods based omn some label 
+kubectl get pods --all-namespaces
+kubectl get nodes
+kubectl api-resources | grep -i namespace    # to find short name of any resource
+minicube ip
+
+kubectl run firstpod --image=coolgourav147/nginx-custom --restart=Never
+
+kubectl get all
+
+-- TO EDIT PODS / RC OR ANY OTHER RESOURCE
+kubectl edit pod <podname>
+kubectl edit rc <rc name>
+
+-- EXPOSE PORTS OF PODS
+kubectl expose pod <podname> --port=8000 --target-port=80 --name myservice (Without --type=NodePort: The service is of type ClusterIP, accessible only within the cluster.)
+kubectl expose pod <podname> --type=NodePort --port=8000 --target-port=80 --name myservice (With --type=NodePort: The service is of type NodePort, accessible from outside the cluster on a specified port range.)
+
+
+kubectl get pods
+kubectl get pods -o wide  (see detailed info like worker node, ip etc)
+kubectl get pods -w   (watch continuously)
+kubectl get nodes
+kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].name}'     # lists all containers inside the pod
+kubectl get replicationcontrollers
+
+kubectl explain pods
+kubectl describe pod <pod_name> (eg - kubectl describe pod firstpod)
+kubectl logs firstpod
+kubectl delete pod <podname>
+kubectl delete pods --all
+
+######################################
+
+You can point your local Docker CLI to the Docker daemon inside Minikube. This allows you to use docker commands to interact with containers running in Minikube.
+eval $(minikube docker-env)
+docker ps
+
+If you want to switch back to your local Docker environment, you can run:
+eval $(minikube docker-env -u)
+
+#######################################
+
+
+--- ATTACHING LABELS TO A POD
+kubectl label pod firstpod env=testing
+
+--- Overwriting any existing label
+kubectl label pod --overwrite firstpod env=testing
+
+--- Deleting any label
+kubectl label pod firstpod env-
+
+--- Attach a label to all pods
+kubectl label pods -all env=dev
+
+#######################################
+
+# CREATE RESOURCES WITH YML FILE IN KUBERNETES WITH CREATE COMMAND
+
+kubectl create -f <file_name>
+kubectl create -f firstpod.yml
+kubectl apply -f firstpod.yml
+kubectl apply -f firstpod.yml --dry-run=client    (this performs a check on the client side)
+kubectl apply -f firstpod.yml --server-dry-run    (this performs a check on the actual server side)
+kubectl diff -f firstpod.yml (shows what changes will be done if applied)
+
+kubectl delete -f firstpod.yml
+
+-------- DIFFERENCE BETWEEN CREATE AND APPLY COMMAND
+kubectl create: Creates new resources; fails if the resource already exists.
+kubectl apply: Creates new resources or updates existing ones; does not fail if the resource exists but instead applies changes.
+
+------- VERY USEFUL COMMAND TO SEE AVAILABLE PROPERTIES FOR ANY RESOURCE FOR WRITING A YML FILE -------------
+kubectl explain pod --recursive
+
+
+------ IF WE WANT TO GENERATE A YAML FILE FOR ANY RESOURCE
+kubectl run mypod --dry-run=client --generator=run-pod/v1 --image =coolgourav147/nginx-custom -o yaml
+
+
+------ TO CHECK ENVIRONMENT VARIABLES IN A POD / RUN COMMANDS IN ANY POD
+kubectl exec -it <pod_name> -c <container name> env
+kubectl exec -it <pod_name> -c <container name> bash
+
+
+------ TO DELETE A REPLICATION CONTROLLER WITHOUT DELETING THE EXISTING PODS
+kubectl delete rc --cascade=false <rc name>
+
+------ SCALE UP & DOWN IN REPLICATION CONTROLLER
+kubectl scale rc --replicas=5 <rc name>
+
+------ DEPLOYMENTS -------------
+kubectl apply -f <deployment file name>.yml
+kubectl rollout status deployment <deployment name>
+kubectl rollout history deployment <deployment name>
+kubectl rollout undo deployment <deployment name>  ### this rollbacks to previous version by default
+kubectl rollout undo --to-revision=2 deployment <deployment name>  ## rollbacks to the desired revision, this number can be found through history command ## by default last ten revisions are stored
+kubectl rollout pause deployment <deployment name>
+kubectl rollout resume deployment <deployment name>
+
+
+-------- NAMESPACE -------------
+# any resource can be created in custom namespace, like pod, deployment, replica set, etc, which supports namespace
+# by default everything is created in default namespace
+kubectl get namespaces
+kubectl api-resources # from this command we can check whether it supports namespaces or not
+kubectl create namespace <namespace name>
+kubectl delete namespace <namespace name>
+kubectl config set-context --current --namespace=<custom namespace name>  # this makes the custom namespace as default
+kubectl describe namespace <namespace name>
+
+syntax-  servicename.namespacename.svc.cluster.local       # How to access a service thats in another namespace
+example- myservice.default.svc.cluster.local               # basically we can do this using service
+
+
+------------------- DEMO: RBAC IN NAMESPACE --------------------------------------------------
+# AIM: TO CREATE A NAMESPACE 'prod' & allow only 'prodteam' user to do stuff in this namespace
+
+kubectl create namespace prod
+
+# CREATE A FULL ACCESS ROLE FOR PRODTEAM - kubectl apply -f role.yml
+# TO VERIFY IF ROLE WAS CREATED OR NOT- kubectl get roles --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: prod
+  name: prod-full-access
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+
+
+
+# CREATE A ROLE BINDING FOR A PROD TEAM - kubectl apply -f rolebinding.yml
+# TO VERIFY IF ROLEBINDING WAS CREATED  - kubectl get rolebindings --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prod-full-access-binding
+  namespace: prod
+subjects:
+- kind: User
+  name: prodteam
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: prod-full-access
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+# CREATE A ROLE TO RESTRICT ACCESS TO NAMESPACE - kubectl apply -f restrictrole.yml
+# TO VERIFY IF ROLE WAS CREATED OR NOT- kubectl get roles --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: prod
+  name: no-access
+rules: []
+
+
+
+# CREATE A ROLE BINDING FOR A USERS OTHER THAN PRODTEAM - kubectl apply -f restrictrolebinding.yml
+# TO VERIFY IF ROLEBINDING WAS CREATED  - kubectl get rolebindings --namespace=prod
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deny-all-binding
+  namespace: prod
+subjects:
+- kind: Group
+  name: system:authenticated
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: no-access
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+
+# Now check if any user has access to this 'prod' namespace or not - 
+kubectl auth can-i list pods --namespace=prod --as=prodteam
+kubectl auth can-i create deployments --namespace=prod --as=prodteam
+
+# ATLAST, NO USER EXCEPT 'prodteam' will be able to do anything in 'prod' namespace
+# TO DO ANYTHING IN THIS NAMESPACE, THEN USE '--as' flag
+kubectl apply -f my-pod.yml --as=prodteam
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+
+
+# DIFFERENCE BETWEEN LIMITRANGE & RESOURCE QUOTA
+
+Feature              | LimitRange                          | ResourceQuota                      
+---------------------|-------------------------------------|------------------------------------
+Scope                | Individual containers or pods       | Entire namespace                   
+Purpose              | Sets default/min/max per-container  | Limits total resource consumption  
+                     | limits                              | across all pods in a namespace      
+Use Case             | Enforces constraints on individual  | Manages overall namespace resource 
+                     | pod/container resource requests     | consumption                         
+Example              | Default CPU/memory per container    | Maximum total CPU/memory for       
+                     |                                     | namespace                            
+Target               | Individual containers               | Sum of all pods/containers in      
+                     |                                     | namespace                            
+
+##################################################################################################################
+
+# ConfigMaps
+kubectl create cm <configmap name> --from-literal=database_ip="192.168.0.4" --from-literal=database_username="root"   # creating config map and giving values through command
+kubectl create cm <configmap name> --from-file=file1.txt --from-file=file2.txt  # create configmap from a file. simply set variablename=value in file
+kubectl create cm <configmap name> --from-file=<foldername>/  # create configmap from a folder that contains multiple files which contains variables and values
+kubectl create cm <configmap name> --from-file=<foldername>/  # create configmap from a folder that contains multiple files which contains variables and values
+kubectl create cm <configmap name> --from-env-file=file.txt # creates each variable as a key value pair
+NOTE: THE DIFFERENCE BETWEEN  CREATING CONFIG MAP USING --from-file & --from-env-file IS THAT IN --from-file, IT CREATES A KEY WITH NAME OF THE FILE & THEN PASSES THE CONTENT AS THE DATA OF THAT KEY , WHEREAS IN --FROM-ENV-FILE IT CREATES EACH VARIABLE AS A KEY
+
+kubectl apply -f ConfigMap.yml
+
+##################################################################################################################
+
+# KUBERNETES SECRETS
+
+3 Types of secrets can be created
++ docker-registry   Create a secret for use with a Docker registry
++ generic           Create a secret from a local file, directory, or literal value
++ tls               Create a TLS secret
+
+
+Examples:
+  # Create a new secret named my-secret with keys for each file in folder bar
+  kubectl create secret generic my-secret --from-file=path/to/bar
+  
+  # Create a new secret named my-secret with specified keys instead of names on disk
+  kubectl create secret generic my-secret --from-file=ssh-privatekey=path/to/id_rsa --from-file=ssh-publickey=path/to/id_rsa.pub
+  
+  # Create a new secret named my-secret with key1=supersecret and key2=topsecret
+  kubectl create secret generic my-secret --from-literal=key1=supersecret --from-literal=key2=topsecret
+  
+  # Create a new secret named my-secret using a combination of a file and a literal
+  kubectl create secret generic my-secret --from-file=ssh-privatekey=path/to/id_rsa --from-literal=passphrase=topsecret
+  
+  # Create a new secret named my-secret from env files
+  kubectl create secret generic my-secret --from-env-file=path/to/foo.env --from-env-file=path/to/bar.env
+
+  # Create secret using yaml file
+  kubectl create secret -f mysecret.yml
+
+  # ENCODING AND DECODING
+  echo -n "saquib" | base64 --encode
+  echo -n "" | base64 --decode
+
+  # To see whats inside any secret (this command will print all vars and values after decoding)
+  kubectl get secret <secretname> -o json | jq -r '.data | keys[] as $k | "\($k): \(.[$k] | @base64d)"'
+
+  # ENABLING ENCRYPTION AT REST
+  https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
+
+#############################################################################################################################################
+
+# TAINTS & TOLERATIONS IN KUBERNETES
+
+taints and tolerations work together to ensure that pods are scheduled on appropriate nodes. This mechanism allows nodes to "repel" certain pods unless the pods explicitly tolerate the taints that the nodes have.
+
+A taint is applied to a node and can repel a set of pods that do not tolerate that taint. Taints have three properties:
+Key, Value & Effect
+
+The effect can be one of the following:
+NoSchedule: Pods that do not tolerate this taint are not scheduled on the node.
+PreferNoSchedule: Kubernetes will try to avoid placing a pod that does not tolerate this taint on the node but it's not a strict enforcement.
+NoExecute: Pods that do not tolerate this taint will be evicted from the node if they are already running, and will not be scheduled on the node in the future. 
+
+EXAMPLE - kubectl taint node <node name> key1=value1:NoSchedule
+This command applies a taint to node where the taint key is key1, the value is value1, and the effect is NoSchedule. This means that no pod that lacks a toleration for key1=value1:NoSchedule will be scheduled on node1.
+
+A toleration is applied to a pod and allows (but does not require) the pod to schedule onto a node with matching taints. Tolerations are specified in the pod specification and consist of a key, value, and effect, which should match the key, value, and effect of the taint they are meant to tolerate.
+This pod will tolerate the taint key1=value1:NoSchedule, allowing it to be scheduled on node1 despite the taint that repels other pods.
+If the tolerance matches with the taint specified on the node, then only it will be allowed on that node, otherwise it will be scheduled on other nodes
+
+
+EXAMPLE:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: mycontainer
+    image: myimage
+  tolerations:
+  - key: "key1"
+    operator: "Equal"
+    value: "value1"
+    effect: "NoSchedule"
+
+
+
+
+# TO REMOVE AN EXISTING TAINT FROM A NODE
+kubectl taint nodes <NODE NAME> key1-
+
+## FUNFACTS
+- WHY NO PODS ARE SCHEDULED ON THE MASTER NODE?
+When cluster is created, then automatically a taint is applied on the master node which prevents any pod to be scheduled on this node.
+To see this, run this command - kubectl describe node kubemaster | grep Taints
+
+
+###############################################################################################################
+### UDEMY CKA COURSE
+
+## DAEMON SET
+This ensures a copy of your pod runs on all the nodes
+Usecase- for deploying logging agent
+
+
+## MONITORING KUBERNETES CLUSTER
+
+-- to enable in minikube
+minikube addons enable metrics-server
+
+-- to enable in others
+git clone https://github.con/kubernetes-incubator/metrics-server.git
+kubectl create -f deploy/1.8+/  OR kubectl create -f .
+
+-- command to see Cluster performance like cpu and memory used by each node
+kubectl top node
+
+-- command to see cpu and memory used by pods
+kubectl top pod
+
+
+
+## LOGGING
+
+-- view logs of all containers inside a pod (note: it will show logs of all containers inside the pod)
+kubectl logs <podname> -f
+
+-- to view logs of a particular container inside a pod
+kubectl logs <podname> <container name> -f
+
+
+
+
+#### Cluster Maintenance
+
+# When you want to make OS upgrade or patch upgrade on node then before doing that its the best practice to drain that particular node, this deletes all pods and recreates them on another node. And draining also ensures that no pod is scheduled on this node in future until specified restriction is removed
+
+kubectl drain node-1
+kubectl drain node01 --ignore-daemonsets
+kubectl cordon node-2 - this only stops future scheduling of pods on this node, existing ones will stay, draining before this command is best practice
+kubectl uncordon node-1 # to allow pods to be scheduled again on this node
+
+
+
+# What should be the version of the different components in the cluster
+Assuming kube-apiserver version - X
+ then, 
+  controller-manager - X-1
+  kube-scheduler - X-1
+  kubelet - X-2
+  kube-proxy - X-2
+  kubectl - between X-1 & X+1
+
+
+# UPGRADING THE CLUSTER CREATED THROUGH KUBEADM METHOD
+apt-cache madison kubeadm # RUN THIS TO GET THE NEW VERSION FOR kubeadm and kubelet
+first update the kubeadm tool itself - apt-get upgrade -y kubeadm=1.12.0-00
+kubeadm upgrade plan
+kubeadm upgrade apply v1.13.4
+
+-- now upgrade the kubelet on the master node
+apt-get update kubelet=1.12.0-00
+systemctl restart kubelet
+
+-- now upgrade each worker node
+kubectl drain node1
+apt-get upgrade -y kubeadm=1.12.0-00
+apt-get upgrade -y kubelet=1.12.0-00
+kubeadm upgrade node config --kubelet-version v1.12.0
+systemctl restart kubelet
+kubectl uncordon node1
+
+-----------------------------------------------------------
+
+Update Cluster Live Example
+
+nano /etc/apt/sources.list.d/kubernetes.list     # open this file and update only the version to desired version and save the file
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
+
+
+apt update
+apt-cache madison kubeadm
+
+
+apt-get install kubeadm=1.30.0-1.1
+
+kubeadm upgrade plan v1.30.0
+kubeadm upgrade apply v1.30.0
+
+
+apt-get install kubelet=1.30.0-1.1
+
+systemctl daemon-reload
+systemctl restart kubelet
+-----------------------------------------------------------
+
+# BACKUP & RESTORE KUBERNETES CLUSTER USING ETCD Cluster
+References - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#backing-up-an-etcd-cluster
+           - https://github.com/etcd-io/website/blob/main/content/en/docs/v3.5/op-guide/recovery.md
+           - https://www.youtube.com/watch?v=qRPNuT080Hk
+
+# BACKING UP
+# Take snapshot of etcd server database (this contains information related to all existing resources)
+# These 4 parameters - endpoint, cacert, cert and key are mandatory
+
+ETCDCTL_API=3 etcdctl --endpoints=https://[127.0.0.1]:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key \
+snapshot save snapshot.db
+
+
+# To view the status of the snapshot
+ETCDCTL_API=3 etcdctl \
+    snapshot status snapshot.db
+ 
+# RESTORING
+# First stop the kube-api server before restoring
+service kube-apiserver stop
+
+# Restore the snapshot
+ETCDCTL_API=3 etcdctl \
+  snapshot restore snapshot.db \
+  --data-dir /var/lib/etcd-from-backup
+
+# AFTER RESTORING UPDATE THIS FILE - /etc/kubernetes/manifests/etcd.yaml
+We have now restored the etcd snapshot to a new path on the controlplane - /var/lib/etcd-from-backup, so, the only change to be made in the YAML file, is to change the hostPath for the volume called 'etcd-data' from old directory (/var/lib/etcd) to the new directory (/var/lib/etcd-from-backup).
+In the same file [ /etc/kubernetes/manifests/etcd.yaml ] , change the value of this flag [ --data-dir ] = /var/lib/etcd-from-backup
+
+# Reload the daemon
+systemctl daemon-reload
+
+# Restart etcd service
+service etcd restart
+
+# Atlast restart the kube-api server
+service kube-apiserver start
+
+
+----------------------------------------------------------------------------------
+
+## SECURITY IN KUBERNETES
+
+# Basic Authentication using static password file   (NOT RECOMMENDED)
+- Create a basic file with any name example - user-details.csv
+- File should have this format
+  <password1>,<username1>,<userid1>,<group1>   # groups are optional
+  <password2>,<username2>,<userid2>,<group1>   # groups are optional
+  <password3>,<username3>,<userid3>,<group2>   # groups are optional
+
+- then add this flag in kube-apiserver configuration & restart kube-apiserver =   --basic-auth-file=user-details.csv
+
+
+# Basic Authentication using static token file (NOT RECOMMENDED)
+- Create a basic file with any name example - user-token-details.csv
+- File should have this format
+  <token1>,<username1>,<userid1>,<group1>   # groups are optional
+  <token2>,<username2>,<userid2>,<group1>   # groups are optional
+  <token3>,<username3>,<userid3>,<group2>   # groups are optional
+
+- then add this flag in kube-apiserver configuration & restart kube-apiserver =   --token-auth-file=user-details.csv
+
+
+# Service accounts in Kubernetes
+(service accounts are used by bots like promethues or github for authenticating into Kubernetes cluster)
+(when a service account is created, a token needs to be created which can be stored as a secret and used by third party apps to authenticate into the cluster)
+- kubectl create serviceaccount testaccount
+- kubectl create token testaccount  # creates token with 1 hour expiry
+- kubectl create token <serviceaccount> --duration=<time>
+           use like this - 1h for 1 hour, 12h for 12 hours, 7d for 7 days
+- kubectl get serviceaccount
+- kubectl describe serviceaccout testaccount
+
+
+#  FETCH PRIVATE DOCKER/CLOUD IMAGE REPOSITORY IMAGES
+WE first create a secret that holds the registry credentials
+kubectl create secret <type> <name>
+kubectl create secret docker-registry regcred --docker-server=private-registry.io --docker-username=registry-user  --docker-password=registry-password  --docker-email=registry-user@org.com
+
+THEN, pass this parameter in the spec section of the pod -
+imagePullSecrets:
+    - name: regcred
+
+
+-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
+
+## Networking Basics
+
+
+# Basic Commands
+ip link  # List and modify interfaces on the host
+ip addr # To see the ip address assigned to the interfaces
+ip addr add 192.168.1.10/24 dev eth0 # Set ip addresses on interfaces
+ip route # Used to view routing table
+ip route add 192.168.1.0/24 via 192.168.2.1 # Add entries into the routing table
+
+
+# Docker Networking
+docker run --network none nginx # runs a container which is not accessible from outside world
+docker run --network host nginx # runs a container which is directly available on host port, so no port mapping required
+
+
+
+
+
+#### JSON PATH IN  KUBERNETES
+
+syntax1 - kubectl get pods -o json | jsonpath $query
+syntax2 - kubectl get pods -o=jsonpath='{$query}'
+
+example1 - kubectl get pods -o=jsonpath='{.items[*].status.nodeInfo.arhitecture}'
+example2 - kubectl get pods -o=jsonpath='{.items[*].status.capacity.cpu}'
+merge example1 & 2 - kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.arhitecture}{.items[*].status.capacity.cpu}'
+format example     - kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.arhitecture}{"\n"}{.items[*].status.capacity.cpu}'
+loops              - kubectl get nodes -o=jsonpath='{range .items[*]} {.metadata.name} {"\t"} {.status.capacity.cpu} {"\n"} {end}'
+custom column name - kubectl get nodes -o=custom-columns=NODE:.metadata.name , CPU:.status.capacity.cpu'
+sort example       - kubectl get nodes --sort-by=.metadata.name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NOTES:
+- If there are init containers defined in the pods, then first init containers will start and then other will others and then pod will comeup in running state
+- Rollout will only trigger when somethis is changed in pod configuration
+- Switch between multiple clusters - kubectl config use-context cluster1
+- List Kubernetes default pods - kubectl get pods -n kube-system
+- To check if any user's access without authenticating, use 'can-i' commands
+        - kubectl auth can-I create deployment  # don't specify user for current user
+        - kubectl auth can-I delete nodes       # don't specify user for current user
+        - kubectl auth can-I delete nodes --as dev-user --namespace=test      # specify any other user
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

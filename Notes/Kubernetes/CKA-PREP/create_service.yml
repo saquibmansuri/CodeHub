@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: firstservice
+  labels:
+    purpose: apiservice
+spec:
+  type: Nodeport
+  ports:
+    - nodePort: 32000 # node port
+      port: 9000      # pod port
+      targetport: 80  # container port
+  selector:
+    type: apiapp  #this service will find pods with this label and route the traffic between those
+
+
+####################################################################################################
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: back-end
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000      # pod port
+      targetport: 80  # container port
+  selector:
+    type: apiapp  #this service will find pods with this label and route the traffic between those
+
+
+#####################################################################################################
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: back-end
+spec:
+  type: LoadBalancer
+  ports:
+    - nodePort: 80    # node port
+      port: 9000      # pod port
+      targetport: 80  # container port
+  selector:
+    type: apiapp  #this service will find pods with this label and route the traffic between those

@@ -1,0 +1,22 @@
+# LimitRange sets default, minimum, and maximum limits on the resources that can be requested or used by individual containers or pods within a namespace.
+
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: testlimit
+  namespace: prod
+spec:
+  limits:
+    - type: Container             # Applies to containers
+      default:
+        cpu: 200m                 # Default CPU limit for containers
+        memory: 500Mi  
+      defaultRequest:
+        cpu: 100m
+        memory: 250Mi
+      min:
+        cpu: 80m
+        memory: 250Mi
+      max:
+        cpu: 700m
+        memory: 770Mi

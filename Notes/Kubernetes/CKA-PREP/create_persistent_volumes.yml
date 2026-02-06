@@ -1,0 +1,120 @@
+# PERSISTENT VOLUMES
+# NOTE: AFTER CREATING PERSISTENT VOLUME , PERSISTENT VOLUME CLAIN SHOULD BE CREATED TO MAKE IT AVAILABLE FOR USE, every claim is meant for 1 single persistent volume
+# BEST PRACTICE IS TO CREATE A PV WITH EXTERNAL STORAGE , THEN CRETAE A PVC AND THEN USE ON ANY NODE IN ANY POD
+
+# Instead of creating volumes individually in each pod yaml file, its better to create a common persistent volume and use in all pods
+# Normal volumes (like hostPath) are tied to the lifecycle of the node and need manual management for persistence across nodes.
+# Persistent Volumes (PVs) provide cluster-wide persistent storage that Kubernetes manages, ensuring durability and availability across pod rescheduling and node changes.
+
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-vol1
+spec:
+  persistentVolumeReclaimPolicy: Retain  # Defaults to retain, other values- Delete, Recycle
+  accessModes:
+    - ReadWriteOnce   # Allowed values- ReadOnlyMany, ReadWriteOnce, ReadWriteMany
+  capacity:
+    storage: 1Gi
+  hostPath:     # hostpath is not recommended in multinode production environments as we dont know where pod will be scheduled
+    path: /tmp/data
+
+
+#############################################################
+
+# Persistent volume with an external storage provider
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-vol1
+  labels:        # mention labels to claim a volume based on labels
+    name: my-pv
+spec:
+  accessModes:
+    - ReadWriteOnce   # Allowed values- ReadOnlyMany, ReadWriteOnce, ReadWriteMany
+  capacity:
+    storage: 1Gi
+  awsElasticBlockStore:
+    volumeID: <volume-id>
+    fsType: ext4
+
+
+#######################################################################################
+#######################################################################################
+
+# PERSISTENT VOLUME CLAIM
+
+# A Persistent Volume Claim (PVC) is a request for storage by a Kubernetes user. 
+# It allows a pod to access persistent storage by claiming a Persistent Volume (PV). 
+# The PVC specifies how much storage is needed and the access mode (e.g., ReadWriteOnce), and Kubernetes binds it to an appropriate PV, enabling the pod to use the storage.
+
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-vol1
+spec:
+  selector:   # use selector only if specific label is required
+    matchLabels:
+      name: my-pv
+  accessModes:
+    - ReadWriteOnce   # Allowed values- ReadOnlyMany, ReadWriteOnce, ReadWriteMany
+  resources:
+    requests:
+      storage: 500Mi
+
+
+
+#######################################################################################
+#######################################################################################
+
+# LIVE EXAMPLE OF USING PERSISTENT VOLUME, PERSISTENT VOLUME CLAIM AND USING A CLAIM INSIDE A POD DEFINITION
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-example
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+
+
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-example
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  containers:
+    - name: my-container
+      image: nginx
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: storage-volume
+  volumes:
+    - name: storage-volume
+      persistentVolumeClaim:
+        claimName: pvc-example
+
+
+#########################################################################################
+#########################################################################################

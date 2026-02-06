@@ -1,0 +1,41 @@
+# To create a pod i a particular namespace
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+  namespace: test   # test namespace should exist before applying the changes
+spec:
+containers:
+  - name: firstcontainer
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+  - name: secondcontainer
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+initContainers:
+  - name: initcontainer1
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+    args: [ "sleep","10" ]
+  - name: initcontainer2
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+    args: [ "sleep","20" ]

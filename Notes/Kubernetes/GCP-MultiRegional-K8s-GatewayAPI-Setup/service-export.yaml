@@ -1,0 +1,6 @@
+# THIS NEEDS TO BE APPLIED ON BOTH THE CLUSTERS TO EXPORT THE SERVICES
+
+apiVersion: net.gke.io/v1
+kind: ServiceExport # to export the service for multi-cluster use
+metadata:
+  name: nginx-svc

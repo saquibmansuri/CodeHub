@@ -1,0 +1,22 @@
+# Static pods are a special type of pod that is directly managed by the kubelet on a node, rather than through the Kubernetes API server.
+# They are defined directly on a node in a configuration file, and the kubelet is responsible for managing them.
+# Unlike regular pods, static pods do not have associated ReplicaSet, Deployment, or DaemonSet controllers and cannot be managed with kubectl.
+# The kubelet on each node monitors and manages static pods independently. If a static pod is deleted, the kubelet will automatically recreate it.
+
+# USECASE - This ensures these critical components are always available, even if the API server is down.
+
+# Specific directory for static pods (just keep the file here, no other thing needs to be done)
+#  /etc/kubernetes/manifests/example-staticpod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-nginx
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - containerPort: 80

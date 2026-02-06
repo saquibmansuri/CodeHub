@@ -1,0 +1,48 @@
+# THIS FILE CAN BE APPLIED IN THE US-CENTRAL CLUSTER ONLY
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-central-html
+data:
+  index.html: |
+    <h1>Hello from US-CENTRAL cluster</h1>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html
+        configMap:
+          name: nginx-central-html
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+spec:
+  type: ClusterIP   # REQUIRED for MCS
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80

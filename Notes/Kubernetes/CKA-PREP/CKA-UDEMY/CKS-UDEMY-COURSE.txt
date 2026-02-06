@@ -1,0 +1,26 @@
+# REPOSITROY LINK - https://github.com/kodekloudhub/certified-kubernetes-administrator-course
+# COMMUNITY CHANNEL LINK - https://kodekloud.com/community
+
+COMPONENTS OF THE MASTER NODE
+-- ETCD CLUSTER
+This is a database that stores the information of the containers in a key-value format
+
+-- KUBE-SCHEDULER
+This decides on which node the container will be created
+
+
+
+
+
+import logging
+
+
+
+
+import os
+from io import BytesIO
+
+
+
+
+import sqlite3

@@ -1,0 +1,582 @@
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+containers:
+  - name: firstcontainer
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+  - name: secondcontainer
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+initContainers:
+  - name: initcontainer1
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+    args: [ "sleep","10" ]
+  - name: initcontainer2
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+    args: [ "sleep","20" ]
+
+
+##########################################
+
+# Resource request & request limit
+# Same templates can be used in deployments and relica sets, etc
+# If we only set limits and do not set requests, then automatically it will set requests similar to limits 
+
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+containers:
+  - name: firstcontainer
+    image: coolgourav147/nginx-custom
+    resources:
+      requests:
+        memory: 100Mi   # 200M OR 200Mi, for gb it is Gi
+        cpu: 100m       # 0.1  
+      limits:
+        memory: 200Mi
+        cpu: 200m
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+  - name: secondcontainer
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+initContainers:
+  - name: initcontainer1
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+    args: [ "sleep","10" ]
+  - name: initcontainer2
+    image: coolgourav147/nginx-custom
+    env:
+      - name: VAR1
+        value: var1_value
+      - name: VAR2
+        value: var2_value
+    args: [ "sleep","20" ]
+
+
+######################################################################
+
+# PASSING CONFIGMAP IN A POD
+
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+
+    # INJECT PARTICULAR KEY INSIDE A CONFIGMAP
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+       -name: NameOfVariableThatYouWantInsidePod
+        valueFrom:
+          configMapKeyRef:
+            name:  <configmap name>
+            key: <key name inside config map>
+  
+    # PASS ALL KEYS           
+    - name: secondcontainer
+      image: coolgourav147/nginx-custom
+      envFrom:
+        valueFrom:
+          - configMapRef:
+              name:  <configmap name>
+              
+    # PASS CONFIGMAPS AS FILES, POSSIBLE THROUGH VOLUMES
+    - name: thirdcontainer
+      image: coolgourav147/nginx-custom
+      volumeMounts:
+       - name: <volume name> # this should be same as the name of the volume
+         mountPath: "/config" # the values will be visible in this location  
+         readOnly: true
+  volumes:
+    - name: <volume name>
+      configMap:
+        name: <configmap name>
+
+
+##############################################################################################
+
+
+# PASSING SECRETS INSIDE A POD
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+
+    # FETCHING A PARTICULAR KEY FROM THE SECRET AND PASS AS CUSTOM ENVIRONMENT VARIABLE
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: myvariable
+          valueFrom:
+            secretKeyRef: 
+              key: var1   # This is the key name which you want to fetch from a secret
+              name: my-secret # This is the name of the secret
+
+    # PASS ALL VARS & VALUES FROM A SECRET TO A CONTAINER        
+    - name: secondcontainer
+      image: coolgourav147/nginx-custom
+      envFrom:
+          - secretRef:
+              name: <secret name>
+
+  
+    # PASS SECRETS AS A FILE IN CONTAINERS
+    - name: thirdcontainer
+      image: coolgourav147/nginx-custom
+      volumeMounts:
+        - mountPath: /secrets   # this is the path where the files will be mounted inside containers
+          name: <volume name>
+
+  volumes:
+    - name: <volume name>
+      secret:
+        secretName: myenvsecret
+        
+##################################################################################################################
+
+
+# ADDING TOLERANCE PROPERTIES
+# assuming that this taint is applied on node
+# kubectl taint node <node name> mysize=large:NoSchedule
+# If the tolerance matches with the taint specified on the node, then only it will be allowed on that node, otherwise it will be scheduled on other nodes
+
+
+# USING EQUAL OPERATOR
+# When the operator is set to Equal, the pod will tolerate a taint only if both the key and value of the taint match what is specified in the toleration. You must specify both key and value when using operator: Equal.
+# Use Case: This is useful when you want to ensure that the pod is scheduled on nodes with a taint that has a precise key-value pair.
+
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+  tolerations:
+    - effect: "NoSchedule"
+      key: "mysize"
+      operator: "Equal"
+      value: "large"
+
+
+# USING EXISTS OPERATOR
+# When the operator is set to Exists, the pod will tolerate any taint that has a matching key, regardless of the taint’s value. The toleration does not specify a value field when operator: Exists is used.
+# Use Case: This is used when you don't care about the taint's value but want to ensure the pod can be scheduled on a node with a specific taint key.
+
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+  tolerations:
+    - effect: "NoSchedule"
+      key: "mysize"
+      operator: "Exists"
+
+
+
+# IF OPERATOR IS EXISTS AND NO KEY SPECIFIED & NO EFFECT SPECIFIED
+# THIS WILL ALLOW POD TO TOLERATE ANYKIND OF TAINT, INSHORT IT WILL BYPASS ALL KINDS OF TAINTS
+
+tolerations:
+  - effect: ""
+    key: ""
+    operator: "Exists"
+
+
+# The tolerationSeconds field in a Kubernetes toleration specifies the amount of time that a pod will continue to run on a node after the node has acquired a new taint that the pod does not already tolerate. 
+# This field is only applicable to the NoExecute effect.
+# Usecase: This mechanism is useful for giving administrators and systems some time to handle the taint effects, possibly to clean up or save the state before the pod is terminated.
+
+tolerations:
+  - effect: "NoExecute"
+    key: "mysize"
+    operator: "Equal"
+    value: "large"
+    tolerationSeconds: 60
+
+
+##################################################################################################################################################################################################################################
+
+# NODE SELECTOR
+# THIS LETS US CHOOSE THAT THE PODS SHOULD BE CREATED ON A PARTICULAR NODE WHERE A PARTICULAR LABEL IS ATTACHED
+# LIMITATIONS: Suppose there are three nodes with label size=small, size=medium & size=large respectively & we want to deploy pods only on nodes where size is either small or large. This can't be done with nodeSelector
+
+# EXAMPLE- kubectl label nodes <node name> size=large
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  nodeSelector:
+    size: "large"   # ONLY 1 LABEL CAN BE ADDED WHICH IS ONE OF THE LIMITATION OF NODE SELECTOR
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+
+
+#################################################################################################################################################################################################################
+
+# NODE AFFINITY
+# Node affinity in Kubernetes is a set of rules used by the scheduler to determine where a pod can be placed based on node labels. 
+# It allows you to constrain which nodes your pod is eligible to be scheduled based on labels on nodes. It's like a "soft rule" compared to node selectors, which are "hard rules."
+
+#Types of Node Affinity
+#There are mainly two types of node affinity:
+
+#RequiredDuringSchedulingIgnoredDuringExecution: The scheduler can only place the pod on a node if it meets the conditions. If the conditions are not met, the pod will not be scheduled.
+#PreferredDuringSchedulingIgnoredDuringExecution: The scheduler will try to place the pod on nodes that meet the conditions, but if it is not possible, the pod will be scheduled on a node that does not meet the conditions.
+
+
+# EXAMPLE- kubectl label nodes <node name 1> size=small && kubectl label nodes <node name 2> size=medium && kubectl label nodes <node name 3> size=large
+
+
+# below will check for a label value of nodes, if it is there then its okay, otherwise it will still create a pod, because 'preferred'/soft scheduling is performed here
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: "size"
+                operator: "In"
+                values:
+                  - "extrasmall"
+        weight: 1  # usefull when multiple affinities are defined
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+
+
+# this will create a pod in the nodes only if the label value matches any of the values specified here
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "size"
+                operator: "In"
+                values:
+                  - "large"
+                  - "small"
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+
+###########################################################################################3
+
+
+
+# VOLUMES IN KUBERNETES
+
+
+# VOLUME INSIDE A POD
+#An emptyDir volume is created when a Pod is assigned to a Node. It remains as long as that Pod is running on that Node. The data in an emptyDir volume can be shared between containers in the same Pod.
+#The emptyDir volume starts empty and can be used to store transient data that you don’t want to persist beyond the lifetime of the Pod. For instance, cache data, workspaces for processing data, etc.
+#If the Pod is removed from the Node for any reason, the data in the emptyDir is deleted forever.
+
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      volumeMounts:
+        - mountPath: /data
+          name: first-volume
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+    - name: secondcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+  volumes:
+    - name: first-volume
+      emptyDir: {}
+
+
+# VOLUME ON A NODE HOST ( SO THAT THE DATA IS SAFE EVEN IF POD IS DESTROYED )
+# LIMITATION: Suppose the volume is on node1 and the pod scheduled on node2, then this will not work, this will work perfectly in single node cluster
+# FOR ELIMINATING THIS LIMITATION, USE PERSISTENT VOLUMES
+apiVersion: v1
+kind: pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      volumeMounts:
+        - mountPath: /data
+          name: first-volume
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+  volumes:
+    - name: first-volume
+      hostPath:
+        path: /tmp/data
+
+
+
+  
+# VOLUME ON A EXTERNAL SERVICE ( SO THAT THE DATA IS SAFE EVEN IF POD IS DESTROYED && SUPPORTS MULTINODE CLUSTER )
+# There are many external services that can be integrated, the example below is for Amazon EBS
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      volumeMounts:
+        - mountPath: /data
+          name: first-volume
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+  volumes:
+    - name: first-volume
+      awsElasticBlockstore:
+        volumeID: <volume-id>
+        fsType: ext4      
+
+
+###############################################################################################################################
+
+# POD WITH  COMMANDS & ARGUMENTS
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      command: ["sleep"] # this overrides any ENTRYPOINT instruction in the dockerfile
+      args: ["10"]  # this gets appended to the ENTRYPOINT in the dockerfile , e.g. ENTRYPOINT ["sleep"]
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      command: 
+        - "sleep"
+        - "1200"
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+
+
+#############################################################################################################################
+
+
+# FETCH DOCKER IMAGES FROM PRIVATE REGISTRY INSIDE THE CLUSTER
+
+# WE first create a secret that holds the registry credentials
+# kubectl create secret <type> <name>
+# kubectl create secret docker-registry regcred --docker-server=private-registry.io --docker-username=registry-user  --docker-password=registry-password  --docker-email=registry-user@org.com
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+    - name: secondcontainer
+      image: myprivateregistry.com:5000/nginx-custom  
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+  imagePullSecrets:
+    - name: regcred
+
+
+################################################################################################################################
+
+# KUBERNETES SECURITY CONTEXT
+# A Security Context in Kubernetes defines privileges and access controls for a pod or a container. 
+# It sets specific rules for how the container or pod should run, like which user it runs as, whether it can access certain files, or if it should run in a secure way.
+
+# Pass security context on pod level
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  securityContext:
+    runAsUser: 1000 # USER ID
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+    - name: secondcontainer
+      image: myprivateregistry.com:5000/nginx-custom  
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+
+
+# Pass security context on container level
+apiVersion: v1
+kind: Pod
+metadata:
+  name: firstpod
+  labels:
+    type: apiapp
+spec:
+  containers:
+    - name: firstcontainer
+      image: coolgourav147/nginx-custom
+      env:
+        - name: VAR1
+          value: var1_value
+        - name: VAR2
+          value: var2_value
+      securityContext:
+        runAsUser: 1000 # USER ID
+

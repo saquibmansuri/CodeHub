@@ -1,0 +1,28 @@
+apiVersion: v1
+data:
+  key1: value1
+  key2: value2
+  key3: value3
+  key4: value4
+  key5: value5
+  key6: value6
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: testconfigmap
+
+
+################################
+
+apiVersion: v1
+data:
+  key1: |
+    this is key1
+    data
+  key2: |
+    this is key2
+    data
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: testconfigmap

@@ -1,0 +1,44 @@
+# Kubectx and Kubens – Command Line Utilities
+References:
+Kubectx/Kubens GitHub Repository: https://github.com/ahmetb/kubectx
+
+In a production Kubernetes environment, switching between multiple namespaces and contexts becomes a common task, especially in large-scale clusters or multi-cluster environments. 
+Performing this task using only kubectl commands can be time-consuming and overwhelming. 
+To streamline this process, we can use two helpful command-line tools: kubectx and kubens.
+
+
+
+# Kubectx: Switch Between Kubernetes Contexts
+Kubectx is a tool designed to simplify switching between Kubernetes contexts. 
+A Kubernetes context contains information on the cluster, user credentials, and namespace. 
+In a multi-cluster environment, it allows you to easily switch between clusters without using lengthy kubectl config commands.
+
+Installation
+To install kubectx, run the following commands:
+    sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+    sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+
+Common Commands
+  - List all contexts: kubectx
+  - Switch to a new context: kubectx <context_name>
+  - Switch back to the previous context: kubectx -
+  - See the current context: kubectx -c
+      
+
+
+
+
+
+# Kubens: Switch Between Kubernetes Namespaces
+Kubens is a tool designed to make switching between Kubernetes namespaces easier. 
+Instead of using the lengthy kubectl commands, you can quickly switch namespaces with this simple tool.
+
+Installation
+To install kubens, use the following commands:
+  sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+  sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+
+
+Common Commands
+  - Switch to a new namespace: kubens <new_namespace>
+  - Switch back to the previous namespace: kubens -

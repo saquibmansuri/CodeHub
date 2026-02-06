@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+
+metadata:
+  name: firstreplicaset
+  labels:
+    pupose: apireplicaset
+
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      type: apiapp # rc will maintain pods with this label
+  template:
+    metadata:
+      name: myfirstpod
+      labels:
+        type: apiapp
+    spec:
+      containers:
+        - name: firstcontainer
+          image: coolgourav147/nginx-custom
+          env:
+            - name: VAR1
+              value: var1_value
+            - name: VAR2
+              value: var2_value
+
+###############################
+
+# USING MATCH EXPRESSION
+
+apiVersion: apps/v1
+kind: ReplicaSet
+
+metadata:
+  name: firstreplicaset
+  labels:
+    pupose: apireplicaset
+
+spec:
+  replicas: 5
+  selector:
+    matchExpressions:
+      - key: type
+        operator: In
+        values:
+          - apiapp1
+          - apiapp2
+      - key: product
+        operator: NotIn
+        values:
+          - webadmin
+  template:
+    metadata:
+      name: myfirstpod
+      labels:
+        type: apiapp
+    spec:
+      containers:
+        - name: firstcontainer
+          image: coolgourav147/nginx-custom
+          env:
+            - name: VAR1
+              value: var1_value
+            - name: VAR2
+              value: var2_value
