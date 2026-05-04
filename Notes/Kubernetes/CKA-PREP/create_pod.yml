@@ -580,3 +580,16 @@ spec:
       securityContext:
         runAsUser: 1000 # USER ID
 
+# If scheduler isnt working in your cluster or you strictly want to run your pod on a particular node
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+spec:
+  nodeName: worker-node-01  # Replace with your actual node name
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+    
+
