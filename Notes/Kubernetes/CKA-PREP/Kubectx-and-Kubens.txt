@@ -25,9 +25,7 @@ Common Commands
   - See the current context: kubectx -c
       
 
-
-
-
+-----------------------
 
 # Kubens: Switch Between Kubernetes Namespaces
 Kubens is a tool designed to make switching between Kubernetes namespaces easier. 

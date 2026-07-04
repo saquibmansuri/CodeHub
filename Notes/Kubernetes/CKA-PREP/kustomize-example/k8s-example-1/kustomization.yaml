@@ -1,0 +1,114 @@
+# we need to manually create this file where our base manifests are stored
+# Kustomize looks for a kustomization.yaml file which contains:
+  # list of all k8s manifests kustomize should manage
+  # all of the customizations that should be applied
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# k8s resources to be managed by kustomize
+resources:
+  - nginx-depl.yaml
+  - nginx-service.yaml
+
+# customizations that should be applied
+# for example. adding a label
+commonLabels:
+  app: nginx
+
+# namespace: adds a common namespace to all resources
+namespace: nginx-namespace
+
+# namePrefix: adds a common prefix to all resource names
+namePrefix: nginx-
+
+# nameSuffix: adds a common suffix to all resource names
+nameSuffix: -app
+
+# commonAnnotations: adds a common annotation to all resources
+commonAnnotations:
+  branch: master
+
+# image transformers: replaces images in the k8s manifests
+images:
+  - name: nginx
+    newName: apache
+
+# image transformers: replaces existing tag only
+images:
+  - name: nginx
+    newTag: "1.21.0"
+
+# image transformers: replaces existing image and tag
+images:
+  - name: nginx
+    newName: apache
+    newTag: "1.21.0"
+
+#######################
+## Patches examples
+
+# json 6902 patch example
+patches:
+  - target:
+      kind: Deployment
+      name: nginx-deployment
+    patch: |-
+      - op: replace # this is the operation type
+        path: /spec/replicas # this is where to find replica in yaml tree
+        value: 3 # this is the value that will be replaced
+
+# json 6902 example to remove a label from deployment
+patches:
+  - target:
+      kind: Deployment
+      name: mongo-deployment
+    patch: |-
+      - op: remove
+        path: /spec/template/metadata/labels/org
+
+# json 6902 example to change image of a container
+patches:
+  - target:
+      kind: Deployment
+      name: api-deployment
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: caddy
+      
+
+# json 6902 example but with a seperate patch file
+patches:
+  - path: replica-patch.yaml
+    target:
+      kind: Deployment
+      name: nginx-deployment
+    
+#  replica.yaml content
+- op: replace # this is the operation type
+  path: /spec/replicas # this is where to find replica in yaml tree
+  value: 3 # this is the value that will be replaced
+
+
+# strategic merge patch example (this simply compares the yamls and changes the properties in base file), this is much easier
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      spec:
+        replicas: 5
+
+# strategic merge patch to delete a container
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: api-deployment
+      spec:
+        template:
+          spec:
+            containers:
+              - $patch: delete
+                name: memcached

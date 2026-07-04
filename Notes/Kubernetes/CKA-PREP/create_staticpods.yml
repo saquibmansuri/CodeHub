@@ -3,6 +3,8 @@
 # Unlike regular pods, static pods do not have associated ReplicaSet, Deployment, or DaemonSet controllers and cannot be managed with kubectl.
 # The kubelet on each node monitors and manages static pods independently. If a static pod is deleted, the kubelet will automatically recreate it.
 
+# Static Pods automatically have a hyphen followed by the node name (-<node_name>) appended as a suffix to their Pod name, EXAMPLE: static-nginx-node1
+
 # USECASE - This ensures these critical components are always available, even if the API server is down.
 
 # Specific directory for static pods (just keep the file here, no other thing needs to be done)
@@ -20,3 +22,13 @@ spec:
       image: nginx
       ports:
         - containerPort: 80
+
+
+
+#### Sometimes the kubelet config file has diff path for static pods directory, in that case find like this
+# ps -ef |  grep /usr/bin/kubelet
+# this will show the config file path for static pods
+# --config=/var/lib/kubelet/config.yaml
+# now open the config file and find the staticPodPath field
+# staticPodPath: /etc/tmp/manifests
+# now you can create the static pods in this directory or change the path in the config file

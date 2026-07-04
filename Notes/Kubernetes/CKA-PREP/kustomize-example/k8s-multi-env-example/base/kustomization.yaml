@@ -1,0 +1,4 @@
+resources:
+  - nginx-depl.yaml
+  - nginx-svc.yaml
+  

@@ -1,0 +1,37 @@
+# A new member akshay joined our team. He requires access to our cluster. The Certificate Signing Request is at the /root location.
+# the file should be there, take csr file from there and convert it to base64 which we will use to create a certificate request
+controlplane ~ ➜  echo "-----BEGIN CERTIFICATE REQUEST-----
+MIICVjCCAT4CAQAwETEPMA0GA1UEAwwGYWtzaGF5MIIBIjANBgkqhkiG9w0BAQEF
+AAOCAQ8AMIIBCgKCAQEAyxdAOTRgGWNUtdOV0ssY9hv+u/WpxKeYOI8DJouXP1QH
+dkSiz61l8CZ0L4YItuZUU5ZJJS/RfsqOX6DJRPIjy9J19a+xuLe/CEUwIdePmCzr
+Z1hZ4KVWBdQKR8Ztr4Dc4pDb731+hz0Vkwy3DazP/KjTIe3BtFHfUJeyWv1q9mIc
+vRj++3Pf9mtxr8PtmF5DTD1SwjUDN7vD7oJq7sLuxXfri8N9SRNe7574grq1rJO+
+xxvTOoZv/vOVivDXjgkeKiHT0ZM8IDZIMtpalwGQ3YNQ5smEp/jt8ZaUMCN9YvDa
+ITvnn62ItT+Sje/mSQ8tVFUSGxzBU/BejN/g0WdsKwIDAQABoAAwDQYJKoZIhvcN
+AQELBQADggEBAEAkL6fsIzVz12F0o/xa4swQjPE1pjxhKSP6OGmg/M91vKIBEg6y
+/1249YcHKQWj3FzmOEa2lnNN87sd1VU8q9m02+CruPAZwlONp/welD/i3YYY5Ibn
+HlB43Y5vgFlJEUFFD5gkiRWdM/B1YflmGuR6YrtNseOql9oZ1idRN8f4FKdBmO4H
+6BH4cbjK9SX+zALYNr+8FD30SPmsw7Eu0hAvshSlbRdcLQ3PDEGeEb6xcSfDeH7Q
+ghU354LLyDKh8WWYMNRl5Z7ivNONIe74zd4OzTkTyhltx0jl6rVqTNIE9esJ0SbK
+IWhZGnCxMsEMMfp+ftxF8sdqNwFdLxQYxTs=
+-----END CERTIFICATE REQUEST-----" | base64
+
+
+# CERTIFICATE SIGNING REQUEST
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: akshay
+spec:
+  request: <BASE64 encoded>
+    signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 86400  # one day
+  usages:
+  - client auth
+
+
+# kubectl get csr
+# kubectl certificate approve akshay
+# kubectl certificate deny agent-smith
+# kubectl delete csr agent-smith
+# kubectl get csr agent-smith -o yaml

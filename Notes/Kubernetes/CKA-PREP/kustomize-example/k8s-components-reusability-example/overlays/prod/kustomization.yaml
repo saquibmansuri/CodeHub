@@ -1,0 +1,7 @@
+bases:
+  - ../../base
+
+# Import components that you need per environment like this
+components:
+  - ../../components/caching
+  - ../../components/db

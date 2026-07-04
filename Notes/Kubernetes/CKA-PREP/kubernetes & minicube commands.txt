@@ -22,10 +22,12 @@ Acts as the control plane for the Kubernetes cluster, managing the overall state
 2. Worker Nodes:
 Run the containerized applications in pods. They are controlled by the master node and include services like kubelet, kube-proxy, and container runtime.
 
+-- In master node
 3. Controller Manager:
 Contains various controllers that regulate the state of the cluster, such as Node, ReplicaSet, and Deployment controllers. It ensures that the desired state matches the current state of the resources.
+A controller is any process or code that runs in a loop and is continuously monitoring the k8s cluster and listening to events of specific objects being changed.
 
-4. ETCD Cluster:
+4. ETCD:
 A highly available, distributed key-value store that stores all cluster data, including configuration, secrets, and the entire state of the Kubernetes cluster.
 
 5. Kube-scheduler:
@@ -34,17 +36,16 @@ Determines the best available node for a pod based on factors like resource requ
 6. Kube-apiserver:
 Serves as the front end for the Kubernetes control plane, exposing the Kubernetes API. It validates and processes API requests, coordinating communication between various components.
 
+-- In worker node
 7. Kubelet:
 Runs on each worker node, ensuring that containers defined in the pod specs are running and healthy. It interacts with the container runtime and monitors the state of the node.
 
 8. Kube-proxy:
 Manages network communication for services within and outside the cluster. It maintains network rules on nodes to route traffic to appropriate pods and ensure connectivity.
 
-
 ---------------------------------------------------
 
 minikube installation - https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download
-
 
 minikube start
 kubectl get po -A
@@ -55,19 +56,18 @@ minikube unpause
 minikube stop
 minikube config set memory 9001
 minikube delete --all
+minicube ip
 minikube dashboard
-	ssh -i sentra-website-aws-kp.pem -L 8001:127.0.0.1:46761 ubuntu@44.214.140.76
 	http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
 kubectl cluster-info
+
 kubectl get pods
-kubectl get all --selector env=prod,bu=finance,tier=frontend   # listing pods based omn some label 
+kubectl get all --selector env=prod,bu=finance,tier=frontend   # listing pods based on some label 
 kubectl get pods --all-namespaces
+kubectl get pods -A  (does the same as above command)
 kubectl get nodes
 kubectl api-resources | grep -i namespace    # to find short name of any resource
-minicube ip
-
 kubectl run firstpod --image=coolgourav147/nginx-custom --restart=Never
-
 kubectl get all
 
 -- TO EDIT PODS / RC OR ANY OTHER RESOURCE
@@ -78,17 +78,16 @@ kubectl edit rc <rc name>
 kubectl expose pod <podname> --port=8000 --target-port=80 --name myservice (Without --type=NodePort: The service is of type ClusterIP, accessible only within the cluster.)
 kubectl expose pod <podname> --type=NodePort --port=8000 --target-port=80 --name myservice (With --type=NodePort: The service is of type NodePort, accessible from outside the cluster on a specified port range.)
 
-
-kubectl get pods
 kubectl get pods -o wide  (see detailed info like worker node, ip etc)
 kubectl get pods -w   (watch continuously)
-kubectl get nodes
 kubectl get pod <pod-name> -o jsonpath='{.spec.containers[*].name}'     # lists all containers inside the pod
 kubectl get replicationcontrollers
 
-kubectl explain pods
+kubectl explain pods (gives documentation)
 kubectl describe pod <pod_name> (eg - kubectl describe pod firstpod)
 kubectl logs firstpod
+kubectl logs firstpod -f
+kubectl logs firstpod -f --previous
 kubectl delete pod <podname>
 kubectl delete pods --all
 
@@ -154,12 +153,16 @@ kubectl scale rc --replicas=5 <rc name>
 
 ------ DEPLOYMENTS -------------
 kubectl apply -f <deployment file name>.yml
+kubectl scale deployment <deployment name> --replicas=2
+kubectl set image deployment/nginx-deploy nginx=nginx:1.17
+kubectl annotate deployment/nginx-deploy kubernetes.io/change-cause="Updated nginx image to 1.17"
 kubectl rollout status deployment <deployment name>
 kubectl rollout history deployment <deployment name>
 kubectl rollout undo deployment <deployment name>  ### this rollbacks to previous version by default
 kubectl rollout undo --to-revision=2 deployment <deployment name>  ## rollbacks to the desired revision, this number can be found through history command ## by default last ten revisions are stored
 kubectl rollout pause deployment <deployment name>
 kubectl rollout resume deployment <deployment name>
+kubectl rollout restart deployment <deployment name>
 
 
 -------- NAMESPACE -------------
@@ -182,7 +185,7 @@ example- myservice.default.svc.cluster.local               # basically we can do
 kubectl create namespace prod
 
 # CREATE A FULL ACCESS ROLE FOR PRODTEAM - kubectl apply -f role.yml
-# TO VERIFY IF ROLE WAS CREATED OR NOT- kubectl get roles --namespace=prod
+# TO VERIFY IF ROLE WAS CREATED OR NOT- kubectl get roles -n prod
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -244,8 +247,8 @@ roleRef:
 
 
 # Now check if any user has access to this 'prod' namespace or not - 
-kubectl auth can-i list pods --namespace=prod --as=prodteam
-kubectl auth can-i create deployments --namespace=prod --as=prodteam
+kubectl auth can-i list pods -n prod --as prodteam
+kubectl auth can-i create deployments -n prod --as prodteam
 
 # ATLAST, NO USER EXCEPT 'prodteam' will be able to do anything in 'prod' namespace
 # TO DO ANYTHING IN THIS NAMESPACE, THEN USE '--as' flag
@@ -331,9 +334,9 @@ A taint is applied to a node and can repel a set of pods that do not tolerate th
 Key, Value & Effect
 
 The effect can be one of the following:
-NoSchedule: Pods that do not tolerate this taint are not scheduled on the node.
+NoSchedule: New Pods that do not tolerate this taint are not scheduled on the node. Pods already running on the node continue to run normally. 
 PreferNoSchedule: Kubernetes will try to avoid placing a pod that does not tolerate this taint on the node but it's not a strict enforcement.
-NoExecute: Pods that do not tolerate this taint will be evicted from the node if they are already running, and will not be scheduled on the node in the future. 
+NoExecute: Pods that do not tolerate this taint will be evicted from the node if they are already running, and will not be scheduled on the node in the future. Strongest restriction. Blocks all new pods without a matching toleration.
 
 EXAMPLE - kubectl taint node <node name> key1=value1:NoSchedule
 This command applies a taint to node where the taint key is key1, the value is value1, and the effect is NoSchedule. This means that no pod that lacks a toleration for key1=value1:NoSchedule will be scheduled on node1.
@@ -359,8 +362,6 @@ spec:
     effect: "NoSchedule"
 
 
-
-
 # TO REMOVE AN EXISTING TAINT FROM A NODE
 kubectl taint nodes <NODE NAME> key1-
 
@@ -375,7 +376,7 @@ To see this, run this command - kubectl describe node kubemaster | grep Taints
 
 ## DAEMON SET
 This ensures a copy of your pod runs on all the nodes
-Usecase- for deploying logging agent
+Usecase example - for deploying logging agent
 
 
 ## MONITORING KUBERNETES CLUSTER
@@ -394,30 +395,38 @@ kubectl top node
 kubectl top pod
 
 
-
+#######################################################
 ## LOGGING
 
 -- view logs of all containers inside a pod (note: it will show logs of all containers inside the pod)
 kubectl logs <podname> -f
 
 -- to view logs of a particular container inside a pod
-kubectl logs <podname> <container name> -f
+kubectl logs <podname> <container_name> -f
 
 
-
-
-#### Cluster Maintenance
+#######################################################
+## Cluster Maintenance
 
 # When you want to make OS upgrade or patch upgrade on node then before doing that its the best practice to drain that particular node, this deletes all pods and recreates them on another node. And draining also ensures that no pod is scheduled on this node in future until specified restriction is removed
 
-kubectl drain node-1
+kubectl drain node01
 kubectl drain node01 --ignore-daemonsets
-kubectl cordon node-2 - this only stops future scheduling of pods on this node, existing ones will stay, draining before this command is best practice
-kubectl uncordon node-1 # to allow pods to be scheduled again on this node
+kubectl cordon node02    # this only stops future scheduling of pods on this node, existing ones will stay, draining before this command is best practice
+kubectl uncordon node01  # to allow pods to be scheduled again on this node
 
 
-
+### Kubernetes releases
 # What should be the version of the different components in the cluster
+1.24.0 (major.minor.patch)
+
+Note: 
+-except etcd and coredns, all other components have same version
+-none of the control plane components should have higher version than kubeapi-server because its the main component in control plane 
+-latest 3 minor releases are supported by k8s, rest are not supported
+-while updating the k8s components the recommended approach is to update 1 minor version at a time
+-first update the master nodes then the worker nodes
+
 Assuming kube-apiserver version - X
  then, 
   controller-manager - X-1
@@ -427,17 +436,19 @@ Assuming kube-apiserver version - X
   kubectl - between X-1 & X+1
 
 
-# UPGRADING THE CLUSTER CREATED THROUGH KUBEADM METHOD
+## UPGRADING THE CLUSTER CREATED THROUGH KUBEADM METHOD (next section has step by step commands verified myself in lab)
+- components should be upgraded 1 minor version at a time
 apt-cache madison kubeadm # RUN THIS TO GET THE NEW VERSION FOR kubeadm and kubelet
 first update the kubeadm tool itself - apt-get upgrade -y kubeadm=1.12.0-00
 kubeadm upgrade plan
-kubeadm upgrade apply v1.13.4
+kubeadm upgrade apply v1.13.4 (this doesnot upgrade kubelets in worker nodes, so you need to manually upgrade kubelets in each worker node)
 
 -- now upgrade the kubelet on the master node
 apt-get update kubelet=1.12.0-00
 systemctl restart kubelet
 
 -- now upgrade each worker node
+kubectl cordon node1
 kubectl drain node1
 apt-get upgrade -y kubeadm=1.12.0-00
 apt-get upgrade -y kubelet=1.12.0-00
@@ -447,26 +458,44 @@ kubectl uncordon node1
 
 -----------------------------------------------------------
 
-Update Cluster Live Example
+## Update Kubeadm Cluster Live Example
+kubectl get nodes (to check cluster version)
+kubeadm upgrade plan (just to see current and new version)
 
+-updating keyring (this needs to be done in all nodes, start with controlplane)
+cat /etc/*release* (shows which distribution is it like Ubuntu 20.04.6 LTS)
 nano /etc/apt/sources.list.d/kubernetes.list     # open this file and update only the version to desired version and save the file
 deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
+then simply do - sudo apt-get update
 
-
+-now updating kubeadm (controlplane)
+kubectl cordon controlplane
+kubectl drain controlplane
 apt update
 apt-cache madison kubeadm
-
-
-apt-get install kubeadm=1.30.0-1.1
-
-kubeadm upgrade plan v1.30.0
-kubeadm upgrade apply v1.30.0
-
-
+apt-get install kubeadm=1.30.0-1.1 (only minor version changes)
+kubeadm upgrade plan v1.30.0 (only in master, change to desired version plan)
+kubeadm upgrade apply v1.30.0 (only in master)
+-update kubelet in controlplane first and uncorden controlplane
 apt-get install kubelet=1.30.0-1.1
-
 systemctl daemon-reload
 systemctl restart kubelet
+kubectl ucordon controlplane
+
+-now updating worker nodes 1 at a time
+ssh node01
+kubectl cordon node01
+kubectl drain node01 --ignore-daemonsets
+-update keyring as above step
+apt get update
+apt-cache madison kubeadm
+apt-get install kubeadm=1.30.0-1.1
+sudo kubeadm upgrade node
+-update kubelet in all nodes
+apt-get install kubelet=1.30.0-1.1
+systemctl daemon-reload
+systemctl restart kubelet
+kubectl uncordon node01
 -----------------------------------------------------------
 
 # BACKUP & RESTORE KUBERNETES CLUSTER USING ETCD Cluster
@@ -477,6 +506,10 @@ References - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgra
 # BACKING UP
 # Take snapshot of etcd server database (this contains information related to all existing resources)
 # These 4 parameters - endpoint, cacert, cert and key are mandatory
+
+-etcdctl version
+-check image used by etcd pod in kube-system namespace by describing the pod
+-describe etcd pod in kubesystem namespace and see '--key-file', '--listen-client-urls', '--peer-trusted-ca-file' & '--cert-file' as we would need these later in backup command
 
 ETCDCTL_API=3 etcdctl --endpoints=https://[127.0.0.1]:2379 \
 --cacert=/etc/kubernetes/pki/etcd/ca.crt \
@@ -492,25 +525,47 @@ ETCDCTL_API=3 etcdctl \
 # RESTORING
 # First stop the kube-api server before restoring
 service kube-apiserver stop
+(if the above command doesnot work then move the kubeapi server manifest to some temporary location)
+mv /etc/kubernetes/manifests/kube-apiserver.yaml /tmp/
+sleep 30
 
-# Restore the snapshot
+# Restore the snapshot (the --data-dir /var/lib/etcd-from-backup path can be anything inside /var/lib, dont use same as existing from describe pod output, because it needs empty directory upon every restore operation)
 ETCDCTL_API=3 etcdctl \
   snapshot restore snapshot.db \
   --data-dir /var/lib/etcd-from-backup
 
 # AFTER RESTORING UPDATE THIS FILE - /etc/kubernetes/manifests/etcd.yaml
-We have now restored the etcd snapshot to a new path on the controlplane - /var/lib/etcd-from-backup, so, the only change to be made in the YAML file, is to change the hostPath for the volume called 'etcd-data' from old directory (/var/lib/etcd) to the new directory (/var/lib/etcd-from-backup).
-In the same file [ /etc/kubernetes/manifests/etcd.yaml ] , change the value of this flag [ --data-dir ] = /var/lib/etcd-from-backup
+We have now restored the etcd snapshot to a new path on the controlplane - /var/lib/etcd-from-backup, so, the change to be made in the YAML file, is to change the hostPath for the volume called 'etcd-data' from old directory (/var/lib/etcd) to the new directory (/var/lib/etcd-from-backup) and also the --data-directory value.
+so in the file change all the '/var/lib/etcd' to '/var/lib/etcd-from-backup' (tip: there will be multiple occurances, approx 3)
 
 # Reload the daemon
 systemctl daemon-reload
 
 # Restart etcd service
-service etcd restart
+service etcd restart (although upon updating the manifest file as above it wwould auto restart)
 
 # Atlast restart the kube-api server
 service kube-apiserver start
+(if the above command doesnot work then move BACK the kubeapi server manifest which we moved into tmp location)
+mv /tmp/kube-apiserver.yaml /etc/kubernetes/manifests/
 
+# restart other components if you want (OPTIONAL)
+# Restart kube-controller-manager
+mv /etc/kubernetes/manifests/kube-controller-manager.yaml /tmp/
+sleep 20
+mv /tmp/kube-controller-manager.yaml /etc/kubernetes/manifests/
+
+# Restart kube-scheduler
+mv /etc/kubernetes/manifests/kube-scheduler.yaml /tmp/
+sleep 20
+mv /tmp/kube-scheduler.yaml /etc/kubernetes/manifests/
+
+# Restart kubelet
+systemctl restart kubelet
+
+----------------------------------------------------------------------------------
+# Backup using kubeapi-server
+kubectl get all --all-namespaces -o yaml > backup.yaml
 
 ----------------------------------------------------------------------------------
 
@@ -536,18 +591,54 @@ service kube-apiserver start
 - then add this flag in kube-apiserver configuration & restart kube-apiserver =   --token-auth-file=user-details.csv
 
 
+## CERTIFICATE TOPIC (TLS IN K8S)
+# Certificate (Public key) naming has *.crt OR *.pem
+example- server.crt, server.pem, client.crt, client.pem
+
+# Private key naming has *.key OR *-key.pem
+server.key
+server-key.pem
+client.key
+client.key.pem
+
+- Server certificates are certificates which stay with server components to serve requests to their clients by proving they are the real servers
+- Client certificates are certificates which stay with client components to prove they are the real clients to the servers
+
+# Server components in k8s having server certificates (bcz they expose api)
+kubeapi-server, etcd & kubelet
+
+# Client components (ones who use server components using their own client certificates)
+human, scheduler, kube-controller-manager, kube-proxy
+
+# View certificates of k8s components
+simply see the manifest files for each component like - cat /etc/kubernetes/manifests/kube-apiserver.yaml, you will see all the certificate paths
+- to view more details of particular certificate, decode it: openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
+
+
+## Roles and bindings
+- Role: namespaced role
+- RoleBinding: Binds user to a namespaced role 
+- ClusterRole: cluster level role for outsiders
+- ClusterRoleBinding: Binds user to cluster level role
+
 # Service accounts in Kubernetes
 (service accounts are used by bots like promethues or github for authenticating into Kubernetes cluster)
 (when a service account is created, a token needs to be created which can be stored as a secret and used by third party apps to authenticate into the cluster)
+(every pod gets a service account, if not specified, it is set to default service account, every namespace has a default service account)
+(the token of the service account attached to the pod is auto renewed by k8s until the life of the pod)
+
+for creating sa for services that are not in our k8s cluster
 - kubectl create serviceaccount testaccount
 - kubectl create token testaccount  # creates token with 1 hour expiry
 - kubectl create token <serviceaccount> --duration=<time>
            use like this - 1h for 1 hour, 12h for 12 hours, 7d for 7 days
 - kubectl get serviceaccount
-- kubectl describe serviceaccout testaccount
+- kubectl describe serviceaccount testaccount
 
 
-#  FETCH PRIVATE DOCKER/CLOUD IMAGE REPOSITORY IMAGES
+# KUBERNETES IMAGE PULL CONCEPT
+- image: docker.io/library/nginx (k8s pulls from here by default)
+# FETCH PRIVATE DOCKER/CLOUD IMAGE REPOSITORY IMAGES
 WE first create a secret that holds the registry credentials
 kubectl create secret <type> <name>
 kubectl create secret docker-registry regcred --docker-server=private-registry.io --docker-username=registry-user  --docker-password=registry-password  --docker-email=registry-user@org.com
@@ -562,7 +653,6 @@ imagePullSecrets:
 
 ## Networking Basics
 
-
 # Basic Commands
 ip link  # List and modify interfaces on the host
 ip addr # To see the ip address assigned to the interfaces
@@ -570,15 +660,266 @@ ip addr add 192.168.1.10/24 dev eth0 # Set ip addresses on interfaces
 ip route # Used to view routing table
 ip route add 192.168.1.0/24 via 192.168.2.1 # Add entries into the routing table
 
+# Identify the network interface configured for a specific node
+ip a | grep <node ip>
+# To know the mac address of the network interface
+ip link show <NI name like eth0>
+# what is the IP address for the default gateway
+ip route show default
+
+## CNI
+- When a container (such as a Kubernetes Pod) is created, it needs to be able to talk to other containers, nodes, and the outside world. Because Kubernetes itself does not provide a built-in networking implementation, it relies on CNI to bridge the gap
+- In linux, The CNI binaries are located under /opt/cni/bin by default.
+- To know which CNI plugin is configured for the k8s cluster - /etc/cni/net.d/
+
+## IPAM
+- PAM (IP Address Management) in Kubernetes is the system responsible for assigning, tracking, and managing IP addresses for networking resources—primarily Pods and Services
+
+## DNS in k8s
+-- For accessing the Service
+syntax: <service-name>.<ns-name>.svc.cluster.local
+myservice.default.svc.cluster.local
+
+-- For accessing the pods (this is not enabled by default but we can enable this feature in our cluster)
+syntax: <ip in dashed form>.<ns-name>.pod.cluster.local
+10-0-1-2.default.pod.cluster.local
+
+- Coredns responsible for dns in k8s
+- Configuration file located inside the CoreDNS pod for configuring the CoreDNS service - /etc/coredns/Corefile
+- How is the Corefile passed into the CoreDNS POD - configmap
+
+# GATEWAY API
+- supports multi tenancy, meaning multiple services can be managed by diff teams with 1 gateway api, in ingress its difficult
+- it support layer 4 and 7 routing 
+- common generic controller anotation, no more specific 
+- it has 3 components: gateway class, gateway and httpRoute/tcpRoute/grpcRoute
 
 # Docker Networking
 docker run --network none nginx # runs a container which is not accessible from outside world
 docker run --network host nginx # runs a container which is directly available on host port, so no port mapping required
 
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+## HELM
+Helm acts as a package manager that helps us install and uninstall apps as well as helm can also act as release manager to deploy new versions and rollbacks
+
+## Installing helm (check official doc, all the diff ways of installing helm are mentioned there)
+# using snap
+- sudo snap install helm --classic
+
+# from script
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+chmod 700 get_helm.sh
+./get_helm.sh
+
+- with every change in helm command, a new revision is created, each revision stores exact state of resources in k8s cluster at that point in time
+- In Helm, a Release is the running instance of your application in the cluster, while a Revision is a specific historical version or checkpoint of that release
+- Helm, stores all the metadata in k8s cluster as secrets
+
+# HELM COMPONENTS
+-Helm Architecture & Core Concepts
+Helm CLI: The command-line interface (CLI) used by developers to manage charts, repositories, and releases.
+Helm Library: The internal logic executing all Helm operations, combining charts and configurations to interface with the Kubernetes API server.
+
+-Chart Components (The Package)
+Chart: A structured bundle of files defining all the Kubernetes resources required for a single application.
+Chart.yaml: The metadata file describing the chart's name, version, description, and maintainers.
+Values.yaml: The configuration layer containing default values that are injected into templates to make deployments customizable.
+Templates: A directory containing Kubernetes manifest files written in Go Template syntax that generate active configurations
+
+-Deployment & Storage
+Release: A specific deployed instance of a Helm chart running in your Kubernetes cluster.
+Metadata/Storage: The release and revision history stored securely as secrets or ConfigMaps inside the Kubernetes cluster.
+Repositories: Remote or local storage locations (like Artifact Hub) used to share, store, and fetch Helm charts
+
+# Helm Chart Structure 
+hello-world-chart
+  - templates/ (templates directory)
+  - values.yaml (configurable values)
+  - chart.yaml (chart information)
+  - LICENSE (chart license)
+  - README.md (readme file)
+  - charts/ (dependency charts)
+
+example helm chart - https://github.com/helm/examples/tree/main/charts/hello-world
+
+# Commonly used helm commands
+- helm install wordpress
+- helm upgrade wordpress
+- helm rollback wordpress
+- helm uninstall wordpress
+- helm install release_name chartname (directly installs and applies the chart, to modify stuff before applying use pull first)
+- helm install nginx-dev bitnami/nginx --version 7.1.0 (pass version like this)  
+- helm --help
+- helm search hub wordpress
+- helm search repo wordpress
+- helm repo add bitnami https://charts.bitnami.com/bitnami
+- helm install <release_name> <repo>/<application_name_in_repo>
+- helm install my-release bitnami/wordpress
+- helm list (to check all the releases)
+- helm uninstall my-release
+- helm repo list
+- helm repo update (just like sudo apt update)
+- helm install --set wordpressBlogName="Helm Tutorials" my-release bitnami/wordpress (pass variable values in command line like this) 
+- helm install --values custom-values.yaml my-release bitnami/wordpress (pass all the values in this yaml file)
+
+# commands to pull and modify the chart
+- helm pull bitnami/wordpress (this pulls the chart in archive form)
+- helm pull --untar bitnami/wordpress (this way we can unzip the chart)
+- helm install my-release ./wordpress (for appying chart now we need to give the path)
+
+# commands to manage release
+- helm install nginx-dev bitnami/nginx --version 7.1.0 (revision1 get created)
+- helm upgrade nginx-dev bitnami/nginx (revision2 gets created inside same release)
+- helm list (check releases and revisions)
+- helm history nginx-dev (more details about a particular release)
+- helm rollback nginx-dev 1 (rollbacks to revision1, although it creates a revision3 same as revision1, rollback doesnot restore volume data, take backups manually before rollback if required)
+--------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
+# KUSTOMIZE BASICS 
+Kustomize is a Kubernetes-native configuration management tool that lets you customize raw, template-free YAML files across different environments (like Dev, Staging, and Prod) without modifying the original manifests. 
+It uses a "base and overlay" approach, meaning you maintain a shared base configuration and layer environment-specific changes on top.
+You write your resources once, and modify only what changes between environments
+
+# TERMINOLOGIES IN KUSTOMIZE 
+Kustomize organizes the manifests into a standard directory structure featuring Bases and Overlays:
+- Base: A directory containing standard, environment-agnostic Kubernetes YAML files (e.g., deployment.yaml, service.yaml) alongside a kustomization.yaml file that lists them.
+- Overlay: A directory that holds configurations specific to an environment (e.g., dev or prod). It contains its own kustomization.yaml pointing to the Base, along with patch files or configuration snippets that override specific fields (like replica counts, container images, or environment variables).
+- Components; A Kustomize component is a modular, reusable building block of Kubernetes configurations (resources + patches) that you can optionally "opt-in" to include in selected environments.
+
+# FOLDER STRUCTURE 
+k8s/
+  base/
+    kustomization.yaml 
+    deployment.yaml
+    service.yaml
+  overlays/
+    dev/
+      kustomization.yaml
+      config-map.yaml
+    staging/
+      kustomization.yaml
+      config-map.yaml
+    prod/
+      kustomization.yaml
+      config-map.yaml
+  components/
+    component1/
+      kustomization.yaml
+      deployment.yaml
+    component2/
+      kustomization.yaml
+      deployment.yaml
+
+BASE + OVERLAYS + COMPONENTS = FINAL K8S MANIFESTS (CREATED BY KUSTOMIZE)
+
+# Commands
+- kustomize build k8s/ (path where the base manifest and kustomization.yaml resides, this only build, it doesn't apply anything)
+--- apply with any one of these commands ---
+- kustomize build k8s/ | kubectl apply -f -
+- kubectl apply -k k8s/ 
+--- delete with any one of these ---
+- kustomize build k8s/ | kubectl delete -f -
+- kubectl delete -k k8s/
+
+# Common transformations
+- commonLabel: adds a label to all the k8s resources
+- namePrefix/Suffix: adds a common prefix/suffix to all resource names
+- namespace: adds a common namespace to all resources
+- commonAnnotations: adds an annotation to all resources
+
+# Image transformers: replaces images in the k8s manifests
+
+# Patches
+- kustomize patches provides another method to modifying kubernetes configs 
+- unlike common transformations, patches provides more surgical approach to targeting one or more specific sections in a k8s resource
+- to create a patch 3 parameters should be provided
+    - Operations type: add/remove/replace  (these are most common, but there are more available)
+    - Target: what resource should this patch be applied on
+        - kind
+        - version/group
+        - name
+        - namespace
+        - labelSelector
+        - annotationSelector
+    - Value: what will be the value that will either be replaced or added  (only needed for add/replace operations)
+
+# COMPONENTS
+- kustomize components provides ability to define reusable pieces of configuration logic (resources + patches) that can be included into multiple overlays
+- components are useful in situations where applications support multiple optional features that need to be enabled only in a subset of overlays (we can simply put file in that particular overlay but its NOT good since again we will have to manage multiple copies, this is where components help us in reusability)
+
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+# TROUBLESHOOTING SECTION
+--- Application failure
+-check labels of pods and deployments
+-check node port, svc port and target port
+-check selectors in svc
+-describe and check env variables in pods/deployments
+-describe and check password for mysql pod is present in environment variables (database name is not visible in pod logs, so ignore it)
+
+--- Control plane failures
+- check node status: kubectl get nodes
+- check pod status: kubectl get pods
+- check control plane pods: kubectl get pods -n kube-system
+- check control plane and worker node services if not managed by kubeadm: service kube-apiserver status
+- check logs of control plane service: kubectl logs <pod name> -n kube-system
+- check logs of control plane and worker node service if not managed by kubeadm: sudo journalctl -u kube-apiserver
+- check manifests here: /etc/kubernetes/manifests/
+- check the volume mount path in manifest files at /etc/kubernetes/manifests
+
+--- Worker node failures
+- check nodes
+- describe nodes
+- check storage, memory, cpu by going in that particular node
+- check kubelet service status in the node: service kubelet status
+- check logs of the service in the node - sudo journalctl -u kubelet
+- check kubelet certificates (check issuer, validity): openssl x509 -in /var/lib/kubelet/worker-1.crt -text
+- check kubelet conf file issues: cat /var/lib/kubelet/config.yaml
+- check kubelet.conf in node01, /etc/kubernetes/kubelet.conf
+- control plane port: https://controlplane:6443
+
+--- Network troubleshooting
+- check service selectors, pod/deployment labels
+- check coredns pod working or not: kubectl get pods -n kube-system | grep coredns
+- verify kubedns endpoints: kubectl get endpointslice -l k8s.io/service-name=kube-dns -n kube-system
+- check pod resolv.conf file: kubectl exec -it <pod_name> -- cat /etc/resolv.conf
+- check if dns is working from a pod: kubectl exec -it busybox -- nslookup kubernetes.default.svc.cluster.local
+- for network troubleshooting always go in this order: pods, service, coredns, cni, kube-proxy
+- check cni: kubectl get pods -n kube-system | grep -E "calico|cilium|flannel|weave|aws-node|kube-router|kindnet"
+- cni plugin directory: ls -la /etc/cni/net.d/
+- check kubelet service logs and grep by cni: sudo journalctl -u kubelet | grep -i cni
+- install cni plugin (flannel) if not initialized
+- for kube proxy, first check the pod logs, then daemon set and configmap of kube-proxy
 
 
+# Topic: Endpoint slicing
+Why Do They Exist? (The Problem They Solve)
+In older Kubernetes versions, a resource called Endpoints tracked every single pod IP for a service in one giant list.
+* If a service had 5,000 pods and just one pod changed its IP, Kubernetes had to rewrite and resend the entire list of 5,000 IPs to every node in the cluster.
+* This wasted massive amounts of network bandwidth and slowed down large clusters
+EndpointSlices solve this by breaking that giant list into smaller, manageable pages (slices). By default, each slice caps out at 100 endpoints. If you add a 101st pod, Kubernetes simply creates a new slice instead of modifying the existing list.
 
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+# Multi container pod types
+1. Co-located container - a pod containing multiple pods, all start at same time
+2. Init container - init container starts and finished then the actual containers start
+3. Sidecar container - the sidecar starts first and keeps on running then the actual containers start
 
+exec in specific container: kubectl exec -it <pod-name> -c <container-name> -- /bin/sh
+
+# Autoscaling in k8s types
+1. Cluster autoscaler
+2. Horizontal pod autoscaler
+   Manually create hpa
+    - kubectl autoscale deployment <deployment-name> --cpu-percent=50 --min=1 --max=10
+    - kubectl autoscale deployment <deployment-name> --param="memory.averageUtilization=80" --min=1 --max=10
+
+3. Vertical pod autoscaler
+
+-------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
 #### JSON PATH IN  KUBERNETES
 
 syntax1 - kubectl get pods -o json | jsonpath $query
@@ -586,71 +927,17 @@ syntax2 - kubectl get pods -o=jsonpath='{$query}'
 
 example1 - kubectl get pods -o=jsonpath='{.items[*].status.nodeInfo.arhitecture}'
 example2 - kubectl get pods -o=jsonpath='{.items[*].status.capacity.cpu}'
-merge example1 & 2 - kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.arhitecture}{.items[*].status.capacity.cpu}'
-format example     - kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.arhitecture}{"\n"}{.items[*].status.capacity.cpu}'
+merge example1 & 2 - kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.arhitecture} {.items[*].status.capacity.cpu}'
+format example     - kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.arhitecture} {"\n"} {.items[*].status.capacity.cpu}'
 loops              - kubectl get nodes -o=jsonpath='{range .items[*]} {.metadata.name} {"\t"} {.status.capacity.cpu} {"\n"} {end}'
 custom column name - kubectl get nodes -o=custom-columns=NODE:.metadata.name , CPU:.status.capacity.cpu'
 sort example       - kubectl get nodes --sort-by=.metadata.name
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
 
 NOTES:
 - If there are init containers defined in the pods, then first init containers will start and then other will others and then pod will comeup in running state
-- Rollout will only trigger when somethis is changed in pod configuration
+- Rollout will only trigger when something is changed in pod configuration
 - Switch between multiple clusters - kubectl config use-context cluster1
 - List Kubernetes default pods - kubectl get pods -n kube-system
 - To check if any user's access without authenticating, use 'can-i' commands
@@ -658,34 +945,17 @@ NOTES:
         - kubectl auth can-I delete nodes       # don't specify user for current user
         - kubectl auth can-I delete nodes --as dev-user --namespace=test      # specify any other user
 
-
+- apt install etcd-client (if we want to use etcdctl)
  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Random Commands
+kubectl api-resources --namespaced=true (to see all namespaced resources in k8s cluster)
+kubectl api-resources --namespaced=false (to see all cluster level resources in k8s cluster)
+kubectl api-resources | grep <resource-name> (to know which group a resource belongs to)
+kubectl get pod -l app=dev
+kubectl config get-contexts
+kubectl config set-context abc 
+kubectl config set-context --current -n abc 
+kubectl config use-context cluster1
+kubectl cluster-info dump | grep cluster-cidr
+k describe cm -n kube-system kubeadm-config | grep podSubnet

@@ -1,3 +1,9 @@
+# create config map using command
+# kubectl create cm <configmap name> --from-literal=key1=value1 --from-literal=key2=value2
+# kubectl create cm <configmap name> --from-file=file1.txt --from-file=file2.txt
+# kubectl create cm <configmap name> --from-file=<foldername>/
+# kubectl create cm <configmap name> --from-env-file=file.txt
+
 apiVersion: v1
 data:
   key1: value1

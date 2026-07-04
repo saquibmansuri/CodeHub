@@ -1,0 +1,7 @@
+bases:
+  - ../../base
+
+patch: |-
+  - op: replace
+    path: /spec/replicas
+    value: 5

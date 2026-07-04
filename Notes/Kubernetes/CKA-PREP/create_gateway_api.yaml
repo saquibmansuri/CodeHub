@@ -1,0 +1,55 @@
+# Gateway API has 3 components: Gateway class, Gateway and HTTPRoute
+
+
+#### Gateway class
+# A GatewayClass defines a set of Gateways that are implemented by a specific controller. Think of it as a blueprint that tells Kubernetes which controller will manage the Gateways.
+# It decouples Gateway configuration from the actual implementation: This allows you to define Gateways without worrying about the underlying controller.
+# It supports multiple gateway implementations in a single cluster: For example, you can have both NGINX and Istio Gateways in the same Kubernetes cluster.
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: example-class
+spec:
+  controllerName: example.com/gateway-controller
+
+
+
+
+# Gateway
+# A Gateway is a Kubernetes resource that defines how traffic enters your cluster. It specifies the protocols, ports, and routing rules for incoming traffic.
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: example-gateway
+spec:
+  gatewayClassName: example-class
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+
+
+
+
+# HttpRoute
+# An HTTPRoute defines how HTTP traffic is forwarded to Kubernetes services. It works in conjunction with a Gateway to route requests based on specific rules, such as matching paths or headers.
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: example-httproute
+spec:
+  parentRefs:
+  - name: example-gateway
+  hostnames:
+  - "www.example.com"
+  rules:
+  - matches:
+    - path:
+      - type: PathPrefix
+        value: "/login"
+    backendRefs:
+    - name: example-svc
+      port: 8080

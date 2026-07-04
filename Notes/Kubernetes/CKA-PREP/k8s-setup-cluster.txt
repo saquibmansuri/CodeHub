@@ -1,0 +1,66 @@
+Github repo - https://github.com/mmumshad/kubernetes-the-hard-way
+Youtube - https://www.youtube.com/watch?v=uUupRagM7m0&list=PL2We04F3Y_41jYdadX55fdJplDvgNGENo
+
+# BASIC STEPS FOR SETTING UP K8S CLUSTER USING KUBEADM TOOL
+1. provision all the vms
+2. install kubeadm on all machines 
+3. install container runtime (containerd) on all machines
+4. initialize the master server
+5. setup pod network
+6. join the worker nodes to the master nodes
+
+
+
+Step 2: Install kubeadm in all machines
+doc - https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+run these commands in all machines
+--
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.36/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.36/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+sudo kubeadm version
+--
+
+
+Step 3: Install container runtime (containerd) on all machines
+doc - https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
+containerd doc (link in above doc) - https://kubernetes.io/docs/setup/production-environment/container-runtimes/#containerd
+run these commands on all machines
+--
+sudo apt update
+sudo apt install -y containerd
+ps -p 1  (check cgroup driver name, we need to set this in kubeadm)
+mkdir -p /etc/containerd (this might be present or not)
+cd /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+sudo nano/etc/containerd/config.toml  [SystemdCgroup = true (find this line in this file and make it true)]
+sudo systemctl restart containerd
+--
+
+
+Step 4: Initialize the master server
+on master server only run this command
+--
+ip add (check the ip address as it will be used later)
+sudo kubeadm init --apiserver-advertise-address 192.168.56.11 --pod-network-cidr "10.244.0.0/16" --upload-certs 
+(this will print the kubeconfig file that can be used, command to setup pod network & command to join other nodes to this cluster)
+--
+
+
+Step 5: Setup pod network (CNI plugin)
+we will use flannel
+all network plugin doc - https://kubernetes.io/docs/concepts/cluster-administration/addons/#networking-and-network-policy
+flannel installation doc - https://github.com/flannel-io/flannel#deploying-flannel-manually
+run commands only on master node
+--
+wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+kubectl apply -f kube-flannel.yml
+kubectl get pods -n kube-flannel
+
+Step 6 : Join the worker nodes to the master nodes
+paste the command to join the cluster that we had from above step and run it in all the worker nodes 
+command will looks something like this :  kubeadm join <control-plane-host>:<control-plane-port> --token <token> --discovery-token-ca-cert-hash sha256:<hash>

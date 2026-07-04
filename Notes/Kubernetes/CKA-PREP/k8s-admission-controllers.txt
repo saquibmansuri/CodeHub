@@ -1,0 +1,19 @@
+Admission controllers are code within the Kubernetes API server that check the data arriving in a request to modify a resource.
+Admission controllers apply to requests that create, delete, or modify objects. Admission controllers can also block custom verbs, such as a request to connect to a pod via an API server proxy. 
+Admission controllers do not (and cannot) block requests to read (get, watch or list) objects, because reads bypass the admission control layer.
+Admission control mechanisms may be validating, mutating, or both. Mutating controllers may modify the data for the resource being modified; validating controllers may not.
+The admission controllers in Kubernetes 1.36 consist of the list below, are compiled into the kube-apiserver binary, and may only be configured by the cluster administrator.
+
+
+# There are two types of admission controllers
+1. Validation admission controllers - these only validate the requests and accept/deny based on validation rules
+2. Mutating admission controllers - these change the resource properties while creating/deleting a resource
+
+# to get a list of existing plugins in enabled state
+kube-apiserver -h | grep enable-admission-plugins
+
+# for enabling a certain admission controller
+kube-apiserver --enable-admission-plugins=NamespaceLifecycle,LimitRanger ...
+
+# for disabling a certain admission controller
+kube-apiserver --disable-admission-plugins=PodNodeSelector,AlwaysDeny ...

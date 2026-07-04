@@ -1,0 +1,56 @@
+# Horizontal Pod Autoscaler (HPA) is a resource that automatically scales the number of pods in a deployment based on the CPU utilization.
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+
+
+# Vertical Pod Autoscaler (VPA) is a resource that automatically scales the memory and CPU requests and limits of a pod based on the resource utilization.
+Componenets:
+1. Recommender: Recommends the memory and CPU requests and limits for a pod
+2. Updater: This evicts the pods if they are not within the recommended memory and CPU requests and limits
+3. Admission Controller: Makes sure the new pods are created with the recommended memory and CPU requests and limits, this component actually updates the pod with the recommended memory and CPU requests and limits.
+
+Modes in which VPA can run:
+1. Off: VPA does not recommend or update the memory and CPU requests and limits for a pod
+2. Initial: Autoscaling happens only on pod creation, not later
+3. Recreate: Evicts pods if usage goes beyond the recommended memory and CPU requests and limits
+4. Auto: VPA automatically decides the mode based on the resource utilization
+
+note: k8s has a safety mechanism that prevents VPA if deployment replica count is 1, because if we have only one pod, then we cannot evict it, because it will result in downtime. So make sure to set the replica count to at least 2.
+
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: php-apache
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: "php-apache"
+      minAllowed:
+        cpu: 100m
+        memory: 100Mi
+      maxAllowed:
+        cpu: 200m
+        memory: 200Mi

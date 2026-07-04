@@ -1,0 +1,47 @@
+# CRD 
+# these can be namespaced OR cluster scoped. both
+# custom resource - It is an extension of the Kubernetes API that is not necessarily available in a default Kubernetes installation.
+
+# CRD - first we create this to tell k8s to accept these kind of resources
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: internals.datasets.kodekloud.com 
+spec:
+  group: datasets.kodekloud.com # we use this in our normal yaml file, see example below
+  versions:
+    - name: v1 # we use this in our normal yaml file, see example below
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                internalLoad:
+                  type: string
+                range:
+                  type: integer
+                percentage:
+                  type: string
+  scope: Namespaced 
+  names:
+    plural: internals
+    singular: internal
+    kind: Internal  # this is the kind we use in our normal yaml file, see example below
+    shortNames:
+    - int
+
+
+# Then you can create like this
+kind: Internal
+apiVersion: datasets.kodekloud.com/v1
+metadata:
+  name: internal-space
+  namespace: default
+spec:
+  internalLoad: "high"
+  range: 80
+  percentage: "50"

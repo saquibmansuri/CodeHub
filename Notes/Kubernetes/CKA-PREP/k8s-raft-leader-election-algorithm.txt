@@ -1,0 +1,48 @@
+https://www.educative.io/answers/how-does-the-leader-election-in-raft-work
+
+Election algorithms choose a server from a group of servers to coordinate various tasks in a distributed system. 
+In case of failure of a coordinator, a new coordinator is chosen by the algorithm.
+
+
+# Server states in Raft
+Each server in the system exists in the following states:
+1. Leader: A leader is responsible for accepting client requests and log replication at other servers. In normal circumstances, there is only a leader in the system.
+2. Candidate: During the event of an election, servers can ask other servers for votes. When servers request votes, they are called candidates.
+3. Follower: A follower is a passive entity. It does not issue requests on its own; rather, it only responds to requests made by the leader and candidates. The Follower syncs up its data with the leader and, in case of leader failure, it can contest an election.
+
+
+In case of a leader’s failure, an election is called and the followers transition themselves to candidates.
+The protocol uses these two types of Remote Procedure Calls (RPCs) to perform its basic functions:
+1. RequestVotes is sent by candidates to gather votes during elections.
+2. AppendEntries is used by leaders for replicating log entries and as a heartbeat. Heartbeats are exchanged to ensure the availability of servers.
+
+
+# Leader election
+The leader sends periodic heartbeats to all other servers to maintain its leadership. An election is initiated when a follower times out while expecting a heartbeat from the leader. At this point, the timed out follower changes its state to Candidate and increments its term number. Then, it votes for itself and sends the RequestVotes RPC to all other servers.
+These are the three possible configurations as a result of the election call:
+1. The candidate wins the elections by receiving the majority of votes. It transitions itself to Leader and sends heartbeats to notify other servers of the new Leader.
+2. When other candidates receive the AppendEntries RPC, they check the term number. If the term number is greater than what they have stored, they transition to Followers. Otherwise, they reject the RPC and maintain their Candidate state.
+3. The candidate fails to receive the majority of votes or enters a split vote state. If more than one server becomes a candidate simultaneously, the votes can split with no clear majority. In this situation, a fresh election is called after one of the candidates times out.
+
+
+## EXAMPLE
+In a 3-node cluster (Node 1, Node 2, Node 3), a majority requires 2 votes. Here is a short example for each scenario:
+
+1. Candidate Wins (Majority Vote)Example: Node 1 times out. It enters Term 2, votes for itself, and asks Node 2 and Node 3 for votes. 
+Node 2 responds first and grants its vote. Node 1 now has 2 votes (Node 1 and Node 2), wins the majority, becomes the Leader, and sends heartbeats.
+
+2. Candidate Resigns (New Leader Discovered)Example: Node 1 times out and becomes a Candidate for Term 2. Meanwhile, Node 3 had already timed out a fraction of a second earlier, secured Node 2's vote, and became the Term 2 Leader. Node 3 sends a heartbeat to Node 1. 
+Node 1 receives it, verifies Node 3 is the rightful Term 2 Leader, and immediately steps down to a Follower.
+
+3. Split Vote (No Majority)Example: Node 1 and Node 2 time out at the exact same millisecond. Node 1 votes for itself and asks Node 3 for a vote. Node 2 also votes for itself and asks Node 3 for a vote. Node 3 can only vote once per term, so it votes for Node 1. Node 1 has 2 votes (wins), but what if Node 3's network message is delayed and it votes for neither? Node 1 has 1 vote, Node 2 has 1 vote. Neither gets 2 votes. 
+Both remain candidates until one randomized timer expires first to trigger Term 3.
+
+
+------------
+
+# Quorum formula
+A successful write operation is considered in a cluster if quoram formula is satisfied
+quorum = n/2+1
+where n= number of nodes
+
+So in a 3 node cluster, a successful write operation in etcd is considered when data is written successfully in 3/2+1=2.5 i.e 2 nodes

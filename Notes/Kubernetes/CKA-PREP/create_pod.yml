@@ -44,6 +44,7 @@ initContainers:
 # Resource request & request limit
 # Same templates can be used in deployments and relica sets, etc
 # If we only set limits and do not set requests, then automatically it will set requests similar to limits 
+# 
 
 apiVersion: v1
 kind: pod
