@@ -1,0 +1,59 @@
+CASE STUDY - ADATUM & LITWARE 
+
+ADatum Corporation is a consulting company in Montreal.
+ADatum recently acquired a Vancouver-based company named Litware, Inc.
+
+Existing Environment. ADatum Environment
+The on-premises network of ADatum contains an Active Directory Domain Services (AD DS) forest named adatum.com.
+ADatum has a Microsoft 365 E5 subscription. The subscription contains a verified domain that syncs with the adatum.com AD DS domain by using Azure AD Connect.
+ADatum has an Azure Active Directory (Azure AD) tenant named adatum.com. The tenant has Security defaults disabled.
+
+The tenant contains the users shown in the following table.
+Name    Role
+User1   None
+User2   None
+User3   User administrator
+User4   Privileged role administrator
+User5   Identity Governance Administrator
+
+The tenant contains the groups shown in the following table.
+Name          Type      Membership   Owner   Members
+IT_Group1     Security  Assigned     None    All users in the IT department
+AdatumUsers   Security  Assigned     None    User1, User2
+
+
+Existing Environment. Litware Environment
+Litware has an AD DS forest named litware.com
+
+Existing Environment. Problem Statements
+ADatum identifies the following issues:
+    • Multiple users in the sales department have up to five devices. The sales department users report that sometimes they must contact the support department to join their devices to the Azure AD tenant because they have reached their device limit.
+    • A recent security incident reveals that several users leaked their credentials, a suspicious browser was used for a sign-in, and resources were accessed from an anonymous IP address.
+    • When you attempt to assign the Device Administrators role to IT_Group1, the group does NOT appear in the selection list.
+    • Anyone in the organization can invite guest users, including other guests and non-administrators.
+    • The helpdesk spends too much time resetting user passwords.
+    • Users currently use only passwords for authentication.
+
+
+Requirements. Planned Changes -
+ADatum plans to implement the following changes:
+    • Configure self-service password reset (SSPR).
+    • Configure multi-factor authentication (MFA) for all users.
+    • Configure an access review for an access package named Package1.
+    • Require admin approval for application access to organizational data.
+    • Sync the AD DS users and groups of litware.com with the Azure AD tenant.
+    • Ensure that only users that are assigned specific admin roles can invite guest users.
+    • Increase the maximum number of devices that can be joined or registered to Azure AD to 10.
+
+
+Requirements. Technical Requirements
+ADatum identifies the following technical requirements:
+    • Users assigned the User administrator role must be able to request permission to use the role when needed for up to one year.
+    • Users must be prompted to register for MFA and provided with an option to bypass the registration for a grace period.
+    • Users must provide one authentication method to reset their password by using SSPR. Available methods must include:
+        - Email
+        - Phone
+        - Security questions
+        - The Microsoft Authenticator app
+    • Trust relationships must NOT be established between the adatum.com and litware.com AD DS domains.
+    • The principle of least privilege must be used.

@@ -1,0 +1,550 @@
+Scenario cue: "5 groups (Security/M365, Assigned/Dynamic User/Dynamic Device) — which can get an Office 365 E5 license assigned directly?"
+Correct Answer: E. Group1, Group2, Group4, and Group5 only
+Why correct: Licenses can only be assigned to Security groups or Microsoft 365 groups with Assigned or Dynamic User membership. Dynamic Device groups can't hold licenses — a license must map to a user identity, not a device.
+Exam tip: See "Dynamic Device" group in a licensing question → auto-eliminate it. Rule of thumb: "Licenses go on users, not devices."
+
+
+
+
+Scenario cue: "AD-synced tenant, disabled on-prem user can still sign in to Azure AD for ~30 min — which solution fixes it?" (multi-solution series, this one = password writeback)
+Why correct (No): Password writeback = a one-way channel for SSPR/password-reset changes flowing from cloud → on-prem. It doesn't touch account status (enabled/disabled) and doesn't affect the sync delay for accountDisabled attribute. The 30-min gap is caused by the default AD Connect sync cycle, not by anything password writeback governs.
+Exam tip: For this whole question series, mentally sort solutions into two buckets:
+✅ Fixes it → things that make auth check on-prem in real time (e.g., Pass-through Authentication) or force an immediate sync cycle.
+❌ Doesn't fix it → password writeback, password protection, password hash sync, SSPR, Conditional Access policies sign-in frequency (these don't touch the disable-propagation delay).
+
+
+
+
+Scoping filters determine which assigned users are provisioned. Multiple clauses within one filter = AND; multiple filters = OR.
+Scenario cue: "Group1 is assigned + two Source Object Scope filters", so OR condition will take effect
+Why correct:
+User1 → Yes: Member of Group1 + department = IT AND jobTitle PRESENT → Filter1 matches.
+User2 → No: Not a member of Group1 → never enters the provisioning scope.
+User3 → Yes: Member of Group1 + city INCLUDES M → Filter2 matches.
+Exam tip:
+Inside one filter = AND | Between filters = OR.
+Also remember: assignment/scope comes first — a user outside the assigned Group1 cannot be brought in merely because a filter matches.
+
+
+
+
+Scenario cue: "5 types of device groups (Entra joined, Entra registered, single vs multi-session, Windows 365) — where can you install the GSA client?"
+Why correct: GSA client requires Entra joined/hybrid joined (not registered) devices, and doesn't support multi-session virtual desktops (AVD/Windows 11 Enterprise multi-session). Windows 365 (Cloud PC, single-session) is explicitly supported.
+Exam tip: Two auto-reject triggers for GSA client questions:
+"Registered" → reject (join type must be Entra joined or hybrid joined).
+"Multi-session" → reject (AVD multi-session / Windows 11 Enterprise multi-session not supported).
+Windows 365 = ✅ supported (don't confuse with AVD multi-session).
+
+
+
+
+Scenario cue: "Licensed Group1 contains 2 users + 2 nested groups"
+Correct Answer: B. 2 Licenses
+Why correct: Group-based licensing applies the license to direct user members of the licensed group. Nested groups aren't supported for group-based licensing, so User1 and User3 receive the license; users inside Group2 and Group4 don't.
+Exam tip:
+Licensed group → count direct users only.
+Nested groups → don't count their users.
+
+
+
+
+Scenario cue: "External contractor uses an existing @outlook.com identity and must access an enterprise application in your AD contoso.com"
+Correct Answer: D. Create a guest user account in contoso.com
+Why correct: Microsoft Entra B2B allows an external user to access your applications using their own existing credentials. The external user is represented as a guest user in your tenant, after which you can assign the guest access to App1.
+Exam tip:
+External person + use their own identity → B2B Guest user.
+Don't create a normal member account just to give an external user access.
+IMPORTANT NOTE: Similar question would come in which these options would Different
+    Exam tip:
+    → Question Pattern: External user + own identity = B2B Guest
+    → "Create Guest user" available → choose it.
+    → No Guest-user option + invitation cmdlet → choose the invitation cmdlet.
+    → No invitation cmdlet then choose this cmdlet: New-MgInvitation
+
+
+
+
+Scenario cue: "Prevent sync of users with extensionAttribute15 = NoSync — what do you configure in AD Connect?"
+Correct Answer: C. Create an inbound synchronization rule for the Active Directory Domain Services connector.
+Why correct: Attribute-based filtering is implemented as an inbound synchronization rule on the AD DS connector that sets the metaverse attribute cloudFiltered = True for matching objects, blocking them from being exported to Azure AD.
+Exam tip: Memorize the flow direction:
+    -Inbound rule + AD DS connector = filtering/transforming data coming from on-prem AD.
+    -Windows Azure AD connector = deals with data going to Azure AD (not where you scope on-prem attributes).
+    -Run profiles (Full Import/Export/Delta) are just sync operations, not filtering logic — always the wrong answer when the question is about which objects sync, not when they sync.
+
+
+
+
+Scenario cue: "On-premises connectivity is lost + PHS enabled. Which users would be able to authenticate"
+Why correct:
+User1 → Yes: Cloud-only user; authentication doesn't depend on on-premises AD.
+User2 → Yes: PHS is enabled, so the password hash is already in Microsoft Entra ID; cloud authentication doesn't require on-premises AD.
+User3 → Yes: Guest user authenticates using their external/home identity, not the on-premises AD.
+Exam tip:
+    -PHS = cloud authentication → on-premises outage doesn't stop sign-in.
+    -PTA = authentication depends on on-premises agents/AD.
+
+
+
+
+Scenario cue: "Synchronize selected Group1; Group2 is nested inside Group1."
+Correct Answer:
+    User1 → Yes
+    User2 → No
+    Group2 → Yes
+Why correct: Group-based filtering synchronizes direct members only. User1 is a direct member of Group1, so it syncs. Group2 is also a direct member of Group1, so Group2 itself syncs, but its member User2 does not because nested membership isn't resolved. Both OU1 and OU2 are included, so OU placement doesn't exclude these objects.
+Exam tip:
+    Group filtering = direct members only.
+    Nested group → group itself can sync, but its members DON'T automatically sync.
+
+
+
+
+Scenario cue: "Ensure External Identities pricing is based on Monthly Active Users (MAU)."
+Correct Answer: C. a linked subscription
+Why correct: Microsoft Entra External ID requires the tenant to be linked to an Azure subscription for billing. External ID uses the MAU billing model, and the MAUs are combined across tenants linked to the subscription.
+Exam tip:
+    External ID + billing/MAU → Linked Azure subscription.
+    User flows, Terms of Use, and Access Reviews are not billing configuration.
+
+
+
+
+Scenario cue: "Users with a company email domain are creating accounts through self-service sign-up. Which powershell commands to use to prevent this"
+Correct Answer: A. Set-MsolCompanySettings
+Why correct: Set-MsolCompanySettings was the MSOnline cmdlet used to control the tenant-wide AllowEmailVerifiedUsers setting, which controls whether users can create/join accounts through email-verified self-service sign-up.
+Exam tip:
+    Self-service / email-verified users → Set-MsolCompanySettings
+    Don't confuse this with domain federation cmdlets (Set-MsolDomainFederationSettings, Update-MsolFederatedDomain).
+
+
+
+
+You have a new Microsoft 365 tenant that uses a domain name of contoso.onmicrosoft.com.
+You register the name contoso.com with a domain registrar.
+You need to use contoso.com as the default domain name for new Microsoft 365 users.
+Which four actions should you perform in sequence (from a given list)?
+Answer:
+    -Add a custom domain name of contoso.com
+    -Create new TXT records in DNS 
+    -Successfully verify the domain name
+    -Set the domain to primary
+
+
+
+
+Scenario cue: "Microsoft 365 sign-in page should appear in the user's browser language (Spanish)."
+Correct Answer: C. Configure the Company branding settings.
+Why correct: Microsoft Entra Company Branding lets you create a customized sign-in experience for a specific browser language. You can add Spanish as a browser-language customization under Entra ID → Custom Branding.
+Exam tip:
+    A (Usage location) — controls license eligibility/compliance by country, unrelated to sign-in page language.
+    B (Global Secure Access / Session management) — governs network access and session lifetime controls, not UI localization.
+    D (Conditional Access policy) — controls access grants/conditions (MFA, compliant device, etc.), not sign-in page appearance/language.
+
+
+
+
+Scenario cue: "Different users have Entra roles, Purview/Defender role groups, and Intune roles. Which portal should you use to configure each user?"
+Correct Answer:
+    User1 → Azure Active Directory admin center
+    User2 → Microsoft 365 compliance center
+    User3 → Microsoft Endpoint Manager admin center
+Why correct: 
+    User1's roles are Microsoft Entra directory roles. 
+    User2's Records Management and Quarantine Administrator are Microsoft Purview/Defender role groups. 
+    User3's roles are Intune RBAC roles.
+Exam tip: 
+    Entra roles → Azure AD admin center
+    Records/Quarantine → Microsoft 365 compliance center
+    Intune roles → Microsoft Endpoint Manager admin center
+
+
+
+
+Scenario cue: "Add another PTA agent while DCs must not access the internet."
+Correct Answer: A. Server4 (Unassigned member server)
+Why correct: PTA agents require outbound Internet access and access to AD domain controllers. Microsoft recommends installing additional agents on separate servers from the Microsoft Entra Connect server for high availability. 
+Server4 is the appropriate member server; Server1/Server2 are domain controllers and must not communicate directly with the Internet, while Server3 already runs Microsoft Entra Connect.
+Exam tip:
+    PTA agent → separate member server + Internet access + AD access.
+    Avoid DCs when the question says DCs cannot access the Internet.
+
+
+
+
+Scenario cue: "Guest self-service sign-up for a webapp + one-time password + collect first name, last name, city, email."
+Correct Answer:
+  → One-time password: An identity provider
+  → User details: A user flow
+Why correct:
+  → Email one-time passcode is configured as an identity provider for B2B guest authentication.
+  → A user flow controls the self-service sign-up experience and lets you select the user attributes to collect, including Given Name, Surname, City, and email.
+Exam tip:
+  → OTP authentication → Identity Provider
+  → Information collected during sign-up → User Flow
+  → Remember: "How they authenticate" = Identity Provider | "What information they provide" = User Flow
+
+
+
+
+Scenario cue: "Bulk create users by uploading the Microsoft Entra CSV template. Which properties needed?"
+Correct Answer: C. accountEnabled, displayName, userPrincipalName, and passwordProfile
+Why correct:
+  → These are the required fields in the bulk-create template.
+  → displayName identifies the user.
+  → userPrincipalName provides the sign-in name.
+  → passwordProfile provides the initial password.
+  → accountEnabled determines whether the account can sign in.
+Exam tip:
+  → Bulk-create users = DisplayName + UPN + PasswordProfile + AccountEnabled
+  → UsageLocation is optional, so eliminate D.
+  → givenName and surname are optional, so eliminate B.
+
+
+
+
+Scenario cue: "On-premises AD + Windows 11 + hybrid join + Intune enrollment."
+Correct Answer (2 dropdown selection):
+  → Domain: Intune Connector for Active Directory
+  → Intune: Modify the mobile device management (MDM) user scope
+Why correct:
+  → Intune Connector for Active Directory → supports the on-premises AD domain-join part of the hybrid deployment.
+  → MDM user scope → enables automatic Intune enrollment.
+Exam tip:
+  → Hybrid/Autopilot domain join → Intune Connector for Active Directory
+  → Automatic Intune enrollment → MDM user scope
+
+
+
+
+Selections to make: 3
+Scenario cue: "Security incidents involving leaked credentials, suspicious browser, and anonymous IP."
+Correct Answer:
+  → Leaked credentials: A user risk policy
+  → A sign-in from a suspicious browser: A sign-in risk policy
+  → Resources accessed from an anonymous IP address: A sign-in risk policy
+Exam tip:
+  → User/account compromised → User risk
+  → Suspicious sign-in → Sign-in risk
+  → Leaked credentials = User risk
+  → Anonymous IP / Suspicious browser = Sign-in risk
+
+
+
+
+Question: Which users will be emailed a passcode, settings given as screenshort where email OTP enable for guest users?
+Topic: Microsoft Entra guest invitation — Email one-time passcode
+Correct Answer: B. User1 only
+Why:
+  → User1 = Guest user → receives email OTP.
+  → User2/User3 do not meet the guest + OTP condition shown in the exhibit as user3 is internal user and user2 is not a guest user in this domain
+
+
+
+
+Selections to make: 2
+Question: For which users can you configure the Job title and Usage location properties in Azure AD, user1:synced, user2 and user3: not synced?
+Topic: Microsoft Entra user properties — synced vs not synced
+Correct Answer:
+  → Job title property: User2 and User3 only
+  → Usage location property: User1, User2, and User3
+Why correct:
+  → User1 is directory-synced → Job title cannot be changed now in Azure.
+  → Usage location is a Microsoft Entra attribute → can be updated even for synced users on azure.
+Exam tip:
+  → Synced user → job info comes from AD
+  → Usage location → can be configured in Entra ID
+
+
+
+
+Question: How can User1 create new catalogs and add resources to the catalogs they own?
+Correct Answer: From the Identity Governance blade, modify the Entitlement management settings.
+Why:
+  → Entitlement management settings lets you delegate the Catalog creator role.
+  → A Catalog creator can create catalogs and becomes the owner of catalogs they create.
+
+
+
+To configure Windows 10 computers for Azure AD Seamless Single Sign-On (Seamless SSO), you need to ensure that users' credentials are automatically passed from their Windows session to Azure AD when accessing cloud resources. 
+This is achieved by configuring the Local intranet zone settings in Internet Explorer or Edge.
+Azure AD Seamless SSO works by authenticating users seamlessly without prompting for credentials when they access resources in Azure AD. However, for it to work, the Azure AD URLs (like https://autologon.microsoftazuread-sso.com) must be trusted by the browsers on the Windows 10 machines. This is achieved by adding the URLs to the Local intranet zone.
+Option A (Configuring Sign-in options) and Option B (Enabling Enterprise State Roaming) are not related to enabling Seamless SSO.
+Option D (Installing the Azure AD Connect Authentication Agent) is also incorrect, as the Authentication Agent is used for Pass-through Authentication (PTA) rather than Seamless SSO.
+Therefore, Option C is the correct choice to ensure Azure AD Seamless SSO works on Windows 10 computers.
+
+
+
+
+Topic: Microsoft Entra B2B collaboration — cross-tenant access
+Architecture:
+  → Contoso West AD forest → Azure AD Connect → Contoso West Microsoft 365 tenant
+  → Contoso East AD forest → Azure AD Connect → Contoso East Microsoft 365 tenant
+Correct Answer: B. Invite the Contoso East users as guests in the Contoso West tenant.
+Why correct:
+  → East users can be represented as guest users in the West tenant using Microsoft Entra B2B.
+  → B2B guests can access SharePoint resources in the West tenant using their own East credentials.
+  → No need to synchronize the East AD into the West tenant.
+  → Options C/D unnecessarily involve Entra Connect and don't fit the simplest supported solution.
+
+
+
+
+Question: Which roles allow User1 to create group access reviews and User2 to review completed access-review history?
+Topic: Microsoft Entra Access Reviews — least-privilege roles
+Correct Answer:
+  → User1: User administrator
+  → User2: Security reader
+Why correct:
+  → User administrator → can create/manage access reviews for groups.
+  → Security reader → can read access-review results/history with least privilege.
+
+
+
+
+Microsoft.app permission for creating and deleting instances of container apps (dont choose Microsoft.compute)
+Microsoft.security permission for enforcing adaptive network hardening rules. (dont choose Microsoft.network)
+
+
+
+You need to ensure that the support team can reset passwords and manage multi-factor authentication (MFA) settings for only the executives (100 executives out of total 5000 users).
+Object type - an administrative unit
+Role - authentication administrator
+
+
+
+You have an administrative unit named Au1. Group1, User2, and User3 are members of Au1.
+User5 is assigned the User administrator role for Au1.
+For which users can User5 reset passwords?
+User2 & User3 ONLY as they are direct part of AU1 and we cant touch the settings for members inside the group
+
+
+
+
+User    Usage location    Department    Job title
+---------------------------------------------------
+User1   United States     Sales         Associate
+User2   Finland           Sales         SalesRep
+User3   Australia         Sales         Manager
+EQUATION: user.usageLocation -in ["US","AU"] -and (user.department -eq "Sales") -and -not (user.jobTitle -eq "Manager") –or (user. jobTitle -eq "SalesRep")
+Which users will be added to the group?
+Answer - User1 and User2 only
+Tip:
+We can think with this logic
+(
+  UsageLocation = US/AU
+  AND Department = Sales
+  AND JobTitle ≠ Manager
+)
+OR
+(
+  JobTitle = SalesRep
+)
+
+
+
+
+The User Administrator role allows users to do the both:
+    Reset passwords for non-administrators.
+    Manage licenses (assign and remove licenses).
+Helpdesk Administrator: This role only allows resetting user passwords but not managing licenses.
+Billing Administrator: This role deals with subscription and billing management, not user licenses or password resets.
+License Administrator: This role allows managing license assignments but does not permit resetting passwords.
+
+
+
+
+Question: How can you remove the individually assigned E3 licenses from 2,500 users with the least administrative effort?
+Correct Answer: C. the Licenses blade in the Azure Active Directory admin center
+Why correct:
+  → E3 licenses are directly assigned to individual users.
+  → E5 is already assigned through a group.
+  → The Licenses blade can be used to remove the direct E3 assignments in bulk.
+Exam tip:
+  → Direct user licenses → Licenses blade
+  → Group-based licenses → manage from the group
+  IMPORTANT - if license blade option is not there then this option is correct - Set-MsolUserLicense cmdlet
+
+
+
+
+We have 30 days to restore a deleted user account from Entra ID tenant. 
+The least privilege role to be used to restore is "User Administrator"
+
+
+
+
+User sign-ins to Azure AD must be authenticated by an Active Directory domain controller. -- Passthrough authentication
+Active Directory domain users must be able to use Azure AD self-service password reset (SSPR). -- Password writeback
+NOTE: SSPR need password writeback to be enabled
+
+
+
+
+You have a Microsoft 365 E5 subscription.
+You create a user named User1.
+You need to ensure that User1 can update the status of Identity Secure Score improvement actions.
+Solution: You assign the Exchange Administrator role to User1. - YES 
+Solution: You assign the SharePoint Administrator role to User1. - YES
+Solution: You assign the User Administrator role to User1. - NO 
+Solution: You assign the Security Operator role to User1. - NO (this only has read-only access to Identity Secure Score improvement actions.)
+
+
+
+
+CASE STUDY - Contoso and Fabrikam
+Selections to make: 2
+Question: What should you create first, and which tool should you use to allow helpdesk administrators to manage licenses only for their respective offices?
+Correct Answer:
+  → Object to create for each branch office: An administrative unit
+  → Tool to use: Azure Active Directory admin center
+Why:
+  → Administrative Units (Not OU, as OU is for onprem) let you scope administrator permissions to specific users, such as users in each office.
+  → License management is supported with administrative-unit-scoped roles.
+
+
+
+
+CASE STUDY - ADatum & Litware
+Question: Sales users have reached their Microsoft Entra device limit. What should you configure to resolve the issue of the sales department users.?
+Correct Answer: A. the Device settings
+Why:
+  → Device settings contains Maximum number of devices per user.
+Exam tip: Fix Device limit → Device settings
+
+
+
+
+CASE STUDY - ADatum & Litware
+Question: You cannot assign the Device Administrators role to IT_Group1. What should you do first?
+Correct Answer: B. Recreate the IT_Group1 group.
+Why:
+  → A group must be created as role-assignable to receive Microsoft Entra roles.
+  → An existing group cannot be converted into a role-assignable group.
+
+
+
+
+Question: Can each user accept/access the shared resources after the collaboration restriction is configured?
+QUESTION DATA (missing data)
+User email             User type    Invitation accepted
+User1@outlook.com      Guest        No
+User2@fabrikam.com     Guest        Yes
+Settings Configured:
+  → Allow invitations only to the specified domains → outlook.com
+
+Correct Answer:
+  → User1 → Yes
+  → User2 → Yes
+  → User3 → No
+Why:
+  → Allowed domain → invitation allowed.
+  → Already accepted guest → can continue accessing.
+  → Non-allowed domain → new invitation blocked.
+
+
+
+
+CASE STUDY - ADatum & Litware 
+Question: How should you sync the Litware AD DS forest with the existing ADatum Microsoft Entra tenant?
+Correct Answer: A. Azure AD Connect cloud sync between the Azure AD tenant and litware.com
+Why:
+  → adatum.com and litware.com are separate/disconnected forests.
+  → IMPORTANT - The requirement explicitly says no trust relationship.
+  → Cloud Sync is designed for multiple disconnected AD forests, including acquisition scenarios.
+Exam tip:
+  → Multiple AD forests + disconnected/no trust → Cloud Sync 
+
+
+
+
+Question: To which identities can you assign the Contributor role for Resource Group?
+Correct Answer: E. User1, Group1, VM1, and App1
+Why:
+  → Azure RBAC roles can be assigned to users, groups, managed identities, and service principals.
+  → Group1 = security group → ✅
+  → VM1 = system-assigned managed identity → ✅
+  → App1 = enterprise application/service principal → ✅
+  → User1 = user → ✅
+
+
+
+
+Selections to make: 3
+Question: Which three External collaboration settings ensure guests cannot query staff email addresses and only User1 can invite guests?
+Correct Answer:
+  → Guest user access restrictions: Guest user access is restricted to properties and memberships of their own directory objects (most restrictive)
+  → Guest invite restrictions: Only users assigned to specific admin roles can invite guest users
+  → Enable guest self-service sign up via user flows: NO
+Why:
+  → Most restrictive guest access prevents guests from viewing other users' profiles/email information.
+  → User administrator is one of the roles allowed to invite guests under the specific-admin-roles option, so User1 can invite them.
+  → Self-service sign-up must be No, otherwise users could sign up without being specifically invited by User1.
+
+
+
+
+Question: Which role should Admin1 have to manage Microsoft 365 service requests, configure service health, and manage Azure support tickets with least administrative effort?
+Correct Answer: C. Assign Admin1 the Helpdesk Administrator role.
+Why:
+  → Helpdesk Administrator provides the required service request and service health permissions.
+  → It is a built-in role, so no custom role is needed.
+
+
+
+Your network contains an on-premises Active Directory Domain Services (AD DS) domain that syncs with an Azure AD tenant.
+You need to ensure that user authentication always occurs by validating passwords against the AD DS domain.
+What should you configure, and what should you use? To answer, select the appropriate options in the answer area.
+Configure: Pass-through authentication
+Use: Azure AD Connect
+
+
+
+
+QUESTION DATA
+User email             User type    Description
+User1@contoso.com      Guest        A guest user in fabrikam.com
+User2@outlook.com      Guest        A user who has never accessed resources in fabrikam.com
+User3@fabrikam.com     Guest        A user in fabrikam.com
+Setting:
+  → Email One-Time Passcode for guests is enabled for any domain.
+Question: Which users will be emailed a passcode?
+Correct Answer: A. User2 only
+Why:
+  → User2 is an external guest who has never accessed resources in fabrikam.com → email OTP is used.
+  → User1 is already an existing guest -> no OTP.
+  → User3 is a fabrikam.com user → no guest OTP.
+
+
+
+
+Question: Which two parameters are required when creating a bulk B2B collaboration invitation?
+Correct Answers: A. email address and B. redirection URL
+Why:
+  → Email address identifies the external user to invite.
+  → Redirection URL specifies where the invited user is sent after accepting the invitation. Microsoft explicitly lists both as required values in the bulk-invite CSV template.
+
+
+
+
+Question: For each statement, determine whether it is true based on the Azure AD Connect filtering and configuration.
+Correct Answer:
+  → User1 can use SSPR to reset his password: Yes
+  → User1 accessing Exchange Online is authenticated by an on-premises DC: Yes
+  → User2 can be added to a SharePoint Online site as a member: No
+Why:
+  → User1 is in OU1, which is synced, and password writeback is enabled → SSPR can write the password back to AD DS. Microsoft confirms password writeback supports PTA environments.
+  → PTA is enabled → User1's password is validated by the on-premises AD domain controller.
+  → User2 is in OU2, which is not selected for synchronization → User2 isn't synchronized to Entra ID, so can't be added as a normal Entra user to SharePoint Online.
+
+
+
+
+Question: Which portal should you use to compare the role permissions of Admin1, Admin2, and Admin3 with minimum administrative effort?
+Correct Answer: B. the Microsoft 365 admin center
+Why:
+  → Microsoft 365 admin center has Compare roles, allowing you to select up to three roles and compare their permissions directly
+
+--------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------
+
