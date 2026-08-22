@@ -1,0 +1,772 @@
+Concept:
+Microsoft Defender for Cloud Apps uses "OAuth app policies" to monitor and generate alerts about third-party OAuth apps, including the permissions they request and users who authorize them.
+
+
+
+You have an Azure subscription that contains a virtual machine named VM1. VM1 has the following configurations:
+• Private IP address: 172.16.1.5
+• Public IP address: 108.143.161.25
+• System-assigned managed identity status: On
+You install an app named App1 on VM1.
+You need to configure App1 to request a managed identity app-only access token.
+ANSWER - Code running inside an Azure VM requests a managed identity token through the Azure Instance Metadata Service (IMDS) endpoint: 
+169.254.169.254  → Azure IMDS / Managed Identity endpoint ✅
+
+
+
+Concept: Phishing-resistant MFA
+→ Windows Hello for Business
+→ FIDO2 security key
+→ Certificate-based authentication (multifactor)
+
+
+
+Users must use Microsoft Authenticator for MFA.
+Some users receive MFA prompts they did NOT initiate.
+Requirement:
+→ Automatically block users when they report an unauthorized MFA request.
+Does configuring MFA Account Lockout settings meet the goal?
+ANSWER - NO (Account lockout is for temporarily blocking authentication after repeated failed MFA attempts)
+From the Azure portal, you configure the Block/unblock users settings for multi-factor authentication (MFA).
+ANSWER - NO (Block/unblock users is a legacy feature and was removed on March 1, 2025. It was replaced by Report suspicious activity)
+From the Azure portal, you configure the Fraud alert settings for multi-factor authentication (MFA).
+ANSWER - NO (Fraud alert was removed on March 1, 2025 and replaced by Report suspicious activity.)
+
+
+
+If you need Defender for Cloud Apps Session Policy → From the Microsoft Entra admin center, create a Conditional Access policy.
+
+
+
+Your network contains an on-premises Active Directory Domain Services (AD DS) domain that syncs user accounts with a Microsoft 365 E5 subscription.
+You need to ensure that on-premises account lockout policies are applied to Microsoft Entra sign-ins.
+What should you configure?
+ANSWER - pass-through authentication (Pass-through authentication allows Microsoft Entra to authenticate users directly against the on-premises Active Directory.)
+
+
+
+You have a Microsoft Entra tenant.
+You open the risk detections report.
+Which risk detection type is classified as a user risk?
+ANSWER  - Microsoft entra threat intelligence
+A. Password spray: This is considered a sign-in risk. It involves multiple attempts to sign in using common passwords, indicating a potential attack.
+B. Anonymous IP address: This is also a sign-in risk. It indicates that the sign-in attempt is coming from an IP address that is anonymized, which can be suspicious.
+C. Unfamiliar sign-in properties: This is a sign-in risk as well. It indicates that the sign-in attempt is coming from an unusual location or device for the user.
+User Risk:
+Microsoft Entra threat intelligence: This is classified as a user risk. It indicates that there is suspicious or anomalous activity related to the user account.
+
+
+
+Which MFA authentication method can users use from the remote location without internet access & network connectivity?
+ANSWER - Windows Hello for Business (Choose this is windows hello not in options -> verification code from the Microsoft Authenticator app)
+
+
+
+The Virtual Machine Contributor role in Azure allows users to manage virtual machines, including actions like creating, deleting, and configuring VMs. However, it DOES NOT grant permissions to log into the virtual machine itself
+To log into a VM, you would need the Virtual Machine Administrator Login or Virtual Machine User Login roles
+VM1: User1 and User3 only, because User1 has a role scope for the entire subscription (which includes the resource group named RG1) and User3 to VM1. Also, both of their roles allow the users to login into the VM.
+VM2: Only User1, because User2 has the "Virtual Machine Contributor" role and that does not allow login to any VM and User3 is limited to VM1 for access.
+
+
+
+Scenario:
+- Users:
+User1 → Group1
+User2 → Group1 + Group2
+User3 → Group2 + Global Administrator
+- Policy1:
+Include → Group1 + Global Administrator
+Exclude → Group2
+Grant → Require MFA
+Target → All cloud apps
+- Question: Who must use MFA when signing in to Microsoft 365 apps?
+Answer
+User1 → YES — included through Group1 and not excluded.
+User2 → NO — included through Group1, but excluded through Group2. Exclusion wins.
+User3 → NO — included as Global Administrator, but also belongs to Group2, so the exclusion wins.
+
+
+
+
+Scenario:
+On-premises:
+→ Server1 hosts Share1 (file share)
+→ 500 Windows 11 devices present
+
+Microsoft 365 E5:
+→ Global Secure Access Private Access is enabled
+→ Global Secure Access client is deployed to devices
+
+Goal:
+→ Allow the devices to remotely access Share1 through Global Secure Access.
+
+Question:
+Which three actions should you perform, in order?
+
+Correct sequence:
+1. Install a connector on Server1 - provides the connection between Global Secure Access and the on-premises resource.
+2. Create an enterprise application - publishes the private resource through Global Secure Access.
+3. Create an application segment - defines the actual destination/port/protocol. For a Windows file share, SMB uses TCP 445.
+FLOW: client intercepts the traffic → tunnels it to the SSE edge → Entra authorization/token → Private Access service → connector → target server.
+
+
+
+Deploy a private network connector → To privately access an Azure web app when multiple Intune-enrolled Windows devices already have the Global Secure Access client deployed.
+
+
+-Scenario:
+You already created Global Secure Access SecurityProfile1 and now need to attach it to CAPolicy1.
+-Question:
+Which two settings must be configured? (window with options would be given)
+-Correct answers:
+Target resources (All internet resources with Global Secure Access)
+Session (Use Global Secure Access security profile → SecurityProfile1)
+
+
+
+- Scenario:
+Sub1
+└── RG1
+    ├── KV1 → Secret1
+    └── KV2 → Secret2
+User1 → Key Vault Administrator at Sub1
+User2 → Key Vault Reader at RG1
+User3 → Key Vault Secrets User at KV1
+- Question:
+Which users can read the actual secret values?
+-Correct Answer:
+Secret1 → User1 and User3 only
+Secret2 → User1 only
+- Why:
+User1 → Key Vault Administrator at subscription scope → inherits access to both KV1 and KV2 and can read secret values.
+User2 → Key Vault Reader → can read metadata, but cannot read secret values.
+User3 → Key Vault Secrets User on KV1 → can read secret contents in KV1 only.
+- Exam tip:
+Key Vault Administrator → secret values
+Key Vault Reader → metadata only, no secret values
+Key Vault Secrets User → secret values
+
+
+
+Scenario:
+You need to create a Conditional Access App Control custom policy and then connect it to an existing Conditional Access policy.
+Correct Answer:
+Portal to create app control policy: Microsoft Defender portal
+Settings to enable app control policy: Session
+
+
+
+Deploy the Global Secure Access client to ensure that all the on-premises devices access the internet by using Global Secure Access.
+Enable Global Secure Access signaling to ensure that users can only access resources in the subscription from a device that has the Global Secure Access client connected.
+
+
+
+Policy1 (Include → Group1, Exclude → Group3)
+Policy2 (Include → Group2, Require compliant device)
+
+User1 (member of Group1 & Group3)
+Policy1:
+Group1 → INCLUDED
+Group3 → EXCLUDED
+        ↓
+Policy1 DOES NOT APPLY
+
+Policy2:
+Group2 → NOT a member
+        ↓
+Policy2 DOES NOT APPLY
+
+No CA policy applies to User1
+        ↓
+No CA block / requirement
+        ↓
+ACCESS ALLOWED
+MAIN POINT WHILE SOLVING CONDITIONAL ACCESS QUESTIONS 
+- exclusion take precedence over inclusion
+- CA policy doesn't say: “If you're not included, deny, If this policy applies → enforce its controls, else always allow the access
+- multiple filters under include and exclude are (OR conditions)
+
+
+
+VM Entra login = correct VM Login RBAC role + supported Windows client (Entra joined/registered/hybrid joined)
+Android devices not supported in VM entra login
+
+
+
+To classify leaked credentials as high-risk use: Microsoft Entra ID Protection
+To trigger remediation use: User risk
+To mitigate the risk while allowing user to access the apps use: Grant access but require password change
+
+
+
+Configure risk policy using ID Protection → ONLY Security Administrator
+View Risky Users report → Security Administrator & Security Operator both can see.
+
+
+
+If a group itself is a member of the Administrative Unit, an AU-scoped User Administrator can:
+✅ Manage the group's membership — add/remove users from the group.
+✅ Manage the group's properties.
+❌ Manage the user properties of those group members.
+❌ Reset their passwords.
+❌ Manage their authentication methods.
+
+
+
+Configure high risk countries by using: a condition
+Configure sign in frequency for the high risk countries by using: a session control
+
+
+
+FIDO2 security keys are physical authentication devices that users can carry and use on shared computers. They don't require a mobile phone or biometric authentication. 
+Best for call centre scenario where no biometric auth and mobile phones are prohibited.
+
+
+
+In a conditional access policy
+Grants settings: ensures that users are prompted for MFA
+Session settings: ensures users are prompted for authentication after every 8 hours
+
+
+
+Helpdesk Administrator role can reset passwords and invalidate sessions for non-administrative users.
+
+
+
+- Scenario:
+Custom banned password list contains:
+Contoso, Litware, Tailwind, project, Zettabyte, MainStreet
+- Common substitutions like 0 → o and @ → a are normalized.
+- Passwords:
+Pr0jectlitw@re → projectlitware → contains project + litware ❌
+T@ilw1nd → tailwind → contains tailwind ❌
+C0nt0s0 → contoso → contains contoso ❌
+- Correct Answer: C. C0nt0s0, Pr0jectlitw@re, and T@ilw1nd ✅
+- Recall: Custom banned list + 0/@ substitutions → normalize first → match banned terms
+
+
+When administrators require ONE method be used to reset a password, mobile app code is the only option available
+
+
+
+Mark user as COMPROMISED, to force that user to reset his password if there is an existing high risk policy
+
+
+
+- Scenario:
+    User1 → Group1 → MFA enabled, never used
+    User2 → Group2 → MFA disabled
+    User3 → Group1 + Group2 → MFA enforced and used
+- User risk policy enabled:
+    → Group1 include
+    → Low+ user risk → BLOCK
+- Sign-in risk policy enabled:
+    → Group2 include
+    → Low+ sign-in risk → REQUIRE MFA
+The key is that “anonymous IP address” is a sign-in risk detection, not automatically a user-risk condition. Microsoft documents it specifically as a sign-in risk detection.
+- Question: who can access using anonymous ip
+- Answers
+User1 → YES ✅ - User1 is only affected by the user-risk policy. An anonymous IP creates sign-in risk, so that policy doesn't trigger.
+User2 → NO ❌ - User2 is in Group2, so the sign-in-risk policy requires MFA. MFA is disabled, so User2 cannot satisfy the requirement.
+User3 → YES ✅ - User3 is in Group2 and has MFA enforced and used, so the sign-in-risk policy can be satisfied with MFA. The anonymous-IP detection itself doesn't make the user-risk policy trigger
+IMPORTANT: For anonymous ip scenario ignore the user risk policy as its a sign in risk, so just check that along with MFA enabled or not
+
+
+
+Sign-in risk → Risk that this particular login attempt is suspicious (e.g., anonymous IP).
+User risk → Risk that the user's identity/account itself is compromised (e.g., leaked credentials).
+
+
+
+"A client apps condition" allows you to filter out legacy authentication attempts
+
+
+
+"The What If tool" provides a way to quickly determine the conditional access policies that apply to a specific use
+
+
+
+Microsoft's current docs say a guest gets Email OTP ONLY when they cannot be authenticated through another available identity provider, such as Microsoft Entra ID or a Microsoft account.
+So guests with account type Azure AD account & Microsoft account wont get email otp && guests having account type like google account will receive email otp 
+VALIDITY of email otp is 30 minutes
+
+
+
+GSA Private Access → Windows/Android/iOS/macOS supported; entra registered/joined devices supported
+
+
+
+Use system assigned managed identity to give SQL db access only to a single webapp
+
+
+
+To create an Azure subscription custom role, you can clone built-in Azure subscription roles && any existing custom Azure subscription role (like Role2 in question) — Entra ID custom roles cannot be cloned.
+
+
+
+Passthrough authentication -> allows authentication by domain controller active directory (onprem). Sends the password authentication request to on-prem AD, so on-prem account/password policies can be enforced.
+Password hash synchronization -> Syncs a hash of the on-prem password to Entra ID, so authentication can happen in the cloud.
+Password writeback -> allows self service password reset
+
+
+
+Virtual Machine Local User Login - CANNOT sign in windows VMs, only for arc VMs
+Virtual Machine Contributor - NO, sign in not supported
+Virtual Machine User Login → YES,  Microsoft Entra user login supported
+Virtual Machine Administrator Login → YES,  Microsoft Entra user login supported
+
+
+
+Region doesn't matter for assigning a user-assigned managed identity to a VM. Both can be in diff regions
+A VM is a resource, not a principal that can receive an Azure RBAC role, so if you attach a user defined identity to a VM and try to make it owner of RG, then thats not possible
+
+
+
+Permissions Management onboarding needs the ability to manage role assignments at Subscription level. 
+"MicrosoftAuthorization/roleAssignments/write" for subscription ->  means create a role assignment at the specified scope.
+"MicrosoftAuthorization/roleAssignments/read" can only read roles
+
+
+
+SSPR = 1 method → Authenticator CODE (NOT EMAIL to outside org as we need to reset password or existing org email)
+
+
+
+Create a sign-in risk policy to ensure that when users connect to the Microsoft 365 portal from an anonymous IP address, they are prompted to use multi-factor authentication (MFA).
+
+
+
+Identity Protection actions
+Confirm user compromised → sets User risk = High
+Confirm sign-in safe → marks that sign-in as safe; but does not clear user risk
+Dismiss user risk → clears/dismisses the user's risk
+
+
+
+APPLICATION ADMINISTRATOR can register/manage applications and manage Application Proxy settings, while avoiding automatic ownership of newly registered apps.
+
+
+
+Azure RBAC - users can sign in into virtual machines using AD
+Built in roles - gives ability to create new virtual machines
+
+
+
+You need to prevent users who connect to Microsoft SharePoint Online on their user-owned computer from downloading or syncing files. Other users must NOT be restricted.
+Answer - an Azure AD conditional access policy that has session controls configured
+
+
+
+A BREAK-GLASS account is a highly privileged account meant to be used in emergency situations where normal administration cannot be performed. 
+As such, it should be created directly in "Azure AD" (NOT IN OU's) so it's not dependent on the on-premises AD DS domain. 
+"The Global Administrator" role will provide the broadest level of permissions to address potential emergency issues.
+
+
+
+You need to ensure that users can request access to Site1. The solution must meet the following requirements:
+• Automatically approve requests from users based on their group membership.
+• Automatically remove the access after 30 days.
+Answer - Create an access package.
+
+
+
+Roles 
+Microsoft.Network - Users that are assigned this can manage application security groups.
+Microsoft.Network - Users that are assigned this can manage Azure Firewall. (Microsoft.Security is incorrect)
+
+
+
+Users report that they cannot sign in to the virtual machines by using their Microsoft Entra credentials.
+Answer - Ensure that the virtual machines can access https://enterpriseregistration.windows.net.
+
+
+
+Correct order to enable real-time session-level monitoring of App1 by using Microsoft Defender for Cloud Apps.
+-Publish App1 in Azure AD
+-Create a Conditional Access policy that has session controls configured
+-From Microsoft Defender for Cloud Apps, modify the Connected apps settings for App1
+-From Microsoft Defender for Cloud Apps, create a session policy
+
+
+
+CASE STUDY - ADatum & Litware
+What occurs when User3 (User administrator) attempts to use SSPR?
+Number of auth methods required - 2 (User administrator specifically needs atleast 2 auth methods, others can have 1)
+Authentication methods that can be used - Email, Phone & Microsoft Authenticator Only (Security question is there in allowed list in case study but this is prohibited for user administrator)
+
+
+
+CASE STUDY - ADatum & Litware
+For MFA which feature should you use - An MFA registration policy
+how long before the users must complete the registration (grace period) - 14 days
+
+
+
+CASE STUDY - ADatum & Litware
+Leaked credentials - user risk policy
+Sign in from suspicious browser - sign in risk policy
+Resources accessed from an anonymous ip - sign in risk policy
+
+
+
+A user named User1 receives an error message when attempting to access the Microsoft Defender for Cloud Apps portal.
+Answer: Check SIGN-IN LOGS to identify the cause of the error
+
+
+
+"Create an access policy" to prevent users from signing in to Yammer from high-risk locations.
+
+
+
+You need to recommend a solution to provide Azure MFA for VPN connections.
+Answer - Network Policy Server (NPS)
+
+
+
+Storage Contributor → can obtain the storage account key and use it to access the file share in azure storage account file type.
+Storage Blob Data Reader -> can only access files in container type storage account.
+Reader role over subscription DOESNOT give ability to read files inside any storage account
+
+
+
+impossible travel - signin risk
+anonymous IP address - signin risk
+malicious IP address - signin risk
+Azure AD threat intelligence - user risk
+
+
+
+What should you create first for creating a Catalog - "Azure Logic App" 
+what should you use to distribute Catalog1?  - an access package
+
+
+
+You need to implement smart lockout with a lockout threshold of 10 failed sign-ins. - Password protection
+
+
+
+You need to ensure that you can control access to Microsoft 365 resources by using conditional access policies.
+What should you do first?
+Anwser - Disable security defaults
+
+
+
+"The Azure AD Password Protection proxy service" ensures that Azure AD Password Protection will continue to work if a single server fails.
+
+
+
+You need to enable the Private access profile. Which blade should you use in the Microsoft Entra admin center?
+Traffic forwarding (NOT Security Profile)
+
+
+Microsoft Entra Internet Access requires an "Entra-joined/hybrid-joined Windows device"
+"Entra-registered" devices support Private Access only.
+Recall - Only joined + windows folks get internet
+
+
+
+Ensure that User can manage and create keys in Vault - KeyVault Crypto Officer
+Ensure that User can access a certificate stored in Vault - KeyVault Certificates Officer
+Ensure that User can access a secret stored in Vault - KeyVault Secrets Officer
+
+
+
+You need to prevent users from accessing https://contoso.com from the devices. 
+Correct Order:
+-create a web content filtering policy
+-configure a security profile
+-create a conditional access policy
+
+
+
+You need to ensure that users can connect to Exchange Online only from email clients that use Modern authentication protocols.
+Answer - a conditional access policy in Azure AD
+
+
+
+Which multifactor authentication (MFA) method will be enabled by default for the tenant?
+- Microsoft Authenticator
+
+
+
+From the SharePoint admin center, you configure Access control for unmanaged devices to allow limited, web-only access.
+Which users will have full access to Site1?
+Only User2 (because it has compliance mentioned in table, rest are either non complaint or not applicable)
+
+
+
+To use Conditional Access Policies, you must first disable "security defaults". 
+So to use the security defaults again, you will need to remove Conditional Access Policies (CA Policy) that may conflict.
+
+
+
+You need to ensure that the members of Group1 can access Site1 for 90 days.
+Answer - access package
+
+
+
+You need to query risky user activity for the tenant.
+How long will the logs of risky user activity be retained?  - 90 days
+
+
+Any Microsoft Entra security group and any Microsoft 365 group (except dynamic groups) can be enabled in PIM
+
+
+
+ABAC Roles are currently supported only for certain role assignments that contain supported Storage data actions.
+Recall - ABAC role conditions → look for Storage Blob/Queue Data roles; ordinary Reader/Contributor/VM roles don't qualify for ABAC
+
+
+
+Linux VM + passwordless access needed + out-of-band MFA (authentication happens through a separate channel/device) → Microsoft Authenticator or FIDO2 keys (these 2 are passwordless).
+In linux vm, windows hello cant be chosen even though its passwordless
+
+
+
+TOU (terms of use) can be configured under Conditional Access Policy - GRANTS. (not conditions)
+
+
+User Access Administrator gives Permissions Management the required ability to manage Azure role assignments without the broader Owner role.
+Autopilot rule automatically identifies/remediates unused permissions and is designed to reduce manual effort.
+
+
+
+The goal is to implement a sign-in risk remediation policy without blocking user access. This strongly suggests using "implementing MFA for all users" as the primary remediation method for risky sign-ins. 
+
+
+
+On-prem AD → Azure Entra ID → Password Hash Synchronization
+Entra ID → on-prem AD → Password Writeback
+
+
+
+Ensure that the users can connect to Third party cloud service without prompt for Authentication: "An Enterprise application in Azure AD" (Don't select app registration as it doesn't support SSO)
+Ensure that users can access Third party cloud service only from the Azure AD joined computers: "A conditional access policy"
+RECALL- Enterprise application (supports SSO), app registration (doesn't support SSO)
+
+
+
+To enable users to request access to corporate applications, you need to configure the "Self-Service" settings for the the enterprise application.
+
+
+
+Three actions in correct order to perform to ensure that Webapp can use Microsoft Graph to read directory data in contoso.com.
+ORDER
+-Create an app registration
+-Add app permissions
+-Grant admin consent
+
+
+
+You need to group related apps into categories in the My Apps portal. - "Collections"
+
+
+
+Reviewer doesn't give permission to grant consent to an app registration — reviewing an admin-consent request does not give consent privileges.
+Application Administrator can grant admin consent for enterprise applications. (Authentication Administrator can't provide admin consent even if it is in reviewer list)
+
+
+
+You need a destination for configuring diagnostic settings for Microsoft Entra - "LOG ANALYTICS WORKSPACE"
+
+
+
+OWNER of app registration / enterprise app without administrator role means they can't provide admin consent
+Cloud application administrator & application administrator can provide admin consent
+
+
+
+Access only a particular secret1 in keyvault - From Secret1, configure the Access control (IAM) settings (not on keyvault level IAM settings)
+
+
+
+You need to be notified if a user downloads more than 50 files in one minute from Site1. - "Activity Policy" (NOT file policy)
+Blocker users from printing the files from Sit1 - "Session Policy"
+Print / Copy / Download in real time → Session policy.
+Scan / classify / govern files at rest → File policy.
+
+
+
+Third-party OAuth apps → need an alert when an app has high permissions and is authorized by more than 20 users.
+Correct answer: OAuth app policy ✅
+
+
+
+Maximum number of days you have to restore the app registration from when it was deleted? - 30 days
+
+
+
+Scenario: Third-party apps are registered in Entra ID → need an alert when an app gets read + write access to users' email.
+Correct answers:
+Tool to use: Microsoft Defender for Cloud Apps ✅
+Policy type: OAuth app ✅ (remember keyword 3rd party in question)
+
+
+
+CASE STUDY - ADatum & Litware
+You need implement the planned changes for application access to organizational data.
+Answer- User consent settings (NOT acceess package)
+Remember:
+App wants permission to org data → User Consent.
+User needs access to a resource → Access Package.
+
+
+
+You need to ensure that the users can only provide consent to apps that require low impact permissions. - Configure permission classifications
+
+
+
+User1 needs to view the App governance dashboard.
+Role needed: Cloud Application Administrator
+Portal: Microsoft 365 Defender Portal
+
+
+
+You need to use the firewall logs to create a list of unmanaged external applications and the users who access them.
+Answer - Cloud App Discovery in Microsoft Cloud App Security
+
+
+
+You need to ensure that the apps support automatic provisioning of Azure AD users. Which specification should the apps support?
+Answer - SCIM 2.0
+
+
+
+You have an Azure AD tenant and a .NET web app named App1. You need to register App1 for Azure AD authentication.
+What should you configure for App1? - "the redirect URI"
+
+
+
+-In app registration:
+Application permissions = app-only access, meaning the app accesses Graph without a signed-in user. 
+Delegated permissions require a user to be signed in.
+-Concept:
+    Delegated permissions → user + app → app acts on behalf of the signed-in user and cannot exceed that user's permissions.
+    Application permissions → app alone → app acts without a user and can access data according to the permissions granted directly to the app, usually requiring admin consent.
+
+
+
+You discover that a large number of new apps were added to the tenant.
+You need to implement an approval process for new enterprise applications.
+Answer - From the Microsoft Entra admin center, configure the Admin consent settings.
+
+
+
+You need to enable app governance integration.
+Portal to use - Microsoft 365 Defender
+
+
+
+You need to create a Microsoft Defender for Cloud Apps access policy for App1. What to do first?
+Configure a Conditional Access policy to use Conditional Access App Control.
+
+
+
+You need to ensure that you can monitor OAuth authentication requests by using Microsoft Defender for Cloud Apps.
+Proposal: From the Microsoft 365 Defender portal, you add the Google Workspace app connector. Answer - FALSE
+Proposal: From the Microsoft 365 Defender portal, you add the Microsoft Azure app connector. Answer - FALSE
+Proposal: From the Microsoft 365 Defender portal, you add the Amazon Web Services app connector. Answer - FALSE
+
+
+
+Deploy "AD application proxy" & "allow outbound HTTPS connections from onprem server to Azure AD" to expose an Onprem app to AD users
+
+
+
+Security admin can manage Microsoft Defender for cloud app policy.
+To ensure that User1 can create Microsoft Defender for Cloud Apps session policies --- Create a Conditional Access policy and select Use Conditional Access App Control.
+
+
+
+Assign the "Application Developer" role to grant the ability to create application registrations even when the Users can register applications setting is set to NO.
+
+
+
+Microsoft confirms both system-assigned and user-assigned managed identities can receive Azure RBAC roles (owner) at resource-group scope.
+User-assigned identity can be attached only to VMs in the same region.
+
+
+
+Multiple App Services/VM wants same storage access + least admin effort = User assigned managed identity
+To control access use: RBAC
+
+
+
+AKS managed identity needs Cosmos DB access → Cosmos DB Data Reader. (NOT Cosmos DB Account Reader Role)
+
+
+
+You need to ensure that WebApp1 can read and write files to storage1 by using the system-assigned managed identity.
+Answer - the access control (IAM) settings
+
+
+
+Registered app wants to access azure resources → use Service principal.
+Multiple Azure resources sharing one identity wants to access azure resources → use User-assigned managed identity.
+
+
+
+Disable user consent to apps → Microsoft 365 admin center ✅
+Configure admin consent workflow → Microsoft Entra admin center ✅
+Concept:
+Microsoft 365 admin center → Microsoft 365/user-level settings
+Microsoft Entra admin center → identity/app registration & admin related settings
+
+
+
+You need to ensure that App1 can access Microsoft Graph.
+App only / no signed-in user → Application permissions
+App + signed-in user → Delegated permissions
+
+
+
+By default any user can register app in Azure AD, doesnt matter which role assigned
+But users in that registered app can only be managed by certain users having roles like - User Administrator, Cloud App Administrator, Application Administrator
+
+
+
+Official rule: VM/App Service → System-assigned + User-assigned MI can be attached (no user etc)
+The exam question: use VM1 = M1+M2; 
+App1 = System+M2 (M1 is also supported for webapp but not given in options)
+
+
+
+To allow App1 in your Azure tenant to authenticate and access App2 in the partner organization's Azure tenant.
+The two valid credential types for this authentication are:
+✅ A. Certificate – Apps can use a public-private key pair (certificate) for authentication, which is considered more secure than secrets.
+✅ C. Secret – Apps can use a client secret (a password-like string) to authenticate, though it's less secure than certificates.
+
+
+
+Third-party app + OAuth permissions/consent → OAuth app policy.
+Third-party app + real-time session control → From the Microsoft Entra admin center, configure single sign-on (SSO)
+
+
+
+You need to enable Microsoft Defender for Cloud Apps session control for Site1. Which policy to create first
+Answer: Conditional access policy (NOT session policy)
+
+
+
+Application developer in Azure AD is the minimum role that is needed to register an app in Azure AD if Users can register applications is set to No.
+
+
+
+The approver automatically becomes owner of the app registration after self service is configured.
+
+
+
+Emergency1 account will be used in the event of Azure AD functionality failures and on-premises infrastructure failures.
+You need to reduce the likelihood that Emergency1 will be prevented from signing in during an emergency.
+Answer - Configure Azure Monitor to generate an alert if Emergency1 is modified or signs in.
+
+
+
+Scenario: You have custom security attributes grouped into Set1/Set2, and different admins have different roles. The question asks who can modify or view the attribute values.
+Answers
+User1 → NO ❌
+Why: Global Admin alone doesn't grant custom security attribute permissions.
+User2 → NO ❌
+Why: Attribute Definition Administrator manages the attribute definition, not the values assigned to users.
+User3 → YES ✅
+Why: Attribute Assignment Administrator can manage/read assigned attribute values.
