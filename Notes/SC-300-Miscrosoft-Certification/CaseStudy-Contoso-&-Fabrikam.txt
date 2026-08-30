@@ -74,3 +74,59 @@ Contoso identifies the following technical requirements:
     • Administrative actions performed in Azure AD must be audited. Audit logs must be retained for one year.
     • The helpdesk administrators must be able to manage licenses for only the users in their respective office.
     • Users must be forced to change their password if there is a probability that the users’ identity was compromised.
+
+-------------------------------------------------------------------------------------------------------------------
+QUESTIONS & ANSWERS
+
+CASE STUDY - Contoso and Fabrikam
+Selections to make: 2
+Question: What should you create first, and which tool should you use to allow helpdesk administrators to manage licenses only for their respective offices?
+Correct Answer:
+  → Object to create for each branch office: An administrative unit
+  → Tool to use: Azure Active Directory admin center
+Why:
+  → Administrative Units (Not OU, as OU is for onprem) let you scope administrator permissions to specific users, such as users in each office.
+  → License management is supported with administrative-unit-scoped roles.
+
+
+
+CASE STUDY - Contoso and Fabrikam
+Access package → Bundles resources (apps, groups, SharePoint sites, Teams) and controls who can request/access them.
+Connected organization → Defines an external organization whose users can be allowed to request/access your resources through entitlement management.
+
+
+
+CASE STUDY - Contoso and Fabrikam
+Role settings → Configure User Administrator to require justification and approval when activating the role through PIM.
+
+
+
+CASE STUDY - Contoso and Fabrikam
+You need to modify the settings of the User administrator role to meet the technical requirements. Select 2 actions
+→ Justification required → Require justification on activation
+→ Set all assignments to Eligible → required because the requirement is to activate the role. An Active assignment doesn't go through activation; an Eligible assignment does.
+
+
+
+CASE STUDY - Contoso and Fabrikam
+Modify the External collaboration settings -> to resolve the issue of the guest user invitations.
+
+
+
+CASE STUDY - Contoso and Fabrikam
+You need to meet the technical requirements for license management by the helpdesk administrators.
+- What should you create first - An administrative unit
+- and which tool should you use - Azure active directory admin centre
+
+
+
+CASE STUDY - Contoso and Fabrikam
+You need to resolve the issue of the sales department users. What should you configure for the Azure AD tenant?
+Answer - the Device settings
+
+
+
+CASE STUDY - Contoso and Fabrikam
+You need to meet the technical requirements for the probability that user identities were compromised.
+What should the users do first - "Register for self-service password reset (SSPR)"
+and what should you configure? - "a user risk policy"

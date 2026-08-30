@@ -57,3 +57,124 @@ ADatum identifies the following technical requirements:
         - The Microsoft Authenticator app
     • Trust relationships must NOT be established between the adatum.com and litware.com AD DS domains.
     • The principle of least privilege must be used.
+
+
+-------------------------------------------------------------------------------------------------------------------
+QUESTIONS & ANSWERS
+
+CASE STUDY - ADatum & Litware
+Question: Sales users have reached their Microsoft Entra device limit. What should you configure to resolve the issue of the sales department users.?
+Correct Answer: A. the Device settings
+Why:
+  → Device settings contains Maximum number of devices per user.
+Exam tip: Fix Device limit → Device settings
+
+
+
+CASE STUDY - ADatum & Litware
+Question: You cannot assign the Device Administrators role to IT_Group1. What should you do first?
+Correct Answer: B. Recreate the IT_Group1 group.
+Why:
+  → A group must be created as role-assignable to receive Microsoft Entra roles.
+  → An existing group cannot be converted into a role-assignable group.
+
+
+
+CASE STUDY - ADatum & Litware 
+Question: How should you sync the Litware AD DS forest with the existing ADatum Microsoft Entra tenant?
+Correct Answer: A. Azure AD Connect cloud sync between the Azure AD tenant and litware.com
+Why:
+  → adatum.com and litware.com are separate/disconnected forests.
+  → IMPORTANT - The requirement explicitly says no trust relationship.
+  → Cloud Sync is designed for multiple disconnected AD forests, including acquisition scenarios.
+Exam tip:
+  → Multiple AD forests + disconnected/no trust → Cloud Sync 
+
+
+
+CASE STUDY - ADatum & Litware
+You need to sync the ADatum users.
+From the Microsoft Azure Active Directory Connect wizard, select Customize synchronization options.
+
+
+
+CASE STUDY - ADatum & Litware
+What occurs when User3 (User administrator) attempts to use SSPR?
+Number of auth methods required - 2 (User administrator specifically needs atleast 2 auth methods, others can have 1)
+Authentication methods that can be used - Email, Phone & Microsoft Authenticator Only (Security question is there in allowed list in case study but this is prohibited for user administrator)
+
+
+
+CASE STUDY - ADatum & Litware
+For MFA which feature should you use - An MFA registration policy
+how long before the users must complete the registration (grace period) - 14 days
+
+
+
+CASE STUDY - ADatum & Litware
+Leaked credentials - user risk policy
+Sign in from suspicious browser - sign in risk policy
+Resources accessed from an anonymous ip - sign in risk policy
+
+
+
+CASE STUDY - ADatum & Litware
+You need implement the planned changes for application access to organizational data.
+Answer- User consent settings (NOT acceess package)
+Remember:
+App wants permission to org data → User Consent.
+User needs access to a resource → Access Package.
+
+
+
+CASE STUDY - ADatum & Litware
+You need to implement the planned changes for Package1. Which users can create and manage the access review?
+Answer: User5 Only (Identity Governance Administrator) 
+Important: {Privileged role administrator  cannot help in access package, they can only help in access reviews}
+
+
+
+CASE STUDY - ADatum & Litware
+You need to resolve the issue of the guest user invitations. What should you do for the Azure AD tenant?
+Answer - Modify the External collaboration settings.
+
+
+
+CASE STUDY - ADatum & Litware
+You need to modify the settings of the User administrator role to meet the technical requirements.
+Which two actions should you perform for the role? Each correct answer presents part of the solution.
+Answer: - Modify the Expire eligible assignments after setting.
+        - Set all assignments to Eligible.
+
+
+
+CASE STUDY - ADatum & Litware
+You need to allocate licenses to the new users from ADatum. The solution must meet the technical requirements. Which type of object should you create?
+Answer - a Dynamic User security group (because case study says assign licenses automatically)
+
+
+
+CASE STUDY - ADatum & Litware
+You need to sync the ADatum users. The solution must meet the technical requirements. What should you do?
+Answer - From the Microsoft Azure Active Directory Connect wizard, select Customize synchronization options.
+
+
+
+CASE STUDY - ADatum & Litware
+You need to configure the assignment of Azure AD licenses to the Litware users. The solution must meet the licensing requirements.
+What should you do:
+    - Azure AD Connect Settings to modify - "Directory extensions"
+    - Assign Azure AD Licenses to - "an azure active directory group that has DYNAMIC USER membership type"
+
+
+
+CASE STUDY - ADatum & Litware
+You need to meet the authentication requirements for leaked credentials. What should you do?
+Answer: Enable password hash synchronization in Azure AD Connect.
+
+
+
+CASE STUDY - ADatum & Litware
+You need to support the planned changes and meet the technical requirements for MFA.
+Which feature should you use - "An MFA registration policy"
+and how long before the users must complete the registration (Grace period) - "14 days"

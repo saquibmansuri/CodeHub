@@ -389,26 +389,6 @@ Correct order to enable real-time session-level monitoring of App1 by using Micr
 
 
 
-CASE STUDY - ADatum & Litware
-What occurs when User3 (User administrator) attempts to use SSPR?
-Number of auth methods required - 2 (User administrator specifically needs atleast 2 auth methods, others can have 1)
-Authentication methods that can be used - Email, Phone & Microsoft Authenticator Only (Security question is there in allowed list in case study but this is prohibited for user administrator)
-
-
-
-CASE STUDY - ADatum & Litware
-For MFA which feature should you use - An MFA registration policy
-how long before the users must complete the registration (grace period) - 14 days
-
-
-
-CASE STUDY - ADatum & Litware
-Leaked credentials - user risk policy
-Sign in from suspicious browser - sign in risk policy
-Resources accessed from an anonymous ip - sign in risk policy
-
-
-
 A user named User1 receives an error message when attempting to access the Microsoft Defender for Cloud Apps portal.
 Answer: Check SIGN-IN LOGS to identify the cause of the error
 
@@ -600,15 +580,6 @@ Scenario: Third-party apps are registered in Entra ID → need an alert when an 
 Correct answers:
 Tool to use: Microsoft Defender for Cloud Apps ✅
 Policy type: OAuth app ✅ (remember keyword 3rd party in question)
-
-
-
-CASE STUDY - ADatum & Litware
-You need implement the planned changes for application access to organizational data.
-Answer- User consent settings (NOT acceess package)
-Remember:
-App wants permission to org data → User Consent.
-User needs access to a resource → Access Package.
 
 
 

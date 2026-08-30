@@ -391,40 +391,6 @@ Solution: You assign the Security Operator role to User1. - NO (this only has re
 
 
 
-
-CASE STUDY - Contoso and Fabrikam
-Selections to make: 2
-Question: What should you create first, and which tool should you use to allow helpdesk administrators to manage licenses only for their respective offices?
-Correct Answer:
-  → Object to create for each branch office: An administrative unit
-  → Tool to use: Azure Active Directory admin center
-Why:
-  → Administrative Units (Not OU, as OU is for onprem) let you scope administrator permissions to specific users, such as users in each office.
-  → License management is supported with administrative-unit-scoped roles.
-
-
-
-
-CASE STUDY - ADatum & Litware
-Question: Sales users have reached their Microsoft Entra device limit. What should you configure to resolve the issue of the sales department users.?
-Correct Answer: A. the Device settings
-Why:
-  → Device settings contains Maximum number of devices per user.
-Exam tip: Fix Device limit → Device settings
-
-
-
-
-CASE STUDY - ADatum & Litware
-Question: You cannot assign the Device Administrators role to IT_Group1. What should you do first?
-Correct Answer: B. Recreate the IT_Group1 group.
-Why:
-  → A group must be created as role-assignable to receive Microsoft Entra roles.
-  → An existing group cannot be converted into a role-assignable group.
-
-
-
-
 Question: Can each user accept/access the shared resources after the collaboration restriction is configured?
 QUESTION DATA (missing data)
 User email             User type    Invitation accepted
@@ -441,20 +407,6 @@ Why:
   → Allowed domain → invitation allowed.
   → Already accepted guest → can continue accessing.
   → Non-allowed domain → new invitation blocked.
-
-
-
-
-CASE STUDY - ADatum & Litware 
-Question: How should you sync the Litware AD DS forest with the existing ADatum Microsoft Entra tenant?
-Correct Answer: A. Azure AD Connect cloud sync between the Azure AD tenant and litware.com
-Why:
-  → adatum.com and litware.com are separate/disconnected forests.
-  → IMPORTANT - The requirement explicitly says no trust relationship.
-  → Cloud Sync is designed for multiple disconnected AD forests, including acquisition scenarios.
-Exam tip:
-  → Multiple AD forests + disconnected/no trust → Cloud Sync 
-
 
 
 
@@ -914,54 +866,8 @@ Password list to be stored in Entra ID, NOT in onprem server
 
 
 
-
 Concept:
 You create a Log Analytics workspace - configure diagnostic settings
-
-
-
-
-CASE STUDY - Contoso and Fabrikam
-Access package → Bundles resources (apps, groups, SharePoint sites, Teams) and controls who can request/access them.
-Connected organization → Defines an external organization whose users can be allowed to request/access your resources through entitlement management.
-
-
-
-
-CASE STUDY - Contoso and Fabrikam
-Role settings → Configure User Administrator to require justification and approval when activating the role through PIM.
-
-
-
-
-CASE STUDY - Contoso and Fabrikam
-You need to modify the settings of the User administrator role to meet the technical requirements. Select 2 actions
-→ Justification required → Require justification on activation
-→ Set all assignments to Eligible → required because the requirement is to activate the role. An Active assignment doesn't go through activation; an Eligible assignment does.
-
-
-
-
-CASE STUDY - Contoso and Fabrikam
-Modify the External collaboration settings -> to resolve the issue of the guest user invitations.
-
-
-
-
-CASE STUDY - ADatum & Litware
-You need to sync the ADatum users.
-From the Microsoft Azure Active Directory Connect wizard, select Customize synchronization options.
-
-
-
-
-Q- You need to configure the detection of multi-staged attacks to meet the monitoring requirements. (maybe case study)
-A- Customize the Microsoft Sentinel rule logic.
-
-Q- You need to track application access assignments by using Identity Governance. The solution must meet the delegation requirements. (maybe case study)
-A- Create a program
-
-
 
 
 Concept
@@ -971,7 +877,6 @@ Concept
 
 Concept:
 To create access reviews for Microsoft Entra roles, you must be assigned AT LEAST the Privileged Role Administrator role.
-
 
 
 

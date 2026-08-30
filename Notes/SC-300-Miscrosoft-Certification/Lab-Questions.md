@@ -63,3 +63,10 @@ LAB13 - You need to ensure that when users in the sg-Operations group go to the 
 • Box  
 ![alt text](image-12.png)  
 ------------------------------------------  
+LBA14 - You need to configure the Group Administrator role to meet the following requirements:  
+• Ensure that Allan Deyoung can approve and reject requests to activate the role.  
+• Ensure that Christie Cline can request activation of the role.  
+• Use the principle of least privilege.  
+To complete this task, sign in to the appropriate admin center.  
+![alt text](image-13.png)  
+------------------------------------------  

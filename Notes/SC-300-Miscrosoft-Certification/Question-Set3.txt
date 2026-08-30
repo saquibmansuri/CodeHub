@@ -1,0 +1,300 @@
+Catalog → organizes resources into a collection that access packages can use.
+Access package → configure what access users receive/request: resources, groups, Teams, SharePoint, apps, approvers, expiration, etc.
+Entitlement management settings → Automatically remove external users after access is no longer required, configure how entitlement management behaves globally: external-user settings, lifecycle/cleanup behavior, etc.
+In Entitlement Management, you first create a catalog to contain the resources (Site1 and Team1), then create an access package using those resources.
+
+
+how long does Azure AD store events in the sign-in logs? - 30 days
+
+
+
+Access reviews can be done for "ALL" - Groups, App, Entra role, Azure RBAC role, (Onprem AD roles NO)
+
+
+
+You need to download the Azure AD logs by using the administrative portal. The log file must contain changes to conditional access policies - audit logs in JSON format
+
+
+
+You discover that all access review requests are received by Megan Bowen.
+You need to ensure that the manager of each department receives the access reviews of their respective department.
+Proposal: You add each manager as a fallback reviewer. Answer - NO
+Proposal: You create a separate access review for each role. Answer - NO
+Proposal: You modify the properties of the IT administrator user accounts - YES (the property you need to change is the Manager field on each IT administrator's user account.)
+
+
+Which objects can you add as eligible in Azure AD Privileged Identity Management (PIM) for an Azure AD role? (options: user, guest, managed identity)
+Answer - user & guest only  (you cannot add a non-interactive account for PIM use like managed identity)
+
+
+
+Access review starts at 15th jan 2021 and reiew period is set to 14 days
+User1 answered a review question on 17th january and User2 on 20th january
+On 5th FEB, User1 can answer the same access review question again - NO (bcz 5th Feb falls outside of the 14 day window for that same review)
+On 25th JAN, User 2 can still access the review. - Yes (within 14 days of current review)
+On 22nd JAN, User 3 can answer the review - No (acc to question its only for group1 and user3 isnt member of group1)
+
+
+
+1️⃣ To allow access for users who have fabrikam.com email addresses:   ✔ An access package policy in Identity Governance
+2️⃣ To block access for users who have litwareinc.com email addresses: ✔ The External collaboration settings in Azure AD
+
+
+
+Access review can be created for - assigned, dynamic user groups. (ONLY dynamic device groups are not supported)
+
+
+
+You create an Azure Sentinel instance and configure the Azure Active Directory connector. You need to ensure that Azure Sentinel can generate incidents based on the risk alerts raised by Azure AD Identity Protection.
+Answer: Modify the Diagnostics settings in Azure AD.
+
+
+
+You use Azure Monitor to analyze Azure Active Directory (Azure AD) activity logs.
+You receive more than 100 email alerts each day for failed Azure AD user sign-in attempts.
+You need to ensure that a new security administrator receives the alerts instead of you.
+Proposal: From Azure Monitor, you create a data collection rule. - NO
+Proposal: From Azure AD, you modify the Diagnostics settings. - NO
+Proposal: From Azure AD, you create an assignment for the Insights administrator role. - NO
+Proposal: From Azure Monitor, you modify the action group. - YES
+
+
+
+You create a Log Analytics workspace.
+You need to ensure that you can view Azure Active Directory (Azure AD) audit log information by using Azure Monitor.
+Answer - Modify the Diagnostics settings for Azure AD.
+
+
+
+You need to ensure that the guest users that have NOT accessed App1 during the past 30 days have their access removed. The solution must minimize administrative effort.
+Answer: an access review for application access
+
+
+
+In an access review if the reviewer setting is (self), then each member reviews their own access (not even owner of group)
+
+
+
+Access review set to self then number of P2 license required = number of users (525)
+Access review set to owner then number of P2 licence required is 1 only
+
+
+
+You need to identify which users accepted or declined Terms1.- audit logs
+
+
+
+- Managed identity can be added to Security type group only. The security group can't be Dynamic or in sync from OnPremise
+- AD User Cloud can be added to Security and M365 groups, Not the dynamic (Group3)
+
+
+
+Which two settings can you use to create a group after which AD roles would be assigned to its users
+Group type: Microsoft 365 - Membership type: Assigned
+Group type: Security - Membership type: Assigned
+
+
+
+Identify the locations and IP addresses used by Azure AD users to sign in. - Sign in logs
+Review the Azure AD security settings and identify improvement recommendations. - Audit logs
+Identify changes to Azure AD users or service principals. - Identity secure Score
+
+
+
+In a Azure AD Privileged Identity Management (PIM) role settings 
+If no specific approvers are selected, privileged role administrators && global administrators will become the default approvers.
+
+
+
+You need to ensure that User1 can create access reviews for Azure AD roles. The solution must use the principle of least privilege.
+Answer - Privileged role administrator (user and user access administrator are not eligible)
+
+
+
+
+You need to delegate the installation of the Application Proxy connector and ensure that User1 can register App1 in Azure AD. The solution must use the principle of least privilege.
+For installation of application proxy - Application Administrator
+For registering apps in Azure AD - Application Developer
+
+
+
+User1 needs to configure a new connector group for an application proxy. What should you use to activate the application admin role for User1? - the Azure Active Directory admin center (because we need to assign azure role)
+
+
+
+“Show/investigate sign-ins” → Sign-in logs
+“Number of failures + success rate for an app” → Usage & insights
+
+
+
+You need to query the logs and graphically display the number of sign-ins per user. How should you complete the query?
+SigninLogs | where ResultType == 0 | "summarize" login_count = count() by Identity | "render" columnchart
+
+
+
+You need to identify which users access Facebook from their devices and browsers
+Answer - Create a Defender for Cloud Apps access policy.
+
+
+
+You need to create a dynamic user group that will include all the users that do NOT have a department defined in their user profile.
+Answer: user.department "-eq" "null"
+
+
+
+Group naming policy applies to "normal users" and "Groups Administrators"; Global Administrators and User Administrators are exempt i.e not affected.
+
+
+
+After you delete an app registration, the app remains in a suspended state for 30 days. During that 30-day window, the app registration can be restored, along with "ALL" its properties like App roles, Users and groups, client secrets, and Self-service.
+
+
+
+Assignment type Eligible → Need JIT access
+Assignment type Active → Need permanent/current access
+Expire eligible assignment → Limit how long eligibility lasts
+Expire active assignment→ Limit how long activated access lasts
+
+
+
+You have an Amazon Web Services (AWS) account, a Google Workspace subscription, and a GitHub account.
+You deploy an Azure subscription and enable Microsoft 365 Defender.
+You need to ensure that you can monitor OAuth authentication requests by using Microsoft Defender for Cloud Apps.
+Proposal: From the Microsoft 365 Defender portal, you add the GitHub app connector. - NO 
+
+
+
+You need to implement certificate-based authentication in Azure AD. The solution must ensure that users can sign in by using certificates issued by CA1 present in on premise. What should you do first?
+Answer - Add CA1 as a Certificate Authority to the Microsoft Entra ID tenant.
+
+
+
+As of now, Microsoft Entra Permissions Management is a Cloud Infrastructure Entitlement Management (CIEM) solution that supports only the three major public cloud platforms:
+-Microsoft Azure
+-Amazon Web Services (AWS)
+-Google Cloud Platform (GCP)
+X alibaba cloud not supported
+
+
+
+You have three Azure subscriptions that are linked to a single Microsoft Entra tenant.
+You need to evaluate and remediate the risks associated with highly privileged accounts.
+Answer - Privileged Identity Management (PIM)
+
+
+
+You need to replace all the permissions granted to User1 with read-only permissions. The solution must minimize administrative effort.
+Answer - From the Permissions subtab, use a quick action.
+
+
+
+Key Vault Secrets User RBAC role - read secrets 
+Key Vault Secrets Officer. - read and update secrets
+
+
+The Sign-ins activity report shows that an external contractor signed in to the Exchange admin center.
+You need to review access to the Exchange admin center at the end of each month and block sign-ins if required.
+Answer - a group-based access review that targets guest users (dont choose any access package related option)
+
+
+
+Identify all the accounts that are assigned the Global Administrator role permanently. - Azure AD Insights
+Review the Permission Creep Index (PCI) of User1. - Dashboards
+
+
+
+You should assign the 1: User Access Administrator role to the service principal of 2: Microsoft Entra Permissions Management
+
+
+
+You need to configure continuous access evaluation for app sign-ins and assign the configuration to users that are assigned the Application Administrator role.
+Answer - Conditional access policy
+
+
+You need to ensure that Permission Management can onboard Sub1
+Full up powershell command -- "New-AzRoleAssignment" -ApplicationId b46c3ac5-9da6-418f-a849-0a07a10b3c6c -RoleDefinitionName "Reader" -Scope /subscriptions/<subscriptionID> 
+
+
+
+You plan to connect Permissions Management to AWS. You need to create a Permissions Management app in Azure. How should you complete the PowerShell command
+"New-AzureADApplication" -DisplayName mciem-aws-oidc-connector "-IdentfierUrls" api://mciem-aws-oidc-app
+
+
+You need to upload the ToU (terms of use) document. Which format should you use for the document?
+Answer - PDF 
+
+
+
+You need to ensure that users are prompted to accept a custom terms of use (ToU) agreement when they sign in to the subscription.
+Answer - Conditional Access policy
+
+
+
+You need to ensure that User1 can onboard the Azure subscription to Permissions Management. The solution must follow the principle of least principle.
+Answer - Permissions Management Administrator
+
+
+
+You need to onboard Permissions Management. Which two actions should you perform? 
+1. From Microsoft Entra Permissions Management, configure data collection.
+2. Create a role assignment for Sub1.
+LOGIC - Permissions Management onboarding requires data collection and an Azure RBAC role assignment on the subscription so it can read the subscription's permissions/resources.
+
+
+
+Choose option in the azure window provided
+You have an Azure subscription that is onboarded to Microsoft Entra Permissions Management. You need to perform the following actions:
+• Identify billable Azure resources.
+• Create a rule to remove permissions for unused resources.
+Answer: Choose these options in the window
+1. Billable resources = Gear icon/ Settings icon
+2. Create a rule = Autopilot (you will see a tab in the window easily)
+
+
+
+You need to ensure that User1 can modify the review frequency of Package1. The solution must use the principle of least privilege.
+Answer: Identity Governance Administrator
+
+
+
+You need to identify managed identities that are assigned permissions and remove any permissions that have been unused for 90 days. The solution must minimize administrative effort.
+Answer - Autopilot rule
+
+
+
+The solution must ensure that users are prevented from accessing websites that include the word gambling in the URL.
+Answer - Create a web content filtering policy.
+
+
+
+VERY IMPORTANT
+to manage Azure AD build in role assignments - Priviledged role administrator
+to manage Azure built-in role assignments - User access administrator
+
+
+---------------------------------------------------------------------------------------------------------------
+Unknown Case Study
+Litware wants to create a group named LWGroup1 that will contain all the Azure AD user accounts for Litware but exclude all the Azure AD guest accounts.
+Answer - (user.objectId -ne "null") and (user.userType -eq "Member"). 
+
+
+
+Unknown Case Study
+You need to configure the MFA settings for users who connect from the Boston office. The solution must meet the authentication requirements and the access requirements.
+What should you include in the configuration?
+Answer - named locations that have a public IP address range
+
+
+
+Unknown Case Study
+Q- You need to configure the detection of multi-staged attacks to meet the monitoring requirements.
+A- Customize the Microsoft Sentinel rule logic.
+
+
+
+Unknown Case Study
+Q- You need to track application access assignments by using Identity Governance. The solution must meet the delegation requirements.
+A- Create a program
+
+
+---------------------------------------------------------------------------------------------------------------
