@@ -1,0 +1,1913 @@
+-------- HYBRID IDENTITY & DIRECTORY SYNC --------
+
+Scenario cue: "AD-synced tenant, disabled on-prem user can still sign in to Azure AD for ~30 min — which solution fixes it?" (multi-solution series, this one = password writeback)
+Why correct (No): Password writeback = a one-way channel for SSPR/password-reset changes flowing from cloud → on-prem. It doesn't touch account status (enabled/disabled) and doesn't affect the sync delay for accountDisabled attribute. The 30-min gap is caused by the default AD Connect sync cycle, not by anything password writeback governs.
+Exam tip: For this whole question series, mentally sort solutions into two buckets:
+✅ Fixes it → things that make auth check on-prem in real time (e.g., Pass-through Authentication) or force an immediate sync cycle.
+❌ Doesn't fix it → password writeback, password protection, password hash sync, SSPR, Conditional Access policies sign-in frequency (these don't touch the disable-propagation delay).
+
+
+
+Scoping filters determine which assigned users are provisioned. Multiple clauses within one filter = AND; multiple filters = OR.
+Scenario cue: "Group1 is assigned + two Source Object Scope filters", so OR condition will take effect
+Why correct:
+User1 → Yes: Member of Group1 + department = IT AND jobTitle PRESENT → Filter1 matches.
+User2 → No: Not a member of Group1 → never enters the provisioning scope.
+User3 → Yes: Member of Group1 + city INCLUDES M → Filter2 matches.
+Exam tip:
+Inside one filter = AND | Between filters = OR.
+Also remember: assignment/scope comes first — a user outside the assigned Group1 cannot be brought in merely because a filter matches.
+
+
+
+Scenario cue: "Prevent sync of users with extensionAttribute15 = NoSync — what do you configure in AD Connect?"
+Correct Answer: C. Create an inbound synchronization rule for the Active Directory Domain Services connector.
+Why correct: Attribute-based filtering is implemented as an inbound synchronization rule on the AD DS connector that sets the metaverse attribute cloudFiltered = True for matching objects, blocking them from being exported to Azure AD.
+Exam tip: Memorize the flow direction:
+    -Inbound rule + AD DS connector = filtering/transforming data coming from on-prem AD.
+    -Windows Azure AD connector = deals with data going to Azure AD (not where you scope on-prem attributes).
+    -Run profiles (Full Import/Export/Delta) are just sync operations, not filtering logic — always the wrong answer when the question is about which objects sync, not when they sync.
+
+
+
+Scenario cue: "On-premises connectivity is lost + PHS enabled. Which users would be able to authenticate"
+Why correct:
+User1 → Yes: Cloud-only user; authentication doesn't depend on on-premises AD.
+User2 → Yes: PHS is enabled, so the password hash is already in Microsoft Entra ID; cloud authentication doesn't require on-premises AD.
+User3 → Yes: Guest user authenticates using their external/home identity, not the on-premises AD.
+Exam tip:
+    -PHS = cloud authentication → on-premises outage doesn't stop sign-in.
+    -PTA = authentication depends on on-premises agents/AD.
+
+
+
+Scenario cue: "Synchronize selected Group1; Group2 is nested inside Group1."
+Correct Answer:
+    User1 → Yes
+    User2 → No
+    Group2 → Yes
+Why correct: Group-based filtering synchronizes direct members only. User1 is a direct member of Group1, so it syncs. Group2 is also a direct member of Group1, so Group2 itself syncs, but its member User2 does not because nested membership isn't resolved. Both OU1 and OU2 are included, so OU placement doesn't exclude these objects.
+Exam tip:
+    Group filtering = direct members only.
+    Nested group → group itself can sync, but its members DON'T automatically sync.
+
+
+
+Scenario cue: "Add another PTA agent while DCs must not access the internet."
+Correct Answer: A. Server4 (Unassigned member server)
+Why correct: PTA agents require outbound Internet access and access to AD domain controllers. Microsoft recommends installing additional agents on separate servers from the Microsoft Entra Connect server for high availability. 
+Server4 is the appropriate member server; Server1/Server2 are domain controllers and must not communicate directly with the Internet, while Server3 already runs Microsoft Entra Connect.
+Exam tip:
+    PTA agent → separate member server + Internet access + AD access.
+    Avoid DCs when the question says DCs cannot access the Internet.
+
+
+
+To configure Windows 10 computers for Azure AD Seamless Single Sign-On (Seamless SSO), you need to ensure that users' credentials are automatically passed from their Windows session to Azure AD when accessing cloud resources. 
+This is achieved by configuring the Local intranet zone settings in Internet Explorer or Edge.
+Azure AD Seamless SSO works by authenticating users seamlessly without prompting for credentials when they access resources in Azure AD. However, for it to work, the Azure AD URLs (like https://autologon.microsoftazuread-sso.com) must be trusted by the browsers on the Windows 10 machines. This is achieved by adding the URLs to the Local intranet zone.
+Option A (Configuring Sign-in options) and Option B (Enabling Enterprise State Roaming) are not related to enabling Seamless SSO.
+Option D (Installing the Azure AD Connect Authentication Agent) is also incorrect, as the Authentication Agent is used for Pass-through Authentication (PTA) rather than Seamless SSO.
+Therefore, Option C is the correct choice to ensure Azure AD Seamless SSO works on Windows 10 computers.
+
+
+
+User sign-ins to Azure AD must be authenticated by an Active Directory domain controller. -- Passthrough authentication
+Active Directory domain users must be able to use Azure AD self-service password reset (SSPR). -- Password writeback
+NOTE: SSPR need password writeback to be enabled
+
+
+
+Your network contains an on-premises Active Directory Domain Services (AD DS) domain that syncs with an Azure AD tenant.
+You need to ensure that user authentication always occurs by validating passwords against the AD DS domain.
+What should you configure, and what should you use? To answer, select the appropriate options in the answer area.
+Configure: Pass-through authentication
+Use: Azure AD Connect
+
+
+
+Question: For each statement, determine whether it is true based on the Azure AD Connect filtering and configuration.
+Correct Answer:
+  → User1 can use SSPR to reset his password: Yes
+  → User1 accessing Exchange Online is authenticated by an on-premises DC: Yes
+  → User2 can be added to a SharePoint Online site as a member: No
+Why:
+  → User1 is in OU1, which is synced, and password writeback is enabled → SSPR can write the password back to AD DS. Microsoft confirms password writeback supports PTA environments.
+  → PTA is enabled → User1's password is validated by the on-premises AD domain controller.
+  → User2 is in OU2, which is not selected for synchronization → User2 isn't synchronized to Entra ID, so can't be added as a normal Entra user to SharePoint Online.
+
+
+
+Question: For each statement, select Yes or No.
+Scenario:
+  → fabrikam.com AD DS is federated with Microsoft Entra through AD FS.
+  → Password Hash Synchronization and Password Writeback are enabled.
+  → User2 is disabled only in Microsoft Entra.
+  → User3 is enabled only in Microsoft Entra, while the on-premises account remains disabled.
+Correct Answer:
+  → You can add User1 to Group1: Yes
+  → User2 can sign in to Server1: Yes
+  → User3 can sign in to Microsoft 365: No
+Why:
+  → User1 → Yes: Cloud-created Group1 can contain the synced User1.
+  → User2 → Yes: Disabling the Entra user doesn't disable the on-premises AD account, so it doesn't prevent User2 from signing into the on-premises Server1.
+  → User3 → No: Microsoft 365 authentication is federated to AD FS. AD FS authenticates against on-premises AD, and Microsoft specifically documents disabled AD accounts as authentication failures.
+
+
+
+Question: After creating User3, updating User1/User2, and running synchronization, what sync status does each user receive?
+Scenario:
+BEFORE
+User1 → user1@contoso.com + sales@contoso.com
+User2 → user2@contoso.com + user.2@contoso.com + service@contoso.com
+STEP 1 — Create User3
+User3 → user3@contoso.com + sales@contoso.com (AD allows duplicate before sync)
+STEP 2 — Update User1
+User1 → admin@contoso.com (sales@contoso.com removed)
+STEP 3 — Update User2
+User2 → sales@contoso.com
+FINAL STATE BEFORE SYNC
+User1 → admin@contoso.com                     (unique)
+User2 → sales@contoso.com                     (duplicate)
+User3 → user3@contoso.com + sales@contoso.com (duplicate)
+STEP 4 — Manual sync
+User1 → Synced
+User2 → Error
+User3 → Error
+
+
+
+Your network contains an on-premises Active Directory Domain Services (AD DS) domain that syncs user accounts with a Microsoft 365 E5 subscription.
+You need to ensure that on-premises account lockout policies are applied to Microsoft Entra sign-ins.
+What should you configure?
+ANSWER - pass-through authentication (Pass-through authentication allows Microsoft Entra to authenticate users directly against the on-premises Active Directory.)
+
+
+
+Passthrough authentication -> allows authentication by domain controller active directory (onprem). Sends the password authentication request to on-prem AD, so on-prem account/password policies can be enforced.
+Password hash synchronization -> Syncs a hash of the on-prem password to Entra ID, so authentication can happen in the cloud.
+Password writeback -> allows self service password reset
+
+
+
+On-prem AD → Azure Entra ID → Password Hash Synchronization
+Entra ID → on-prem AD → Password Writeback
+
+
+
+-------- USERS, GROUPS & LICENSING --------
+
+Scenario cue: "5 groups (Security/M365, Assigned/Dynamic User/Dynamic Device) — which can get an Office 365 E5 license assigned directly?"
+Correct Answer: E. Group1, Group2, Group4, and Group5 only
+Why correct: Licenses can only be assigned to Security groups or Microsoft 365 groups with Assigned or Dynamic User membership. Dynamic Device groups can't hold licenses — a license must map to a user identity, not a device.
+Exam tip: See "Dynamic Device" group in a licensing question → auto-eliminate it. Rule of thumb: "Licenses go on users, not devices."
+
+
+
+Scenario cue: "Licensed Group1 contains 2 users + 2 nested groups"
+Correct Answer: B. 2 Licenses
+Why correct: Group-based licensing applies the license to direct user members of the licensed group. Nested groups aren't supported for group-based licensing, so User1 and User3 receive the license; users inside Group2 and Group4 don't.
+Exam tip:
+Licensed group → count direct users only.
+Nested groups → don't count their users.
+
+
+
+Scenario cue: "Bulk create users by uploading the Microsoft Entra CSV template. Which properties needed?"
+Correct Answer: C. accountEnabled, displayName, userPrincipalName, and passwordProfile
+Why correct:
+  → These are the required fields in the bulk-create template.
+  → displayName identifies the user.
+  → userPrincipalName provides the sign-in name.
+  → passwordProfile provides the initial password.
+  → accountEnabled determines whether the account can sign in.
+Exam tip:
+  → Bulk-create users = DisplayName + UPN + PasswordProfile + AccountEnabled
+  → UsageLocation is optional, so eliminate D.
+  → givenName and surname are optional, so eliminate B.
+
+
+
+Selections to make: 2
+Question: For which users can you configure the Job title and Usage location properties in Azure AD, user1:synced, user2 and user3: not synced?
+Topic: Microsoft Entra user properties — synced vs not synced
+Correct Answer:
+  → Job title property: User2 and User3 only
+  → Usage location property: User1, User2, and User3
+Why correct:
+  → User1 is directory-synced → Job title cannot be changed now in Azure.
+  → Usage location is a Microsoft Entra attribute → can be updated even for synced users on azure.
+Exam tip:
+  → Synced user → job info comes from AD
+  → Usage location → can be configured in Entra ID
+
+
+
+User    Usage location    Department    Job title
+---------------------------------------------------
+User1   United States     Sales         Associate
+User2   Finland           Sales         SalesRep
+User3   Australia         Sales         Manager
+EQUATION: user.usageLocation -in ["US","AU"] -and (user.department -eq "Sales") -and -not (user.jobTitle -eq "Manager") –or (user. jobTitle -eq "SalesRep")
+Which users will be added to the group?
+Answer - User1 and User2 only
+Tip:
+We can think with this logic
+(
+  UsageLocation = US/AU
+  AND Department = Sales
+  AND JobTitle ≠ Manager
+)
+OR
+(
+  JobTitle = SalesRep
+)
+
+
+
+Question: How can you remove the individually assigned E3 licenses from 2,500 users with the least administrative effort?
+Correct Answer: C. the Licenses blade in the Azure Active Directory admin center
+Why correct:
+  → E3 licenses are directly assigned to individual users.
+  → E5 is already assigned through a group.
+  → The Licenses blade can be used to remove the direct E3 assignments in bulk.
+Exam tip:
+  → Direct user licenses → Licenses blade
+  → Group-based licenses → manage from the group
+  IMPORTANT - if license blade option is not there then this option is correct - Set-MsolUserLicense cmdlet OR Set-MgUserLicense cmdlet
+
+
+
+Question: Which objects can you add as members to Group3?
+Scenario:
+User1  → User
+User2  → User
+Group1 → Security group
+Group2 → Microsoft 365 group
+Group3 → Mail-enabled security group
+Correct Answer: D. User1 and User2 only
+Why:
+  → A mail-enabled security group can have users as members (licenses doesnot matter).
+  → Security groups cannot be added as members of mail-enabled security groups.
+  → Microsoft 365 groups cannot be nested into a mail-enabled security group either.
+
+
+
+Scenario:
+Existing user : User1
+--Existing groups:
+Group1 → Security | Assigned
+Group2 → Security | Dynamic User
+Group3 → Security | Dynamic Device
+Group4 → Microsoft 365 | Assigned
+--New groups:
+GroupA → Security | Assigned
+GroupB → Microsoft 365 | Assigned
+--Question: Which members can you add to GroupA and GroupB?
+--Correct Answer:
+GroupA → User1, Group1, Group2, and Group3 only (Security group → Users + Security groups + Devices)
+GroupB → User1 only (Microsoft 365 group → Users only)
+
+
+
+Concept:
+Group type: security, mail-enabled security, distribution --> do not support expiration
+Group type: Microsoft 365 --> supports expiration of 30 days
+
+
+
+- Managed identity can be added to Security type group only. The security group can't be Dynamic or in sync from OnPremise
+- AD User Cloud can be added to Security and M365 groups, Not the dynamic (Group3)
+
+
+
+You need to create a dynamic user group that will include all the users that do NOT have a department defined in their user profile.
+Answer: user.department "-eq" "null"
+
+
+
+Group naming policy applies to "normal users" and "Groups Administrators"; Global Administrators and User Administrators are exempt i.e not affected.
+
+
+
+Unknown Case Study
+Litware wants to create a group named LWGroup1 that will contain all the Azure AD user accounts for Litware but exclude all the Azure AD guest accounts.
+Answer - (user.objectId -ne "null") and (user.userType -eq "Member"). 
+
+
+
+-------- GUESTS, B2B & EXTERNAL IDENTITIES --------
+
+Scenario cue: "External contractor uses an existing @outlook.com identity and must access an enterprise application in your AD contoso.com"
+Correct Answer: D. Create a guest user account in contoso.com
+Why correct: Microsoft Entra B2B allows an external user to access your applications using their own existing credentials. The external user is represented as a guest user in your tenant, after which you can assign the guest access to App1.
+Exam tip:
+External person + use their own identity → B2B Guest user.
+Don't create a normal member account just to give an external user access.
+IMPORTANT NOTE: Similar question would come in which these options would Different
+    Exam tip:
+    → Question Pattern: External user + own identity = B2B Guest
+    → "Create Guest user" available → choose it.
+    → No Guest-user option + invitation cmdlet → choose the invitation cmdlet.
+    → No invitation cmdlet then choose this cmdlet: New-MgInvitation
+
+
+
+Scenario cue: "Ensure External Identities pricing is based on Monthly Active Users (MAU)."
+Correct Answer: C. a linked subscription
+Why correct: Microsoft Entra External ID requires the tenant to be linked to an Azure subscription for billing. External ID uses the MAU billing model, and the MAUs are combined across tenants linked to the subscription.
+Exam tip:
+    External ID + billing/MAU → Linked Azure subscription.
+    User flows, Terms of Use, and Access Reviews are not billing configuration.
+
+
+
+Scenario cue: "Users with a company email domain are creating accounts through self-service sign-up. Which powershell commands to use to prevent this"
+Correct Answer: A. Set-MsolCompanySettings
+Why correct: Set-MsolCompanySettings was the MSOnline cmdlet used to control the tenant-wide AllowEmailVerifiedUsers setting, which controls whether users can create/join accounts through email-verified self-service sign-up.
+Exam tip:
+    Self-service / email-verified users → Set-MsolCompanySettings
+    Don't confuse this with domain federation cmdlets (Set-MsolDomainFederationSettings, Update-MsolFederatedDomain).
+
+
+
+Scenario cue: "Guest self-service sign-up for a webapp + one-time password + collect first name, last name, city, email."
+Correct Answer:
+  → One-time password: An identity provider
+  → User details: A user flow
+Why correct:
+  → Email one-time passcode is configured as an identity provider for B2B guest authentication.
+  → A user flow controls the self-service sign-up experience and lets you select the user attributes to collect, including Given Name, Surname, City, and email.
+Exam tip:
+  → OTP authentication → Identity Provider
+  → Information collected during sign-up → User Flow
+  → Remember: "How they authenticate" = Identity Provider | "What information they provide" = User Flow
+
+
+
+Question: Which users will be emailed a passcode, settings given as screenshort where email OTP enable for guest users?
+Topic: Microsoft Entra guest invitation — Email one-time passcode
+Correct Answer: B. User1 only
+Why:
+  → User1 = Guest user → receives email OTP.
+  → User2/User3 do not meet the guest + OTP condition shown in the exhibit as user3 is internal user and user2 is not a guest user in this domain
+
+
+
+Topic: Microsoft Entra B2B collaboration — cross-tenant access
+Architecture:
+  → Contoso West AD forest → Azure AD Connect → Contoso West Microsoft 365 tenant
+  → Contoso East AD forest → Azure AD Connect → Contoso East Microsoft 365 tenant
+Correct Answer: B. Invite the Contoso East users as guests in the Contoso West tenant.
+Why correct:
+  → East users can be represented as guest users in the West tenant using Microsoft Entra B2B.
+  → B2B guests can access SharePoint resources in the West tenant using their own East credentials.
+  → No need to synchronize the East AD into the West tenant.
+  → Options C/D unnecessarily involve Entra Connect and don't fit the simplest supported solution.
+
+
+
+Question: Can each user accept/access the shared resources after the collaboration restriction is configured?
+QUESTION DATA (missing data)
+User email             User type    Invitation accepted
+User1@outlook.com      Guest        No
+User2@fabrikam.com     Guest        Yes
+Settings Configured:
+  → Allow invitations only to the specified domains → outlook.com
+Correct Answer:
+  → User1 → Yes
+  → User2 → Yes
+  → User3 → No
+Why:
+  → Allowed domain → invitation allowed.
+  → Already accepted guest → can continue accessing.
+  → Non-allowed domain → new invitation blocked.
+
+
+
+Selections to make: 3
+Question: Which three External collaboration settings ensure guests cannot query staff email addresses and only User1 can invite guests?
+Correct Answer:
+  → Guest user access restrictions: Guest user access is restricted to properties and memberships of their own directory objects (most restrictive)
+  → Guest invite restrictions: Only users assigned to specific admin roles can invite guest users
+  → Enable guest self-service sign up via user flows: NO
+Why:
+  → Most restrictive guest access prevents guests from viewing other users' profiles/email information.
+  → User administrator is one of the roles allowed to invite guests under the specific-admin-roles option, so User1 can invite them.
+  → Self-service sign-up must be No, otherwise users could sign up without being specifically invited by User1.
+
+
+
+QUESTION DATA
+User email             User type    Description
+User1@contoso.com      Guest        A guest user in fabrikam.com
+User2@outlook.com      Guest        A user who has never accessed resources in fabrikam.com
+User3@fabrikam.com     Guest        A user in fabrikam.com
+Setting:
+  → Email One-Time Passcode for guests is enabled for any domain.
+Question: Which users will be emailed a passcode?
+Correct Answer: A. User2 only
+Why:
+  → User2 is an external guest who has never accessed resources in fabrikam.com → email OTP is used.
+  → User1 is already an existing guest -> no OTP.
+  → User3 is a fabrikam.com user → no guest OTP.
+
+
+
+Question: Which two parameters are required when creating a bulk B2B collaboration invitation?
+Correct Answers: A. email address and B. redirection URL
+Why:
+  → Email address identifies the external user to invite.
+  → Redirection URL specifies where the invited user is sent after accepting the invitation. Microsoft explicitly lists both as required values in the bulk-invite CSV template.
+
+
+
+Question: You have an Azure AD tenant and need to configure the following External Identities features:
+• B2B collaboration
+• Monthly active users (MAU)-based pricing
+Which two settings should you configure? To answer, select the settings in the answer area.
+Answer: - External collaboration Settings
+        - Linked subscriptions
+
+
+
+Question: You update the email address of the user. (Account status is Enabled and B2B collaboration: invitation accepted)
+You need to ensure that the user can authenticate by using the updated email address.
+What should you do for the user?
+Answer: Reset the redemption status.
+
+
+
+Question: You have an Azure AD tenant.
+You need to ensure that only users from specific external domains can be invited as guests to the tenant.
+Which settings should you configure?
+Answer: External collaboration settings
+
+
+
+Question: You can invite guests from fabrikam.com to contoso.com but not adatum.com. What should you configure to allow adatum.com guests?
+A. Guest invite settings
+B. Verifiable credentials
+C. Named locations
+D. Collaboration restrictions
+Correct Answer: D. Collaboration restrictions
+Why:
+  → Collaboration restrictions control which domains can receive B2B invitations.
+Exam tip: Specific guest domain blocked → Collaboration restrictions
+
+
+
+Scenario:
+Contoso tenant
+User1 → Member
+User2 → Member
+User3 → Guest
+--
+Group1 → User1
+Group2 → Group1 + User2
+--
+Cross-tenant synchronization enabled for:
+→ User3
+→ Group2
+Question: Which users will sync from contoso.com to fabrikam.com?
+Correct Answer:
+User1 → No (nested group users cant be synced)
+User2 → Yes
+User3 → No (guest cant be synced)
+
+
+
+Concept:
+Cross tenant syncronization
+- Users (supported)  
+- Security groups (supported)
+- Microsoft 365 groups (Not supported)
+
+
+
+Question: Which PowerShell cmdlet should you run to prevent users from creating user accounts in the contoso.com tenant through self-service sign-up?
+Correct Answer: A. Update-MgOrganization
+Why:
+  → Update-MgOrganization is used for the organization-level setting that controls whether email-verified users can join the tenant.
+  → The other options manage permission grant policies, domain properties, or domain federation.
+  -> SAME QUESTION - correct answer = Update-MgPolicyAuthorizationPolicy
+
+
+
+Microsoft's current docs say a guest gets Email OTP ONLY when they cannot be authenticated through another available identity provider, such as Microsoft Entra ID or a Microsoft account.
+So guests with account type Azure AD account & Microsoft account wont get email otp && guests having account type like google account will receive email otp 
+VALIDITY of email otp is 30 minutes
+
+
+
+-------- ENTITLEMENT MANAGEMENT (CATALOGS & ACCESS PACKAGES) --------
+
+Question: How can User1 create new catalogs and add resources to the catalogs they own?
+Correct Answer: From the Identity Governance blade, modify the Entitlement management settings.
+Why:
+  → Entitlement management settings lets you delegate the Catalog creator role.
+  → A Catalog creator can create catalogs and becomes the owner of catalogs they create.
+
+
+
+Scenario:
+- Resources:
+Site1  → SharePoint Online site
+Team1  → Microsoft Teams team
+- Requestor groups:
+Group3 → Site1 only
+Group1 → Site1 + Team1
+Group4 → Site1 + Team1
+- Approvers:
+Group1 requests → Group2 approves
+Group3 requests → Group5 approves
+Group4 requests → Group5 approves
+- Question: What is the minimum number of access packages required?
+- Correct Answer: A. 2
+Why:
+#Access Package 1
+    → Site1
+    → Requestor: Group3
+    → Approver: Group5
+#Access Package 2
+    → Site1 + Team1
+    → Policy 1: Group1 → Approver Group2
+    → Policy 2: Group4 → Approver Group5
+Exam tip:
+→ Access package = resources
+→ Policy = who can request + approval rules
+→ Same resources but different approval rules → use separate policies, not separate packages.
+
+
+
+Concept
+Exam tip:
+→ Requestor = must be allowed by the request policy.
+→ Approver cannot approve their own request, even if they are also an eligible requestor.
+
+
+
+You need to ensure that users can request access to Site1. The solution must meet the following requirements:
+• Automatically approve requests from users based on their group membership.
+• Automatically remove the access after 30 days.
+Answer - Create an access package.
+
+
+
+What should you create first for creating a Catalog - "Azure Logic App" 
+what should you use to distribute Catalog1?  - an access package
+
+
+
+You need to ensure that the members of Group1 can access Site1 for 90 days.
+Answer - access package
+
+
+
+Catalog → organizes resources into a collection that access packages can use.
+Access package → configure what access users receive/request: resources, groups, Teams, SharePoint, apps, approvers, expiration, etc.
+Entitlement management settings → Automatically remove external users after access is no longer required, configure how entitlement management behaves globally: external-user settings, lifecycle/cleanup behavior, etc.
+In Entitlement Management, you first create a catalog to contain the resources (Site1 and Team1), then create an access package using those resources.
+
+
+
+1️⃣ To allow access for users who have fabrikam.com email addresses:   ✔ An access package policy in Identity Governance
+2️⃣ To block access for users who have litwareinc.com email addresses: ✔ The External collaboration settings in Azure AD
+
+
+
+You need to ensure that User1 can modify the review frequency of Package1. The solution must use the principle of least privilege.
+Answer: Identity Governance Administrator
+
+
+
+Unknown Case Study
+Q- You need to track application access assignments by using Identity Governance. The solution must meet the delegation requirements.
+A- Create a program
+
+
+
+-------- ACCESS REVIEWS --------
+
+Question: Which roles allow User1 to create group access reviews and User2 to review completed access-review history?
+Topic: Microsoft Entra Access Reviews — least-privilege roles
+Correct Answer:
+  → User1: User administrator
+  → User2: Security reader
+Why correct:
+  → User administrator → can create/manage access reviews for groups.
+  → Security reader → can read access-review results/history with least privilege.
+
+
+
+Question: How can User1 be notified every three months to validate the guest membership of Group1?
+A - Configure the External collaboration settings.
+B - Create an access review.
+C - Configure an access package.
+D - Create a group expiration policy.
+Correct Answer: B. Create an access review.
+Why:
+  → Access reviews let group owners periodically review and validate guest memberships.
+  → Set the review recurrence to every 3 months and User1 as the reviewer.
+
+
+
+Concept:
+To create access reviews for Microsoft Entra roles, you must be assigned AT LEAST the Privileged Role Administrator role.
+
+
+
+Access reviews can be done for "ALL" - Groups, App, Entra role, Azure RBAC role, (Onprem AD roles NO)
+
+
+
+You discover that all access review requests are received by Megan Bowen.
+You need to ensure that the manager of each department receives the access reviews of their respective department.
+Proposal: You add each manager as a fallback reviewer. Answer - NO
+Proposal: You create a separate access review for each role. Answer - NO
+Proposal: You modify the properties of the IT administrator user accounts - YES (the property you need to change is the Manager field on each IT administrator's user account.)
+
+
+
+Access review starts at 15th jan 2021 and reiew period is set to 14 days
+User1 answered a review question on 17th january and User2 on 20th january
+On 5th FEB, User1 can answer the same access review question again - NO (bcz 5th Feb falls outside of the 14 day window for that same review)
+On 25th JAN, User 2 can still access the review. - Yes (within 14 days of current review)
+On 22nd JAN, User 3 can answer the review - No (acc to question its only for group1 and user3 isnt member of group1)
+
+
+
+Access review can be created for - assigned, dynamic user groups. (ONLY dynamic device groups are not supported)
+
+
+
+You need to ensure that the guest users that have NOT accessed App1 during the past 30 days have their access removed. The solution must minimize administrative effort.
+Answer: an access review for application access
+
+
+
+In an access review if the reviewer setting is (self), then each member reviews their own access (not even owner of group)
+
+
+
+Access review set to self then number of P2 license required = number of users (525)
+Access review set to owner then number of P2 licence required is 1 only
+
+
+
+You need to ensure that User1 can create access reviews for Azure AD roles. The solution must use the principle of least privilege.
+Answer - Privileged role administrator (user and user access administrator are not eligible)
+
+
+
+The Sign-ins activity report shows that an external contractor signed in to the Exchange admin center.
+You need to review access to the Exchange admin center at the end of each month and block sign-ins if required.
+Answer - a group-based access review that targets guest users (dont choose any access package related option)
+
+
+
+-------- ROLES, RBAC & ADMINISTRATIVE UNITS --------
+
+Scenario cue: "Different users have Entra roles, Purview/Defender role groups, and Intune roles. Which portal should you use to configure each user?"
+Correct Answer:
+    User1 → Azure Active Directory admin center
+    User2 → Microsoft 365 compliance center
+    User3 → Microsoft Endpoint Manager admin center
+Why correct: 
+    User1's roles are Microsoft Entra directory roles. 
+    User2's Records Management and Quarantine Administrator are Microsoft Purview/Defender role groups. 
+    User3's roles are Intune RBAC roles.
+Exam tip: 
+    Entra roles → Azure AD admin center
+    Records/Quarantine → Microsoft 365 compliance center
+    Intune roles → Microsoft Endpoint Manager admin center
+
+
+
+You need to ensure that the support team can reset passwords and manage multi-factor authentication (MFA) settings for only the executives (100 executives out of total 5000 users).
+Object type - an administrative unit
+Role - authentication administrator
+
+
+
+You have an administrative unit named Au1. Group1, User2, and User3 are members of Au1.
+User5 is assigned the User administrator role for Au1.
+For which users can User5 reset passwords?
+User2 & User3 ONLY as they are direct part of AU1 and we cant touch the settings for members inside the group
+
+
+
+The User Administrator role allows users to do the both:
+    Reset passwords for non-administrators.
+    Manage licenses (assign and remove licenses).
+Helpdesk Administrator: This role only allows resetting user passwords but not managing licenses.
+Billing Administrator: This role deals with subscription and billing management, not user licenses or password resets.
+License Administrator: This role allows managing license assignments but does not permit resetting passwords.
+
+
+
+We have 30 days to restore a deleted user account from Entra ID tenant. 
+The least privilege role to be used to restore is "User Administrator"
+
+
+
+You have a Microsoft 365 E5 subscription.
+You create a user named User1.
+You need to ensure that User1 can update the status of Identity Secure Score improvement actions.
+Solution: You assign the Exchange Administrator role to User1. - YES 
+Solution: You assign the SharePoint Administrator role to User1. - YES
+Solution: You assign the User Administrator role to User1. - NO 
+Solution: You assign the Security Operator role to User1. - NO (this only has read-only access to Identity Secure Score improvement actions.)
+
+
+
+Question: Which role should Admin1 have to manage Microsoft 365 service requests, configure service health, and manage Azure support tickets with least administrative effort?
+Correct Answer: C. Assign Admin1 the Helpdesk Administrator role.
+Why:
+  → Helpdesk Administrator provides the required service request and service health permissions.
+  → It is a built-in role, so no custom role is needed.
+
+
+
+Question: What can Admin1/Admin3 do?
+Scenario:
+  → Department1 AU contains User1, User2, Group1, Group2.
+  → Admin1 = User Administrator scoped to Department1 AU.
+  → Admin3 = User Administrator scoped to entire directory.
+  → Group2 contains User3 and User4.
+Correct Answer:
+  → Admin1 can reset password of User3/User4: NO
+  → Admin1 can add User1 to Group3: NO
+  → Admin3 can reset password of User1: YES
+Why:
+  → Group2 being in Department1 does not put User3/User4 in the AU. AU scope applies to the group itself, not its members.
+  → Group3 is outside Admin1's AU scope → cannot manage it.
+  → Admin3 has directory-wide User Administrator scope → can reset User1's password.
+
+
+
+Question: For which scopes can each user be assigned their respective role?
+Scenario:
+Tenant → contoso.com
+AU1 → User1 is a member
+User1 → Security Administrator
+User2 → User Administrator
+Correct Answer:
+User1 → contoso.com only
+User2 → AU1 and contoso.com
+Why:
+  → Security Administrator → can be assigned at directory scope, not Administrative Unit scope.
+  → User Administrator → supports Administrative Unit scope as well as the entire directory.
+  - User2 does not need to be a member of AU1 to be assigned a role with AU1 as the scope.
+
+
+
+Question: Which portal should you use to compare the role permissions of Admin1, Admin2, and Admin3 with minimum administrative effort?
+Correct Answer: B. the Microsoft 365 admin center
+Why:
+  → Microsoft 365 admin center has Compare roles, allowing you to select up to three roles and compare their permissions directly
+
+
+
+If a group itself is a member of the Administrative Unit, an AU-scoped User Administrator can:
+✅ Manage the group's membership — add/remove users from the group.
+✅ Manage the group's properties.
+❌ Manage the user properties of those group members.
+❌ Reset their passwords.
+❌ Manage their authentication methods.
+
+
+
+Helpdesk Administrator role can reset passwords and invalidate sessions for non-administrative users.
+
+
+
+To create an Azure subscription custom role, you can clone built-in Azure subscription roles && any existing custom Azure subscription role (like Role2 in question) — Entra ID custom roles cannot be cloned.
+
+
+
+A BREAK-GLASS account is a highly privileged account meant to be used in emergency situations where normal administration cannot be performed. 
+As such, it should be created directly in "Azure AD" (NOT IN OU's) so it's not dependent on the on-premises AD DS domain. 
+"The Global Administrator" role will provide the broadest level of permissions to address potential emergency issues.
+
+
+
+Which two settings can you use to create a group after which AD roles would be assigned to its users
+Group type: Microsoft 365 - Membership type: Assigned
+Group type: Security - Membership type: Assigned
+
+
+
+You need to delegate the installation of the Application Proxy connector and ensure that User1 can register App1 in Azure AD. The solution must use the principle of least privilege.
+For installation of application proxy - Application Administrator
+For registering apps in Azure AD - Application Developer
+
+
+
+User1 needs to configure a new connector group for an application proxy. What should you use to activate the application admin role for User1? - the Azure Active Directory admin center (because we need to assign azure role)
+
+
+
+VERY IMPORTANT
+to manage Azure AD build in role assignments - Priviledged role administrator
+to manage Azure built-in role assignments - User access administrator
+
+
+
+-------- PRIVILEGED IDENTITY MANAGEMENT (PIM) --------
+
+Any Microsoft Entra security group and any Microsoft 365 group (except dynamic groups) can be enabled in PIM
+
+
+
+Which objects can you add as eligible in Azure AD Privileged Identity Management (PIM) for an Azure AD role? (options: user, guest, managed identity)
+Answer - user & guest only  (you cannot add a non-interactive account for PIM use like managed identity)
+
+
+
+In a Azure AD Privileged Identity Management (PIM) role settings 
+If no specific approvers are selected, privileged role administrators && global administrators will become the default approvers.
+
+
+
+Assignment type Eligible → Need JIT access
+Assignment type Active → Need permanent/current access
+Expire eligible assignment → Limit how long eligibility lasts
+Expire active assignment→ Limit how long activated access lasts
+
+
+
+You have three Azure subscriptions that are linked to a single Microsoft Entra tenant.
+You need to evaluate and remediate the risks associated with highly privileged accounts.
+Answer - Privileged Identity Management (PIM)
+
+
+
+-------- CONDITIONAL ACCESS --------
+
+Scenario:
+- Users:
+Admin1 → Global Administrator
+Admin2 → Conditional Access Administrator
+Admin3 → Authentication Policy Administrator
+Admin4 → Global Administrator
+- Admin4 creates Policy1 using the "Require multifactor authentication for Azure management" template.
+- Question: Which users will be required to use MFA the next time they sign in?
+- Correct Answer: C. Admin1, Admin2, and Admin3 only
+Why : Conditional Access templates targeting users automatically exclude only the user who creates the policy.
+
+
+
+Scenario:
+- Users:
+User1 → Group1
+User2 → Group1 + Group2
+User3 → Group2 + Global Administrator
+- Policy1:
+Include → Group1 + Global Administrator
+Exclude → Group2
+Grant → Require MFA
+Target → All cloud apps
+- Question: Who must use MFA when signing in to Microsoft 365 apps?
+Answer
+User1 → YES — included through Group1 and not excluded.
+User2 → NO — included through Group1, but excluded through Group2. Exclusion wins.
+User3 → NO — included as Global Administrator, but also belongs to Group2, so the exclusion wins.
+
+
+
+Policy1 (Include → Group1, Exclude → Group3)
+Policy2 (Include → Group2, Require compliant device)
+User1 (member of Group1 & Group3)
+Policy1:
+Group1 → INCLUDED
+Group3 → EXCLUDED
+        ↓
+Policy1 DOES NOT APPLY
+Policy2:
+Group2 → NOT a member
+        ↓
+Policy2 DOES NOT APPLY
+No CA policy applies to User1
+        ↓
+No CA block / requirement
+        ↓
+ACCESS ALLOWED
+MAIN POINT WHILE SOLVING CONDITIONAL ACCESS QUESTIONS 
+- exclusion take precedence over inclusion
+- CA policy doesn't say: “If you're not included, deny, If this policy applies → enforce its controls, else always allow the access
+- multiple filters under include and exclude are (OR conditions)
+
+
+
+Configure high risk countries by using: a condition
+Configure sign in frequency for the high risk countries by using: a session control
+
+
+
+In a conditional access policy
+Grants settings: ensures that users are prompted for MFA
+Session settings: ensures users are prompted for authentication after every 8 hours
+
+
+
+"A client apps condition" allows you to filter out legacy authentication attempts
+
+
+
+"The What If tool" provides a way to quickly determine the conditional access policies that apply to a specific use
+
+
+
+You need to prevent users who connect to Microsoft SharePoint Online on their user-owned computer from downloading or syncing files. Other users must NOT be restricted.
+Answer - an Azure AD conditional access policy that has session controls configured
+
+
+
+You need to ensure that you can control access to Microsoft 365 resources by using conditional access policies.
+What should you do first?
+Anwser - Disable security defaults
+
+
+
+You need to ensure that users can connect to Exchange Online only from email clients that use Modern authentication protocols.
+Answer - a conditional access policy in Azure AD
+
+
+
+From the SharePoint admin center, you configure Access control for unmanaged devices to allow limited, web-only access.
+Which users will have full access to Site1?
+Only User2 (because it has compliance mentioned in table, rest are either non complaint or not applicable)
+
+
+
+To use Conditional Access Policies, you must first disable "security defaults". 
+So to use the security defaults again, you will need to remove Conditional Access Policies (CA Policy) that may conflict.
+
+
+
+TOU (terms of use) can be configured under Conditional Access Policy - GRANTS. (not conditions)
+
+
+
+You need to configure continuous access evaluation for app sign-ins and assign the configuration to users that are assigned the Application Administrator role.
+Answer - Conditional access policy
+
+
+
+You need to upload the ToU (terms of use) document. Which format should you use for the document?
+Answer - PDF 
+
+
+
+You need to ensure that users are prompted to accept a custom terms of use (ToU) agreement when they sign in to the subscription.
+Answer - Conditional Access policy
+
+
+
+Unknown Case Study
+You need to configure the MFA settings for users who connect from the Boston office. The solution must meet the authentication requirements and the access requirements.
+What should you include in the configuration?
+Answer - named locations that have a public IP address range
+
+
+
+-------- MFA, AUTHENTICATION METHODS & PASSWORD PROTECTION --------
+
+Concept:
+If Application Proxy already installed on MEMBER SERVER, then DON'T install Password Protection Proxy Service there.
+Microsoft Entra Connect MEMBER SERVER → Can host Password Protection Proxy Service.
+Domain Controller servers cannot host password protection policy service
+Password list to be stored in Entra ID, NOT in onprem server
+
+
+
+Concept: Phishing-resistant MFA
+→ Windows Hello for Business
+→ FIDO2 security key
+→ Certificate-based authentication (multifactor)
+
+
+
+Users must use Microsoft Authenticator for MFA.
+Some users receive MFA prompts they did NOT initiate.
+Requirement:
+→ Automatically block users when they report an unauthorized MFA request.
+Does configuring MFA Account Lockout settings meet the goal?
+ANSWER - NO (Account lockout is for temporarily blocking authentication after repeated failed MFA attempts)
+From the Azure portal, you configure the Block/unblock users settings for multi-factor authentication (MFA).
+ANSWER - NO (Block/unblock users is a legacy feature and was removed on March 1, 2025. It was replaced by Report suspicious activity)
+From the Azure portal, you configure the Fraud alert settings for multi-factor authentication (MFA).
+ANSWER - NO (Fraud alert was removed on March 1, 2025 and replaced by Report suspicious activity.)
+
+
+
+Which MFA authentication method can users use from the remote location without internet access & network connectivity?
+ANSWER - Windows Hello for Business (Choose this is windows hello not in options -> verification code from the Microsoft Authenticator app)
+
+
+
+FIDO2 security keys are physical authentication devices that users can carry and use on shared computers. They don't require a mobile phone or biometric authentication. 
+Best for call centre scenario where no biometric auth and mobile phones are prohibited.
+
+
+
+- Scenario:
+Custom banned password list contains:
+Contoso, Litware, Tailwind, project, Zettabyte, MainStreet
+- Common substitutions like 0 → o and @ → a are normalized.
+- Passwords:
+Pr0jectlitw@re → projectlitware → contains project + litware ❌
+T@ilw1nd → tailwind → contains tailwind ❌
+C0nt0s0 → contoso → contains contoso ❌
+- Correct Answer: C. C0nt0s0, Pr0jectlitw@re, and T@ilw1nd ✅
+- Recall: Custom banned list + 0/@ substitutions → normalize first → match banned terms
+
+
+
+When administrators require ONE method be used to reset a password, mobile app code is the only option available
+
+
+
+SSPR = 1 method → Authenticator CODE (NOT EMAIL to outside org as we need to reset password or existing org email)
+
+
+
+You need to recommend a solution to provide Azure MFA for VPN connections.
+Answer - Network Policy Server (NPS)
+
+
+
+You need to implement smart lockout with a lockout threshold of 10 failed sign-ins. - Password protection
+
+
+
+"The Azure AD Password Protection proxy service" ensures that Azure AD Password Protection will continue to work if a single server fails.
+
+
+
+Which multifactor authentication (MFA) method will be enabled by default for the tenant?
+- Microsoft Authenticator
+
+
+
+Linux VM + passwordless access needed + out-of-band MFA (authentication happens through a separate channel/device) → Microsoft Authenticator or FIDO2 keys (these 2 are passwordless).
+In linux vm, windows hello cant be chosen even though its passwordless
+
+
+
+You need to implement certificate-based authentication in Azure AD. The solution must ensure that users can sign in by using certificates issued by CA1 present in on premise. What should you do first?
+Answer - Add CA1 as a Certificate Authority to the Microsoft Entra ID tenant.
+
+
+
+-------- IDENTITY PROTECTION & RISK --------
+
+Selections to make: 3
+Scenario cue: "Security incidents involving leaked credentials, suspicious browser, and anonymous IP."
+Correct Answer:
+  → Leaked credentials: A user risk policy
+  → A sign-in from a suspicious browser: A sign-in risk policy
+  → Resources accessed from an anonymous IP address: A sign-in risk policy
+Exam tip:
+  → User/account compromised → User risk
+  → Suspicious sign-in → Sign-in risk
+  → Leaked credentials = User risk
+  → Anonymous IP / Suspicious browser = Sign-in risk
+
+
+
+You have a Microsoft Entra tenant.
+You open the risk detections report.
+Which risk detection type is classified as a user risk?
+ANSWER  - Microsoft entra threat intelligence
+A. Password spray: This is considered a sign-in risk. It involves multiple attempts to sign in using common passwords, indicating a potential attack.
+B. Anonymous IP address: This is also a sign-in risk. It indicates that the sign-in attempt is coming from an IP address that is anonymized, which can be suspicious.
+C. Unfamiliar sign-in properties: This is a sign-in risk as well. It indicates that the sign-in attempt is coming from an unusual location or device for the user.
+User Risk:
+Microsoft Entra threat intelligence: This is classified as a user risk. It indicates that there is suspicious or anomalous activity related to the user account.
+
+
+
+To classify leaked credentials as high-risk use: Microsoft Entra ID Protection
+To trigger remediation use: User risk
+To mitigate the risk while allowing user to access the apps use: Grant access but require password change
+
+
+
+Configure risk policy using ID Protection → ONLY Security Administrator
+View Risky Users report → Security Administrator & Security Operator both can see.
+
+
+
+Mark user as COMPROMISED, to force that user to reset his password if there is an existing high risk policy
+
+
+
+- Scenario:
+    User1 → Group1 → MFA enabled, never used
+    User2 → Group2 → MFA disabled
+    User3 → Group1 + Group2 → MFA enforced and used
+- User risk policy enabled:
+    → Group1 include
+    → Low+ user risk → BLOCK
+- Sign-in risk policy enabled:
+    → Group2 include
+    → Low+ sign-in risk → REQUIRE MFA
+The key is that “anonymous IP address” is a sign-in risk detection, not automatically a user-risk condition. Microsoft documents it specifically as a sign-in risk detection.
+- Question: who can access using anonymous ip
+- Answers
+User1 → YES ✅ - User1 is only affected by the user-risk policy. An anonymous IP creates sign-in risk, so that policy doesn't trigger.
+User2 → NO ❌ - User2 is in Group2, so the sign-in-risk policy requires MFA. MFA is disabled, so User2 cannot satisfy the requirement.
+User3 → YES ✅ - User3 is in Group2 and has MFA enforced and used, so the sign-in-risk policy can be satisfied with MFA. The anonymous-IP detection itself doesn't make the user-risk policy trigger
+IMPORTANT: For anonymous ip scenario ignore the user risk policy as its a sign in risk, so just check that along with MFA enabled or not
+
+
+
+Sign-in risk → Risk that this particular login attempt is suspicious (e.g., anonymous IP).
+User risk → Risk that the user's identity/account itself is compromised (e.g., leaked credentials).
+
+
+
+Create a sign-in risk policy to ensure that when users connect to the Microsoft 365 portal from an anonymous IP address, they are prompted to use multi-factor authentication (MFA).
+
+
+
+Identity Protection actions
+Confirm user compromised → sets User risk = High
+Confirm sign-in safe → marks that sign-in as safe; but does not clear user risk
+Dismiss user risk → clears/dismisses the user's risk
+
+
+
+impossible travel - signin risk
+anonymous IP address - signin risk
+malicious IP address - signin risk
+Azure AD threat intelligence - user risk
+
+
+
+The goal is to implement a sign-in risk remediation policy without blocking user access. This strongly suggests using "implementing MFA for all users" as the primary remediation method for risky sign-ins. 
+
+
+
+-------- MANAGED IDENTITIES, APP REGISTRATIONS & AZURE RESOURCE ACCESS --------
+
+Microsoft.app permission for creating and deleting instances of container apps (dont choose Microsoft.compute)
+Microsoft.security permission for enforcing adaptive network hardening rules. (dont choose Microsoft.network)
+
+
+
+Question: To which identities can you assign the Contributor role for Resource Group?
+Correct Answer: E. User1, Group1, VM1, and App1
+Why:
+  → Azure RBAC roles can be assigned to users, groups, managed identities, and service principals.
+  → Group1 = security group → ✅
+  → VM1 = system-assigned managed identity → ✅
+  → App1 = enterprise application/service principal → ✅
+  → User1 = user → ✅
+
+
+
+Question: What is the minimum number of RBAC role assignments required for User1 to view all resources (both RG), restart VMs (both RG), and create VMs/storage accounts only in RG1?
+Correct Answer: C. 3
+Why:
+  Reader View all resources
+  Virtual Machine Contributor Restart VMs across both resource groups
+  Contributor Create VMs and storage accounts in RG1
+
+
+
+Question: Which resources can use Managed1 as their identity?
+Scenario:
+Managed1 → User-assigned managed identity → East US
+VM1      → Virtual machine       → West US
+storage1 → Storage account       → East US
+WebApp1  → Azure App Service app → East US
+Correct Answer: D. VM1, storage1, and WebApp1
+Why:
+  → All three resource types support user-assigned managed identities.
+  → The managed identity does not have to be in the same Azure region as the resource, so VM1 in West US is also valid.
+
+
+
+Question: Which identity should you assign to VM1 to enable Microsoft Entra login and allow VM1 to access resources in Sub1?
+Correct Answer: D. system-assigned managed identity
+Exam tip:
+  → System-assigned managed identity → identity tied to one Azure resource; lifecycle follows the resource.
+  → User-assigned managed identity → standalone identity that can be shared across multiple Azure resources.
+
+
+
+Question: What authentication solution should be recommended for VMs hosting App1 to securely authenticate to external apis and access azure resources?
+Scenario:
+App1 → runs on multiple VMs
+- Needs third-party API secrets
+- Secrets must be securely stored
+- No credentials in code
+- VMs need Microsoft Entra authentication to Azure resources
+- Minimum admin effort
+Correct Answer: B. user-assigned managed identities and Azure Key Vault
+
+
+
+Question: You have an Azure subscription that contains an Azure Automation account named Automation1.
+You need to grant Automation1 access to Azure resources. The solution must meet the following requirements:
+• Ensure that any permissions granted to Automation1 are removed when the account is deleted.
+• Minimize administrative effort.
+What should you use?
+Answer - system-assigned managed identity (bcz the lifecycle stays with object)
+
+
+
+Question:
+What should you do to implement on-premises application and SharePoint Online restrictions to meet the authentication requirements and the access requirements.
+Correct Answer:
+For on-premises applications:
+→ Publish the applications by using Microsoft Entra Application Proxy.
+For SharePoint Online:
+→ Configure app-enforced restrictions.
+
+
+
+You have an Azure subscription that contains a virtual machine named VM1. VM1 has the following configurations:
+• Private IP address: 172.16.1.5
+• Public IP address: 108.143.161.25
+• System-assigned managed identity status: On
+You install an app named App1 on VM1.
+You need to configure App1 to request a managed identity app-only access token.
+ANSWER - Code running inside an Azure VM requests a managed identity token through the Azure Instance Metadata Service (IMDS) endpoint: 
+169.254.169.254  → Azure IMDS / Managed Identity endpoint ✅
+
+
+
+The Virtual Machine Contributor role in Azure allows users to manage virtual machines, including actions like creating, deleting, and configuring VMs. However, it DOES NOT grant permissions to log into the virtual machine itself
+To log into a VM, you would need the Virtual Machine Administrator Login or Virtual Machine User Login roles
+VM1: User1 and User3 only, because User1 has a role scope for the entire subscription (which includes the resource group named RG1) and User3 to VM1. Also, both of their roles allow the users to login into the VM.
+VM2: Only User1, because User2 has the "Virtual Machine Contributor" role and that does not allow login to any VM and User3 is limited to VM1 for access.
+
+
+
+VM Entra login = correct VM Login RBAC role + supported Windows client (Entra joined/registered/hybrid joined)
+Android devices not supported in VM entra login
+
+
+
+Use system assigned managed identity to give SQL db access only to a single webapp
+
+
+
+Virtual Machine Local User Login - CANNOT sign in windows VMs, only for arc VMs
+Virtual Machine Contributor - NO, sign in not supported
+Virtual Machine User Login → YES,  Microsoft Entra user login supported
+Virtual Machine Administrator Login → YES,  Microsoft Entra user login supported
+
+
+
+Region doesn't matter for assigning a user-assigned managed identity to a VM. Both can be in diff regions
+A VM is a resource, not a principal that can receive an Azure RBAC role, so if you attach a user defined identity to a VM and try to make it owner of RG, then thats not possible
+
+
+
+APPLICATION ADMINISTRATOR can register/manage applications and manage Application Proxy settings, while avoiding automatic ownership of newly registered apps.
+
+
+
+Azure RBAC - users can sign in into virtual machines using AD
+Built in roles - gives ability to create new virtual machines
+
+
+
+Roles 
+Microsoft.Network - Users that are assigned this can manage application security groups.
+Microsoft.Network - Users that are assigned this can manage Azure Firewall. (Microsoft.Security is incorrect)
+
+
+
+Users report that they cannot sign in to the virtual machines by using their Microsoft Entra credentials.
+Answer - Ensure that the virtual machines can access https://enterpriseregistration.windows.net.
+
+
+
+Storage Contributor → can obtain the storage account key and use it to access the file share in azure storage account file type.
+Storage Blob Data Reader -> can only access files in container type storage account.
+Reader role over subscription DOESNOT give ability to read files inside any storage account
+
+
+
+ABAC Roles are currently supported only for certain role assignments that contain supported Storage data actions.
+Recall - ABAC role conditions → look for Storage Blob/Queue Data roles; ordinary Reader/Contributor/VM roles don't qualify for ABAC
+
+
+
+Ensure that the users can connect to Third party cloud service without prompt for Authentication: "An Enterprise application in Azure AD" (Don't select app registration as it doesn't support SSO)
+Ensure that users can access Third party cloud service only from the Azure AD joined computers: "A conditional access policy"
+RECALL- Enterprise application (supports SSO), app registration (doesn't support SSO)
+
+
+
+To enable users to request access to corporate applications, you need to configure the "Self-Service" settings for the the enterprise application.
+
+
+
+Three actions in correct order to perform to ensure that Webapp can use Microsoft Graph to read directory data in contoso.com.
+ORDER
+-Create an app registration
+-Add app permissions
+-Grant admin consent
+
+
+
+You need to group related apps into categories in the My Apps portal. - "Collections"
+
+
+
+Reviewer doesn't give permission to grant consent to an app registration — reviewing an admin-consent request does not give consent privileges.
+Application Administrator can grant admin consent for enterprise applications. (Authentication Administrator can't provide admin consent even if it is in reviewer list)
+
+
+
+OWNER of app registration / enterprise app without administrator role means they can't provide admin consent
+Cloud application administrator & application administrator can provide admin consent
+
+
+
+Maximum number of days you have to restore the app registration from when it was deleted? - 30 days
+
+
+
+You need to ensure that the users can only provide consent to apps that require low impact permissions. - Configure permission classifications
+
+
+
+You need to ensure that the apps support automatic provisioning of Azure AD users. Which specification should the apps support?
+Answer - SCIM 2.0
+
+
+
+You have an Azure AD tenant and a .NET web app named App1. You need to register App1 for Azure AD authentication.
+What should you configure for App1? - "the redirect URI"
+
+
+
+-In app registration:
+Application permissions = app-only access, meaning the app accesses Graph without a signed-in user. 
+Delegated permissions require a user to be signed in.
+-Concept:
+    Delegated permissions → user + app → app acts on behalf of the signed-in user and cannot exceed that user's permissions.
+    Application permissions → app alone → app acts without a user and can access data according to the permissions granted directly to the app, usually requiring admin consent.
+
+
+
+You discover that a large number of new apps were added to the tenant.
+You need to implement an approval process for new enterprise applications.
+Answer - From the Microsoft Entra admin center, configure the Admin consent settings.
+
+
+
+Deploy "AD application proxy" & "allow outbound HTTPS connections from onprem server to Azure AD" to expose an Onprem app to AD users
+
+
+
+Assign the "Application Developer" role to grant the ability to create application registrations even when the Users can register applications setting is set to NO.
+
+
+
+Microsoft confirms both system-assigned and user-assigned managed identities can receive Azure RBAC roles (owner) at resource-group scope.
+User-assigned identity can be attached only to VMs in the same region.
+
+
+
+Multiple App Services/VM wants same storage access + least admin effort = User assigned managed identity
+To control access use: RBAC
+
+
+
+AKS managed identity needs Cosmos DB access → Cosmos DB Data Reader. (NOT Cosmos DB Account Reader Role)
+
+
+
+You need to ensure that WebApp1 can read and write files to storage1 by using the system-assigned managed identity.
+Answer - the access control (IAM) settings
+
+
+
+Registered app wants to access azure resources → use Service principal.
+Multiple Azure resources sharing one identity wants to access azure resources → use User-assigned managed identity.
+
+
+
+Disable user consent to apps → Microsoft 365 admin center ✅
+Configure admin consent workflow → Microsoft Entra admin center ✅
+Concept:
+Microsoft 365 admin center → Microsoft 365/user-level settings
+Microsoft Entra admin center → identity/app registration & admin related settings
+
+
+
+You need to ensure that App1 can access Microsoft Graph.
+App only / no signed-in user → Application permissions
+App + signed-in user → Delegated permissions
+
+
+
+By default any user can register app in Azure AD, doesnt matter which role assigned
+But users in that registered app can only be managed by certain users having roles like - User Administrator, Cloud App Administrator, Application Administrator
+
+
+
+Official rule: VM/App Service → System-assigned + User-assigned MI can be attached (no user etc)
+The exam question: use VM1 = M1+M2; 
+App1 = System+M2 (M1 is also supported for webapp but not given in options)
+
+
+
+To allow App1 in your Azure tenant to authenticate and access App2 in the partner organization's Azure tenant.
+The two valid credential types for this authentication are:
+✅ A. Certificate – Apps can use a public-private key pair (certificate) for authentication, which is considered more secure than secrets.
+✅ C. Secret – Apps can use a client secret (a password-like string) to authenticate, though it's less secure than certificates.
+
+
+
+Application developer in Azure AD is the minimum role that is needed to register an app in Azure AD if Users can register applications is set to No.
+
+
+
+The approver automatically becomes owner of the app registration after self service is configured.
+
+
+
+After you delete an app registration, the app remains in a suspended state for 30 days. During that 30-day window, the app registration can be restored, along with "ALL" its properties like App roles, Users and groups, client secrets, and Self-service.
+
+
+
+-------- LOGGING, MONITORING & DIAGNOSTICS --------
+
+Concept:
+You create a Log Analytics workspace - configure diagnostic settings
+
+
+
+A user named User1 receives an error message when attempting to access the Microsoft Defender for Cloud Apps portal.
+Answer: Check SIGN-IN LOGS to identify the cause of the error
+
+
+
+You need to query risky user activity for the tenant.
+How long will the logs of risky user activity be retained?  - 90 days
+
+
+
+You need a destination for configuring diagnostic settings for Microsoft Entra - "LOG ANALYTICS WORKSPACE"
+
+
+
+Emergency1 account will be used in the event of Azure AD functionality failures and on-premises infrastructure failures.
+You need to reduce the likelihood that Emergency1 will be prevented from signing in during an emergency.
+Answer - Configure Azure Monitor to generate an alert if Emergency1 is modified or signs in.
+
+
+
+how long does Azure AD store events in the sign-in logs? - 30 days
+
+
+
+You need to download the Azure AD logs by using the administrative portal. The log file must contain changes to conditional access policies - audit logs in JSON format
+
+
+
+You create an Azure Sentinel instance and configure the Azure Active Directory connector. You need to ensure that Azure Sentinel can generate incidents based on the risk alerts raised by Azure AD Identity Protection.
+Answer: Modify the Diagnostics settings in Azure AD.
+
+
+
+You use Azure Monitor to analyze Azure Active Directory (Azure AD) activity logs.
+You receive more than 100 email alerts each day for failed Azure AD user sign-in attempts.
+You need to ensure that a new security administrator receives the alerts instead of you.
+Proposal: From Azure Monitor, you create a data collection rule. - NO
+Proposal: From Azure AD, you modify the Diagnostics settings. - NO
+Proposal: From Azure AD, you create an assignment for the Insights administrator role. - NO
+Proposal: From Azure Monitor, you modify the action group. - YES
+
+
+
+You create a Log Analytics workspace.
+You need to ensure that you can view Azure Active Directory (Azure AD) audit log information by using Azure Monitor.
+Answer - Modify the Diagnostics settings for Azure AD.
+
+
+
+You need to identify which users accepted or declined Terms1.- audit logs
+
+
+
+Identify the locations and IP addresses used by Azure AD users to sign in. - Sign in logs
+Review the Azure AD security settings and identify improvement recommendations. - Audit logs
+Identify changes to Azure AD users or service principals. - Identity secure Score
+
+
+
+“Show/investigate sign-ins” → Sign-in logs
+“Number of failures + success rate for an app” → Usage & insights
+
+
+
+You need to query the logs and graphically display the number of sign-ins per user. How should you complete the query?
+SigninLogs | where ResultType == 0 | "summarize" login_count = count() by Identity | "render" columnchart
+
+
+
+Unknown Case Study
+Q- You need to configure the detection of multi-staged attacks to meet the monitoring requirements.
+A- Customize the Microsoft Sentinel rule logic.
+
+
+
+-------- KEY VAULT & SECRETS --------
+
+- Scenario:
+Sub1
+└── RG1
+    ├── KV1 → Secret1
+    └── KV2 → Secret2
+User1 → Key Vault Administrator at Sub1
+User2 → Key Vault Reader at RG1
+User3 → Key Vault Secrets User at KV1
+- Question:
+Which users can read the actual secret values?
+-Correct Answer:
+Secret1 → User1 and User3 only
+Secret2 → User1 only
+- Why:
+User1 → Key Vault Administrator at subscription scope → inherits access to both KV1 and KV2 and can read secret values.
+User2 → Key Vault Reader → can read metadata, but cannot read secret values.
+User3 → Key Vault Secrets User on KV1 → can read secret contents in KV1 only.
+- Exam tip:
+Key Vault Administrator → secret values
+Key Vault Reader → metadata only, no secret values
+Key Vault Secrets User → secret values
+
+
+
+Ensure that User can manage and create keys in Vault - KeyVault Crypto Officer
+Ensure that User can access a certificate stored in Vault - KeyVault Certificates Officer
+Ensure that User can access a secret stored in Vault - KeyVault Secrets Officer
+
+
+
+Access only a particular secret1 in keyvault - From Secret1, configure the Access control (IAM) settings (not on keyvault level IAM settings)
+
+
+
+Key Vault Secrets User RBAC role - read secrets 
+Key Vault Secrets Officer. - read and update secrets
+
+
+
+-------- MICROSOFT DEFENDER FOR CLOUD APPS & APP GOVERNANCE --------
+
+Concept:
+Microsoft Defender for Cloud Apps uses "OAuth app policies" to monitor and generate alerts about third-party OAuth apps, including the permissions they request and users who authorize them.
+
+
+
+If you need Defender for Cloud Apps Session Policy → From the Microsoft Entra admin center, create a Conditional Access policy.
+
+
+
+Scenario:
+You need to create a Conditional Access App Control custom policy and then connect it to an existing Conditional Access policy.
+Correct Answer:
+Portal to create app control policy: Microsoft Defender portal
+Settings to enable app control policy: Session
+
+
+
+Correct order to enable real-time session-level monitoring of App1 by using Microsoft Defender for Cloud Apps.
+-Publish App1 in Azure AD
+-Create a Conditional Access policy that has session controls configured
+-From Microsoft Defender for Cloud Apps, modify the Connected apps settings for App1
+-From Microsoft Defender for Cloud Apps, create a session policy
+
+
+
+"Create an access policy" to prevent users from signing in to Yammer from high-risk locations.
+
+
+
+You need to be notified if a user downloads more than 50 files in one minute from Site1. - "Activity Policy" (NOT file policy)
+Blocker users from printing the files from Sit1 - "Session Policy"
+Print / Copy / Download in real time → Session policy.
+Scan / classify / govern files at rest → File policy.
+
+
+
+Third-party OAuth apps → need an alert when an app has high permissions and is authorized by more than 20 users.
+Correct answer: OAuth app policy ✅
+
+
+
+Scenario: Third-party apps are registered in Entra ID → need an alert when an app gets read + write access to users' email.
+Correct answers:
+Tool to use: Microsoft Defender for Cloud Apps ✅
+Policy type: OAuth app ✅ (remember keyword 3rd party in question)
+
+
+
+User1 needs to view the App governance dashboard.
+Role needed: Cloud Application Administrator
+Portal: Microsoft 365 Defender Portal
+
+
+
+You need to use the firewall logs to create a list of unmanaged external applications and the users who access them.
+Answer - Cloud App Discovery in Microsoft Cloud App Security
+
+
+
+You need to enable app governance integration.
+Portal to use - Microsoft 365 Defender
+
+
+
+You need to create a Microsoft Defender for Cloud Apps access policy for App1. What to do first?
+Configure a Conditional Access policy to use Conditional Access App Control.
+
+
+
+You need to ensure that you can monitor OAuth authentication requests by using Microsoft Defender for Cloud Apps.
+Proposal: From the Microsoft 365 Defender portal, you add the Google Workspace app connector. Answer - FALSE
+Proposal: From the Microsoft 365 Defender portal, you add the Microsoft Azure app connector. Answer - FALSE
+Proposal: From the Microsoft 365 Defender portal, you add the Amazon Web Services app connector. Answer - FALSE
+
+
+
+Security admin can manage Microsoft Defender for cloud app policy.
+To ensure that User1 can create Microsoft Defender for Cloud Apps session policies --- Create a Conditional Access policy and select Use Conditional Access App Control.
+
+
+
+Third-party app + OAuth permissions/consent → OAuth app policy.
+Third-party app + real-time session control → From the Microsoft Entra admin center, configure single sign-on (SSO)
+
+
+
+You need to enable Microsoft Defender for Cloud Apps session control for Site1. Which policy to create first
+Answer: Conditional access policy (NOT session policy)
+
+
+
+You need to identify which users access Facebook from their devices and browsers
+Answer - Create a Defender for Cloud Apps access policy.
+
+
+
+You have an Amazon Web Services (AWS) account, a Google Workspace subscription, and a GitHub account.
+You deploy an Azure subscription and enable Microsoft 365 Defender.
+You need to ensure that you can monitor OAuth authentication requests by using Microsoft Defender for Cloud Apps.
+Proposal: From the Microsoft 365 Defender portal, you add the GitHub app connector. - NO 
+
+
+
+-------- MICROSOFT ENTRA PERMISSIONS MANAGEMENT (CIEM) --------
+
+Question: Which role should User1 have to purchase a Microsoft Entra Permissions Management license for Sub1 using least privilege?
+Correct Answer: B. Billing Administrator
+
+
+
+Permissions Management onboarding needs the ability to manage role assignments at Subscription level. 
+"MicrosoftAuthorization/roleAssignments/write" for subscription ->  means create a role assignment at the specified scope.
+"MicrosoftAuthorization/roleAssignments/read" can only read roles
+
+
+
+User Access Administrator gives Permissions Management the required ability to manage Azure role assignments without the broader Owner role.
+Autopilot rule automatically identifies/remediates unused permissions and is designed to reduce manual effort.
+
+
+
+As of now, Microsoft Entra Permissions Management is a Cloud Infrastructure Entitlement Management (CIEM) solution that supports only the three major public cloud platforms:
+-Microsoft Azure
+-Amazon Web Services (AWS)
+-Google Cloud Platform (GCP)
+X alibaba cloud not supported
+
+
+
+You need to replace all the permissions granted to User1 with read-only permissions. The solution must minimize administrative effort.
+Answer - From the Permissions subtab, use a quick action.
+
+
+
+Identify all the accounts that are assigned the Global Administrator role permanently. - Azure AD Insights
+Review the Permission Creep Index (PCI) of User1. - Dashboards
+
+
+
+You should assign the 1: User Access Administrator role to the service principal of 2: Microsoft Entra Permissions Management
+
+
+
+You need to ensure that Permission Management can onboard Sub1
+Full up powershell command -- "New-AzRoleAssignment" -ApplicationId b46c3ac5-9da6-418f-a849-0a07a10b3c6c -RoleDefinitionName "Reader" -Scope /subscriptions/<subscriptionID> 
+
+
+
+You plan to connect Permissions Management to AWS. You need to create a Permissions Management app in Azure. How should you complete the PowerShell command
+"New-AzureADApplication" -DisplayName mciem-aws-oidc-connector "-IdentfierUrls" api://mciem-aws-oidc-app
+
+
+
+You need to ensure that User1 can onboard the Azure subscription to Permissions Management. The solution must follow the principle of least principle.
+Answer - Permissions Management Administrator
+
+
+
+You need to onboard Permissions Management. Which two actions should you perform? 
+1. From Microsoft Entra Permissions Management, configure data collection.
+2. Create a role assignment for Sub1.
+LOGIC - Permissions Management onboarding requires data collection and an Azure RBAC role assignment on the subscription so it can read the subscription's permissions/resources.
+
+
+
+Choose option in the azure window provided
+You have an Azure subscription that is onboarded to Microsoft Entra Permissions Management. You need to perform the following actions:
+• Identify billable Azure resources.
+• Create a rule to remove permissions for unused resources.
+Answer: Choose these options in the window
+1. Billable resources = Gear icon/ Settings icon
+2. Create a rule = Autopilot (you will see a tab in the window easily)
+
+
+
+You need to identify managed identities that are assigned permissions and remove any permissions that have been unused for 90 days. The solution must minimize administrative effort.
+Answer - Autopilot rule
+
+
+
+-------- GLOBAL SECURE ACCESS & DEVICE MANAGEMENT --------
+
+Scenario cue: "5 types of device groups (Entra joined, Entra registered, single vs multi-session, Windows 365) — where can you install the GSA client?"
+Why correct: GSA client requires Entra joined/hybrid joined (not registered) devices, and doesn't support multi-session virtual desktops (AVD/Windows 11 Enterprise multi-session). Windows 365 (Cloud PC, single-session) is explicitly supported.
+Exam tip: Two auto-reject triggers for GSA client questions:
+"Registered" → reject (join type must be Entra joined or hybrid joined).
+"Multi-session" → reject (AVD multi-session / Windows 11 Enterprise multi-session not supported).
+Windows 365 = ✅ supported (don't confuse with AVD multi-session).
+
+
+
+Scenario cue: "On-premises AD + Windows 11 + hybrid join + Intune enrollment."
+Correct Answer (2 dropdown selection):
+  → Domain: Intune Connector for Active Directory
+  → Intune: Modify the mobile device management (MDM) user scope
+Why correct:
+  → Intune Connector for Active Directory → supports the on-premises AD domain-join part of the hybrid deployment.
+  → MDM user scope → enables automatic Intune enrollment.
+Exam tip:
+  → Hybrid/Autopilot domain join → Intune Connector for Active Directory
+  → Automatic Intune enrollment → MDM user scope
+
+
+
+Scenario:
+Device limit = 5 per user
+User1:
+→ Device1 = Windows 10, Entra joined
+→ Device2 = iOS, Entra registered
+→ Device3 = Windows 10, Entra registered
+→ Device4 = Android, Entra registered
+Admin1 = Cloud Device Administrator
+Admin2 = Microsoft Entra Joined Device Local Administrator
+Question: For each statement, select Yes or No.
+Correct Answer:
+  → User1 can join four additional Windows 10 devices: No
+  → Admin1 can set "Devices ... require Multi-Factor Authentication" to Yes: Yes
+  → Admin2 is a local administrator on Device3: No
+Why:
+  → User1 already has 4 devices and the maximum is 5 → only 1 more can be added. The limit applies to joined and registered devices.
+  → Cloud Device Administrator can modify device settings.
+  → Microsoft Entra Joined Device Local Administrator applies to Microsoft Entra joined devices; Device3 is registered, not joined.
+
+
+
+Concept
+"Global Administrator" and "Global Secure Access Administrator" can manage Microsoft Entra Internet Access.
+
+
+
+Scenario:
+On-premises:
+→ Server1 hosts Share1 (file share)
+→ 500 Windows 11 devices present
+Microsoft 365 E5:
+→ Global Secure Access Private Access is enabled
+→ Global Secure Access client is deployed to devices
+Goal:
+→ Allow the devices to remotely access Share1 through Global Secure Access.
+Question:
+Which three actions should you perform, in order?
+Correct sequence:
+1. Install a connector on Server1 - provides the connection between Global Secure Access and the on-premises resource.
+2. Create an enterprise application - publishes the private resource through Global Secure Access.
+3. Create an application segment - defines the actual destination/port/protocol. For a Windows file share, SMB uses TCP 445.
+FLOW: client intercepts the traffic → tunnels it to the SSE edge → Entra authorization/token → Private Access service → connector → target server.
+
+
+
+Deploy a private network connector → To privately access an Azure web app when multiple Intune-enrolled Windows devices already have the Global Secure Access client deployed.
+
+
+
+-Scenario:
+You already created Global Secure Access SecurityProfile1 and now need to attach it to CAPolicy1.
+-Question:
+Which two settings must be configured? (window with options would be given)
+-Correct answers:
+Target resources (All internet resources with Global Secure Access)
+Session (Use Global Secure Access security profile → SecurityProfile1)
+
+
+
+Deploy the Global Secure Access client to ensure that all the on-premises devices access the internet by using Global Secure Access.
+Enable Global Secure Access signaling to ensure that users can only access resources in the subscription from a device that has the Global Secure Access client connected.
+
+
+
+GSA Private Access → Windows/Android/iOS/macOS supported; entra registered/joined devices supported
+
+
+
+You need to enable the Private access profile. Which blade should you use in the Microsoft Entra admin center?
+Traffic forwarding (NOT Security Profile)
+
+
+
+Microsoft Entra Internet Access requires an "Entra-joined/hybrid-joined Windows device"
+"Entra-registered" devices support Private Access only.
+Recall - Only joined + windows folks get internet
+
+
+
+You need to prevent users from accessing https://contoso.com from the devices. 
+Correct Order:
+-create a web content filtering policy
+-configure a security profile
+-create a conditional access policy
+
+
+
+The solution must ensure that users are prevented from accessing websites that include the word gambling in the URL.
+Answer - Create a web content filtering policy.
+
+
+
+-------- CUSTOM SECURITY ATTRIBUTES --------
+
+Concept:
+Security attributes can only be assigned to users and service principals
+Only users who have role of "Attribute Definition Administrator" can create custom security attributes (not even global administrator & security administrator can do this)
+
+
+
+Scenario: You have custom security attributes grouped into Set1/Set2, and different admins have different roles. The question asks who can modify or view the attribute values.
+Answers
+User1 → NO ❌
+Why: Global Admin alone doesn't grant custom security attribute permissions.
+User2 → NO ❌
+Why: Attribute Definition Administrator manages the attribute definition, not the values assigned to users.
+User3 → YES ✅
+Why: Attribute Assignment Administrator can manage/read assigned attribute values.
+
+
+
+-------- DOMAINS, TENANT SETUP & BRANDING --------
+
+You have a new Microsoft 365 tenant that uses a domain name of contoso.onmicrosoft.com.
+You register the name contoso.com with a domain registrar.
+You need to use contoso.com as the default domain name for new Microsoft 365 users.
+Which four actions should you perform in sequence (from a given list)?
+Answer:
+    -Add a custom domain name of contoso.com
+    -Create new TXT records in DNS 
+    -Successfully verify the domain name
+    -Set the domain to primary
+
+
+
+Scenario cue: "Microsoft 365 sign-in page should appear in the user's browser language (Spanish)."
+Correct Answer: C. Configure the Company branding settings.
+Why correct: Microsoft Entra Company Branding lets you create a customized sign-in experience for a specific browser language. You can add Spanish as a browser-language customization under Entra ID → Custom Branding.
+Exam tip:
+    A (Usage location) — controls license eligibility/compliance by country, unrelated to sign-in page language.
+    B (Global Secure Access / Session management) — governs network access and session lifetime controls, not UI localization.
+    D (Conditional Access policy) — controls access grants/conditions (MFA, compliant device, etc.), not sign-in page appearance/language.
+
+
+
+Which four actions should you perform in sequence to gain global administrator privileges to the Azure Active Directory
+Correct sequence:
+1. Create a self-signed user account in the Azure AD tenant.
+2. Sign in to the Microsoft 365 admin center.
+3. Respond to the Become the admin message.
+4. Create a TXT record in the contoso.com DNS zone.
